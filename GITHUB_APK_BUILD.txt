@@ -1,0 +1,3 @@
+Tani is configured for GitHub Actions.
+After the project is pushed to GitHub, open Actions -> Build Tani APK -> Run workflow.
+The generated app-debug.apk will be available as the tani-debug-apk artifact.

@@ -1,0 +1,1 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"><item android:id="@+id/home" android:title="الرئيسية"/><item android:id="@+id/categories" android:title="التصنيفات"/><item android:id="@+id/cart" android:title="السلة"/><item android:id="@+id/orders" android:title="طلباتي"/><item android:id="@+id/profile" android:title="حسابي"/></menu>
