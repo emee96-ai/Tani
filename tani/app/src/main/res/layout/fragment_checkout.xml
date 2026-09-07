@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/tani_background">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="18dp">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="إتمام الطلب"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_dark" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="كل متجر سيستلم طلباً مستقلاً ورسوم توصيله مستقلة."
+            android:textColor="@color/text_muted" />
+        <ProgressBar
+            android:id="@+id/checkout_progress"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="عنوان التوصيل"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:textColor="@color/text_dark" />
+        <RadioGroup
+            android:id="@+id/checkout_addresses"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" />
+        <Button
+            android:id="@+id/checkout_add_address"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="8dp"
+            android:text="إضافة عنوان" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="رقم هاتف التوصيل"
+            android:textStyle="bold"
+            android:textColor="@color/text_dark" />
+        <EditText
+            android:id="@+id/checkout_phone"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_field"
+            android:hint="رقم الهاتف"
+            android:inputType="phone"
+            android:maxLength="30"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="ملاحظات الطلب"
+            android:textStyle="bold"
+            android:textColor="@color/text_dark" />
+        <EditText
+            android:id="@+id/checkout_notes"
+            android:layout_width="match_parent"
+            android:layout_height="90dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_field"
+            android:gravity="top"
+            android:hint="اختياري"
+            android:maxLength="1000"
+            android:padding="14dp" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="16dp">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="طريقة الدفع"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:textColor="@color/text_dark" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:text="الدفع عند الاستلام (COD)"
+                android:textColor="@color/text_muted" />
+            <LinearLayout
+                android:id="@+id/checkout_summary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="vertical" />
+            <TextView
+                android:id="@+id/checkout_total"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:textSize="21sp"
+                android:textStyle="bold"
+                android:textColor="@color/tani_primary" />
+        </LinearLayout>
+        <Button
+            android:id="@+id/checkout_confirm"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:layout_marginTop="18dp"
+            android:layout_marginBottom="26dp"
+            android:text="تأكيد الطلب" />
+    </LinearLayout>
+</ScrollView>

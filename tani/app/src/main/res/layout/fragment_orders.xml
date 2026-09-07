@@ -1,1 +1,46 @@
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/tani_background"><LinearLayout android:orientation="vertical" android:padding="18dp" android:layout_width="match_parent" android:layout_height="wrap_content"><TextView android:text="طلباتي" android:textSize="28sp" android:textStyle="bold" android:textColor="@color/text_dark" android:layout_width="match_parent" android:layout_height="wrap_content"/><LinearLayout android:id="@+id/orders_box" android:orientation="vertical" android:layout_marginTop="16dp" android:layout_width="match_parent" android:layout_height="wrap_content"/></LinearLayout></ScrollView>
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/tani_background">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="18dp">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="طلباتي"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_dark" />
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:scrollbars="none">
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <Button android:id="@+id/orders_all" android:layout_width="wrap_content" android:layout_height="48dp" android:text="الكل" />
+                <Button android:id="@+id/orders_active" android:layout_width="wrap_content" android:layout_height="48dp" android:text="النشطة" />
+                <Button android:id="@+id/orders_completed" android:layout_width="wrap_content" android:layout_height="48dp" android:text="المكتملة" />
+                <Button android:id="@+id/orders_cancelled" android:layout_width="wrap_content" android:layout_height="48dp" android:text="الملغاة" />
+            </LinearLayout>
+        </HorizontalScrollView>
+        <ProgressBar
+            android:id="@+id/orders_progress"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="18dp" />
+        <LinearLayout
+            android:id="@+id/orders_box"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="12dp" />
+    </LinearLayout>
+</ScrollView>

@@ -1,1 +1,98 @@
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/tani_background"><LinearLayout android:orientation="vertical" android:padding="18dp" android:layout_width="match_parent" android:layout_height="wrap_content"><TextView android:text="المنتجات" android:textSize="28sp" android:textStyle="bold" android:textColor="@color/text_dark" android:layout_width="match_parent" android:layout_height="wrap_content"/><TextView android:text="منتجات من تاجرات محليات في مكان واحد" android:textColor="@color/text_muted" android:layout_marginTop="4dp" android:layout_width="match_parent" android:layout_height="wrap_content"/><LinearLayout android:id="@+id/products_box" android:orientation="vertical" android:layout_marginTop="16dp" android:layout_width="match_parent" android:layout_height="wrap_content"/></LinearLayout></ScrollView>
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/tani_background">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="18dp">
+        <TextView
+            android:id="@+id/products_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="المنتجات"
+            android:textColor="@color/text_dark"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+        <EditText
+            android:id="@+id/products_search"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_field"
+            android:hint="اسم المنتج أو المتجر"
+            android:padding="13dp"
+            android:singleLine="true" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="9dp"
+            android:orientation="horizontal">
+            <EditText
+                android:id="@+id/products_min_price"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_field"
+                android:hint="أقل سعر"
+                android:inputType="numberDecimal"
+                android:padding="10dp" />
+            <EditText
+                android:id="@+id/products_max_price"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_field"
+                android:hint="أعلى سعر"
+                android:inputType="numberDecimal"
+                android:padding="10dp" />
+        </LinearLayout>
+        <CheckBox
+            android:id="@+id/products_in_stock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="المتوفر فقط" />
+        <Spinner
+            android:id="@+id/products_sort"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/bg_field" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+            <Button
+                android:id="@+id/products_apply"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="تطبيق" />
+            <Button
+                android:id="@+id/products_clear"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:text="مسح الفلاتر" />
+        </LinearLayout>
+        <TextView
+            android:id="@+id/products_loading"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="جاري تحميل المنتجات..."
+            android:textColor="@color/text_muted" />
+        <LinearLayout
+            android:id="@+id/products_box"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="vertical" />
+    </LinearLayout>
+</ScrollView>

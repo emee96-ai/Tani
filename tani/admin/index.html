@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>تاني — لوحة الإدارة</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <section id="loginView" class="auth-card">
+      <div class="brand">تاني</div>
+      <h1>لوحة الإدارة</h1>
+      <p>الدخول متاح لحسابات الإدارة والدعم فقط.</p>
+      <label>البريد الإلكتروني<input id="email" type="email" autocomplete="username" /></label>
+      <label>كلمة المرور<input id="password" type="password" autocomplete="current-password" /></label>
+      <button id="loginBtn">تسجيل الدخول</button>
+      <div id="loginStatus" class="status"></div>
+    </section>
+
+    <section id="dashboard" class="hidden">
+      <header class="topbar">
+        <div><div class="brand">تاني</div><strong>Admin Foundation</strong></div>
+        <div class="top-actions"><span id="roleBadge" class="badge"></span><button id="logoutBtn" class="secondary">خروج</button></div>
+      </header>
+
+      <div id="dashboardStatus" class="status"></div>
+
+      <section class="metrics" id="metrics"></section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>طلبات التجار</h2><button id="refreshBtn" class="secondary">تحديث</button></div>
+        <div class="table-wrap"><table><thead><tr><th>النشاط</th><th>المتجر</th><th>الهاتف</th><th>الحالة</th><th>الهوية</th><th>تاريخ الطلب</th><th>إجراء</th></tr></thead><tbody id="merchantsBody"></tbody></table></div>
+      </section>
+
+      <section class="grid-two">
+        <section class="panel"><h2>الشكاوى الأخيرة</h2><div id="complaintsList" class="list"></div></section>
+        <section class="panel"><h2>أخطاء التطبيق الأخيرة</h2><div id="errorsList" class="list"></div></section>
+      </section>
+
+      <section class="panel"><h2>مؤشرات الأسبوع</h2><div id="weeklyKpis" class="metrics"></div></section>
+
+      <section class="grid-two">
+        <section class="panel"><h2>الثقة وأداء التجار</h2><div id="trustList" class="list"></div></section>
+        <section class="panel"><h2>تذاكر الدعم</h2><div id="ticketsList" class="list"></div></section>
+      </section>
+
+      <section class="grid-two">
+        <section class="panel"><h2>طلبات الاشتراك</h2><div id="subscriptionRequestsList" class="list"></div></section>
+        <section class="panel"><h2>طلبات الظهور الممول</h2><div id="featuredRequestsList" class="list"></div></section>
+      </section>
+
+      <section class="grid-two">
+        <section class="panel"><h2>المدن</h2><div id="citiesList" class="list"></div></section>
+        <section class="panel"><h2>مزودو التوصيل</h2><div id="deliveryProvidersList" class="list"></div></section>
+      </section>
+
+      <section class="panel"><h2>بلاغات التقييمات</h2><div id="reviewReportsList" class="list"></div></section>
+
+      <section class="panel"><h2>Audit Log</h2><div id="auditList" class="list"></div></section>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

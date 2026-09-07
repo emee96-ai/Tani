@@ -1,7 +1,8 @@
-Gradle: 8.7
+Gradle wrapper: 8.9
 Android Gradle Plugin: 8.7.3
 Kotlin: 2.0.21
 compileSdk/targetSdk: 35
 minSdk: 24
 
-The project includes the standard wrapper configuration. The wrapper JAR is not fabricated because it was not present in the source environment; Android Studio can import/sync the project with Gradle 8.7.
+The standard Gradle wrapper is bundled, including gradle/wrapper/gradle-wrapper.jar.
+Core library desugaring is enabled because the app uses java.time APIs while supporting Android API 24+.
