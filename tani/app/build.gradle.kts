@@ -1,6 +1,10 @@
 plugins { id("com.android.application"); id("org.jetbrains.kotlin.android"); id("org.jetbrains.kotlin.plugin.serialization") }
 
-android { namespace = "com.tani.app"; compileSdk = 35
+android {
+    buildFeatures {
+        buildConfig = true
+    }
+ namespace = "com.tani.app"; compileSdk = 35
     defaultConfig { applicationId = "com.tani.app"; minSdk = 24; targetSdk = 35; versionCode = 1; versionName = "1.0.0" }
 
     compileOptions {
