@@ -135,10 +135,20 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
             setPadding(0, 12, 0, 8)
         }
         row.addView(TextView(requireContext()).apply {
-            text = "${item.product.name}\n${MarketplaceUi.formatPrice(item.product.price)} × ${item.quantity} = ${MarketplaceUi.formatPrice(item.product.price * item.quantity)}"
-            textSize = 15f
+            text = item.product.name
+            textSize = 16f
+            setTextColor(requireContext().getColor(R.color.text_dark))
         })
-        val actions = LinearLayout(requireContext()).apply { orientation = LinearLayout.HORIZONTAL }
+        row.addView(TextView(requireContext()).apply {
+            text = "${MarketplaceUi.formatPrice(item.product.price)} × ${item.quantity} = ${MarketplaceUi.formatPrice(item.product.price * item.quantity)}"
+            textSize = 14f
+            setPadding(0, 4, 0, 0)
+            setTextColor(requireContext().getColor(R.color.text_muted))
+        })
+        val actions = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(0, 10, 0, 0)
+        }
         actions.addView(Button(requireContext()).apply {
             text = "+"
             setOnClickListener {
@@ -151,11 +161,11 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
         actions.addView(Button(requireContext()).apply {
             text = "−"
             setOnClickListener { Cart.decrease(item.product.id); render(); syncSilent() }
-        }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = 8 })
         actions.addView(Button(requireContext()).apply {
             text = "حذف"
             setOnClickListener { Cart.remove(item.product.id); render(); syncSilent() }
-        }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = 8 })
         row.addView(actions)
         return row
     }
@@ -164,6 +174,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
         text = "$label: $value"
         textSize = 15f
         setPadding(0, 4, 0, 4)
+        setTextColor(requireContext().getColor(R.color.text_muted))
     }
 
     private fun syncSilent() {

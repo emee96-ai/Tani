@@ -105,12 +105,9 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             runCatching { repository.categories() }.onSuccess { categories ->
                 suggestionsBox.removeAllViews()
                 categories.take(8).forEach { category ->
-                    suggestionsBox.addView(Button(requireContext()).apply {
-                        text = category.name
-                        setOnClickListener {
-                            query.setText(category.name)
-                            runSearch()
-                        }
+                    suggestionsBox.addView(MarketplaceUi.chipButton(requireContext(), category.name) {
+                        query.setText(category.name)
+                        runSearch()
                     })
                 }
             }

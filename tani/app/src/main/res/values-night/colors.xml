@@ -1,1 +1,17 @@
-<resources><color name="tani_primary">#B3AAFF</color><color name="tani_primary_dark">#5145D6</color><color name="tani_secondary">#153B4A</color><color name="tani_accent">#1FB89A</color><color name="tani_background">#121522</color><color name="tani_surface">#1C2030</color><color name="white">#FFFFFF</color><color name="text_dark">#F3F4FA</color><color name="text_muted">#B8BECD</color><color name="border">#363C50</color><color name="success">#14804A</color><color name="warning">#9A5600</color><color name="error">#C63845</color><color name="brand_soft">#292540</color><color name="brand_violet">#5145D6</color></resources>
+<resources>
+    <color name="tani_primary">#A99FFF</color>
+    <color name="tani_primary_dark">#7A6FFF</color>
+    <color name="tani_secondary">#D7DDF3</color>
+    <color name="tani_accent">#4FD1AC</color>
+    <color name="tani_background">#10131D</color>
+    <color name="tani_surface">#181D29</color>
+    <color name="white">#FFFFFF</color>
+    <color name="text_dark">#F6F7FC</color>
+    <color name="text_muted">#C2C8D6</color>
+    <color name="border">#31384A</color>
+    <color name="success">#5BD08C</color>
+    <color name="warning">#FFBE62</color>
+    <color name="error">#FF8B97</color>
+    <color name="brand_soft">#24283A</color>
+    <color name="brand_violet">#A99FFF</color>
+</resources>

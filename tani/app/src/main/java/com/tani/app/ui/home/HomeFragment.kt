@@ -70,13 +70,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     loading.visibility = View.GONE
                     categoriesBox.removeAllViews()
                     feed.categories.forEach { category ->
-                        val button = Button(requireContext()).apply {
-                            text = category.name
-                            setOnClickListener {
-                                (activity as MainActivity).show(
-                                    ProductsFragment.newInstance(category.id, category.name)
-                                )
-                            }
+                        val button = MarketplaceUi.chipButton(requireContext(), category.name) {
+                            (activity as MainActivity).show(
+                                ProductsFragment.newInstance(category.id, category.name)
+                            )
                         }
                         categoriesBox.addView(button)
                     }

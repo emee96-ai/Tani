@@ -1,1 +1,36 @@
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/tani_background"><LinearLayout android:orientation="vertical" android:padding="18dp" android:layout_width="match_parent" android:layout_height="wrap_content"><TextView android:text="سلة المشتريات" android:textSize="28sp" android:textStyle="bold" android:textColor="@color/text_dark" android:layout_width="match_parent" android:layout_height="wrap_content"/><LinearLayout android:id="@+id/cart_box" android:orientation="vertical" android:layout_marginTop="16dp" android:layout_width="match_parent" android:layout_height="wrap_content"/></LinearLayout></ScrollView>
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/tani_background"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="18dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="سلة المشتريات"
+            android:textColor="@color/text_dark"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="راجعي المنتجات قبل الانتقال لإتمام الطلب"
+            android:textColor="@color/text_muted" />
+
+        <LinearLayout
+            android:id="@+id/cart_box"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="vertical" />
+    </LinearLayout>
+</ScrollView>

@@ -2,12 +2,15 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/tani_background">
+    android:background="@color/tani_background"
+    android:fillViewport="true">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="18dp">
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -15,11 +18,20 @@
             android:textColor="@color/text_dark"
             android:textSize="28sp"
             android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="استكشفي المتاجر المحلية وابحثي حسب الاسم أو المنطقة"
+            android:textColor="@color/text_muted" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:orientation="horizontal">
+
             <EditText
                 android:id="@+id/stores_search"
                 android:layout_width="0dp"
@@ -28,8 +40,9 @@
                 android:background="@drawable/bg_field"
                 android:hint="اسم المتجر أو المنطقة"
                 android:imeOptions="actionSearch"
-                android:padding="13dp"
+                android:paddingHorizontal="13dp"
                 android:singleLine="true" />
+
             <Button
                 android:id="@+id/stores_search_button"
                 android:layout_width="wrap_content"
@@ -37,6 +50,7 @@
                 android:layout_marginStart="8dp"
                 android:text="بحث" />
         </LinearLayout>
+
         <TextView
             android:id="@+id/stores_loading"
             android:layout_width="match_parent"
@@ -44,6 +58,7 @@
             android:layout_marginTop="10dp"
             android:text="جاري تحميل المتاجر..."
             android:textColor="@color/text_muted" />
+
         <LinearLayout
             android:id="@+id/stores_box"
             android:layout_width="match_parent"

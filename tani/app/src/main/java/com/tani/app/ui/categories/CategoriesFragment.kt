@@ -36,13 +36,10 @@ class CategoriesFragment : Fragment(R.layout.fragment_categories) {
                     } else categories.forEach { category ->
                         MarketplaceUi.addWithSpacing(
                             box,
-                            Button(requireContext()).apply {
-                                text = category.name
-                                setOnClickListener {
-                                    (activity as MainActivity).show(
-                                        ProductsFragment.newInstance(category.id, category.name)
-                                    )
-                                }
+                            MarketplaceUi.chipButton(requireContext(), category.name) {
+                                (activity as MainActivity).show(
+                                    ProductsFragment.newInstance(category.id, category.name)
+                                )
                             },
                             requireContext(),
                             8
