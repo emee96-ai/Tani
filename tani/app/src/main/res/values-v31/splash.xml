@@ -1,0 +1,1 @@
+<resources><style name="Theme.Tani.Starting" parent="Theme.Tani"><item name="android:windowSplashScreenBackground">@color/tani_background</item><item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_brand</item></style></resources>

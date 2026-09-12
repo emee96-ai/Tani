@@ -1,5 +1,6 @@
 package com.tani.app.data
 
+import com.tani.app.data.commerce.CartQuote
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
@@ -516,6 +517,23 @@ class Repository {
         }
         return Supabase.post(
             "rpc/sync_my_cart",
+            buildJsonObject { put("p_items", payload) }.toString()
+        )
+    }
+
+    suspend fun quoteCart(items: List<CartItem>): CartQuote {
+        require(items.isNotEmpty()) { "السلة فارغة" }
+        val payload = buildJsonArray {
+            items.forEach { item ->
+                add(buildJsonObject {
+                    put("product_id", item.product.id)
+                    put("quantity", item.quantity.coerceIn(1, 99))
+                })
+            }
+        }
+
+        return Supabase.post(
+            "rpc/quote_cart",
             buildJsonObject { put("p_items", payload) }.toString()
         )
     }

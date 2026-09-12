@@ -20,6 +20,7 @@ import com.tani.app.R
 import com.tani.app.data.Address
 import com.tani.app.data.Cart
 import com.tani.app.data.Repository
+import com.tani.app.data.commerce.CartQuote
 import com.tani.app.ui.marketplace.MarketplaceUi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -192,6 +193,66 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
             Toast.makeText(requireContext(), "اختاري عنوان التوصيل", Toast.LENGTH_SHORT).show()
             return
         }
+
+        confirm.isEnabled = false
+        progress.visibility = View.VISIBLE
+        lifecycleScope.launch {
+            runCatching { repository.quoteCart(Cart.all()) }
+                .onSuccess { quote ->
+                    progress.visibility = View.GONE
+                    confirm.isEnabled = true
+                    showQuoteConfirmation(addressId, quote)
+                }
+                .onFailure {
+                    progress.visibility = View.GONE
+                    confirm.isEnabled = true
+                    Toast.makeText(
+                        requireContext(),
+                        it.message ?: "تعذر التحقق من الأسعار والمخزون",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+        }
+    }
+
+    private fun showQuoteConfirmation(addressId: String, quote: CartQuote) {
+        val unavailable = quote.items.filterNot { it.available }
+        val warnings = buildList {
+            addAll(quote.warnings)
+            unavailable.forEach { add("${it.name}: الكمية المطلوبة غير متاحة") }
+        }.distinct()
+
+        total.text = "الإجمالي من الخادم: ${MarketplaceUi.formatPrice(quote.grand_total)}"
+
+        if (warnings.isNotEmpty()) {
+            AlertDialog.Builder(requireContext())
+                .setTitle("راجعي السلة")
+                .setMessage(warnings.joinToString("\n"))
+                .setPositiveButton("حسناً", null)
+                .show()
+            return
+        }
+
+        val message = buildString {
+            append("قيمة المنتجات: ${MarketplaceUi.formatPrice(quote.subtotal)}\n")
+            append("التوصيل: ${MarketplaceUi.formatPrice(quote.delivery_total)}\n")
+            if (quote.discount_total > 0) {
+                append("الخصم: ${MarketplaceUi.formatPrice(quote.discount_total)}\n")
+            }
+            append("\nالإجمالي النهائي: ${MarketplaceUi.formatPrice(quote.grand_total)}")
+        }
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("تأكيد الطلب")
+            .setMessage(message)
+            .setNegativeButton("رجوع", null)
+            .setPositiveButton("تأكيد الطلب") { _, _ ->
+                placeOrder(addressId)
+            }
+            .show()
+    }
+
+    private fun placeOrder(addressId: String) {
         confirm.isEnabled = false
         progress.visibility = View.VISIBLE
         lifecycleScope.launch {

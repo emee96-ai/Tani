@@ -46,12 +46,12 @@ else: ok('Android R.id references', str(len(id_refs)))
 
 # Resource references from Kotlin and XML.
 res=root/'app/src/main/res'
-file_types={'layout','drawable','mipmap','menu','xml','font','raw','anim','animator','navigation','transition'}
+file_types={'color','layout','drawable','mipmap','menu','xml','font','raw','anim','animator','navigation','transition'}
 res_defs={t:set() for t in file_types|{'color','string','style','dimen','integer','bool','array','plurals','attr','id'}}
 for t in file_types:
-    d=res/t
-    if d.exists():
-        res_defs[t] |= {p.stem for p in d.iterdir() if p.is_file()}
+    for d in res.iterdir():
+        if d.is_dir() and d.name.split("-")[0] == t:
+            res_defs[t] |= {p.stem for p in d.iterdir() if p.is_file()}
 for p in (res/'values').glob('*.xml'):
     try:
         tree=ET.parse(p)
@@ -71,6 +71,7 @@ for qdir in [p for p in res.iterdir() if p.is_dir() and p.name.startswith('value
                 typ=child.attrib.get('type') if tag=='item' else tag
                 if name and typ in res_defs: res_defs[typ].add(name)
         except Exception: pass
+res_defs["style"] |= {name.replace(".", "_") for name in res_defs["style"]}
 refs=[]
 for m in re.finditer(r'(?<!android\.)R\.(layout|drawable|mipmap|menu|xml|font|raw|anim|animator|navigation|transition|color|string|style|dimen|integer|bool|array|plurals|attr)\.([A-Za-z0-9_]+)',kt):
     refs.append((m.group(1),m.group(2),'Kotlin'))

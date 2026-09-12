@@ -15,6 +15,7 @@
         android:paddingEnd="24dp"
         android:paddingBottom="32dp">
 
+        <ImageView android:layout_width="72dp" android:layout_height="72dp" android:src="@drawable/ic_brand" android:contentDescription="@string/app_name" android:layout_marginBottom="12dp"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -23,6 +24,7 @@
             android:textSize="36sp"
             android:textStyle="bold" />
 
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/brand_slogan" android:textColor="@color/text_muted" android:gravity="center" android:layout_marginTop="8dp"/>
         <TextView
             android:id="@+id/auth_title"
             android:layout_width="match_parent"

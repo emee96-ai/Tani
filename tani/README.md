@@ -82,3 +82,7 @@ See `FINAL_QA_REPORT.md` and `docs/RELEASE_CHECKLIST.md` before a production rel
 
 ## Legal / launch note
 The policy documents under `docs/` are product-ready drafts based on the implementation specification, but must be reviewed for Sudan/local law and business terms before commercial launch. Production also requires real approved supply, tested delivery operations, staffed support, backup configuration and a successful APK/device smoke test.
+
+
+## tani v1 maintenance
+See `CHANGELOG_TANI_V1.md` and `docs/TANI_Maintenance_Modernization_Plan.md`.

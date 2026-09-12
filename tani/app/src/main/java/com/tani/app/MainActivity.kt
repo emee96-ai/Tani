@@ -27,6 +27,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var nav: BottomNavigationView
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        setTheme(R.style.Theme_Tani)
         super.onCreate(savedInstanceState)
         Supabase.init(this)
         Cart.init(this)
@@ -70,7 +71,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun handleAuthDeepLink(intent: Intent?): Boolean {
         val uri = intent?.data ?: return false
-        if (uri.scheme != "tani" || uri.host != "auth" || uri.path != "/reset") return false
+        val isLegacyRecovery =
+            uri.scheme == "tani" && uri.host == "auth" && uri.path == "/reset"
+        val isVerifiedRecovery =
+            uri.scheme == "https" &&
+                uri.host.equals(BuildConfig.APP_LINK_HOST, ignoreCase = true) &&
+                uri.path == "/auth/reset"
+        if (!isLegacyRecovery && !isVerifiedRecovery) return false
 
         val params = parseAuthParams(uri)
         val token = params["access_token"]

@@ -1,11 +1,31 @@
 plugins { id("com.android.application"); id("org.jetbrains.kotlin.android"); id("org.jetbrains.kotlin.plugin.serialization") }
 
+val taniResetRedirect = providers.gradleProperty("TANI_RESET_REDIRECT")
+    .orElse("tani://auth/reset")
+    .get()
+val taniAppLinkHost = providers.gradleProperty("TANI_APP_LINK_HOST")
+    .orElse("tani.invalid")
+    .get()
+
 android {
     buildFeatures {
         buildConfig = true
     }
- namespace = "com.tani.app"; compileSdk = 35
-    defaultConfig { applicationId = "com.tani.app"; minSdk = 24; targetSdk = 35; versionCode = 1; versionName = "1.0.0" }
+
+    namespace = "com.tani.app"
+    compileSdk = 35
+
+    defaultConfig {
+        applicationId = "com.tani.app"
+        minSdk = 24
+        targetSdk = 35
+        versionCode = 3
+        versionName = "3.0.0"
+
+        buildConfigField("String", "PASSWORD_RESET_REDIRECT", "\"$taniResetRedirect\"")
+        buildConfigField("String", "APP_LINK_HOST", "\"$taniAppLinkHost\"")
+        manifestPlaceholders["taniAppLinkHost"] = taniAppLinkHost
+    }
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
@@ -27,4 +47,5 @@ dependencies {
     implementation("androidx.fragment:fragment-ktx:1.8.5")
     implementation("io.ktor:ktor-client-android:3.0.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+    testImplementation("junit:junit:4.13.2")
 }

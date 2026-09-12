@@ -1,0 +1,20 @@
+TANI v1 build-ready package
+
+Base source archive: Tani-full-product-final-2026-09-06.zip
+Current GitHub main inspected: emee96-ai/Tani @ 5d206fa9a7ce5d39273d87ae407b710f696dba84
+The base archive was verified byte-for-byte against current main for the core source files checked (MainActivity.kt, Supabase.kt, Repository.kt, phase3_commerce.sql). The current main BuildConfig change and root GitHub Actions files were then overlaid before maintenance v1 changes.
+
+Local verification completed:
+- Static project QA: PASS
+- XML/Manifest parsing: PASS
+- Android resource reference checks: PASS
+- Internal import checks: PASS
+- SQL table/view/RPC dependency coverage: PASS
+- Privileged secret scan: PASS
+- Gradle wrapper JAR integrity: PASS
+- Pure Kotlin OrderStateMachine compilation: PASS
+
+A full Android Gradle build could not be run inside this ChatGPT execution environment because outbound DNS/network is disabled and Gradle 8.9 cannot be downloaded. The included GitHub Actions workflows are configured to perform lint, unit tests and assembleDebug in GitHub's runner environment.
+
+TANI package version: v2
+Change: unified GitHub Actions build around ./gradlew and removed duplicate CI workflow.

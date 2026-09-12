@@ -1,8 +1,9 @@
 package com.tani.app.data
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.util.Base64
+import com.tani.app.BuildConfig
+import com.tani.app.security.SecureTokenStorage
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.android.Android
 import io.ktor.client.request.HttpRequestBuilder
@@ -32,14 +33,14 @@ object Supabase {
 
     const val URL = "https://sihttimibjzoahvwuwbm.supabase.co"
     const val KEY = "sb_publishable_9syQMNqMr0q9V0_Z4W-jvA_OQjhHj1Y"
-    const val PASSWORD_RESET_REDIRECT = "tani://auth/reset"
+    val PASSWORD_RESET_REDIRECT: String get() = BuildConfig.PASSWORD_RESET_REDIRECT
 
     private const val ACCESS_TOKEN_KEY = "access_token"
     private const val REFRESH_TOKEN_KEY = "refresh_token"
     private const val USER_ID_KEY = "user_id"
     private const val REFRESH_LEEWAY_SECONDS = 90L
 
-    private lateinit var prefs: SharedPreferences
+    private lateinit var secureStorage: SecureTokenStorage
 
     @PublishedApi
     internal val refreshMutex = Mutex()
@@ -55,26 +56,35 @@ object Supabase {
     }
 
     fun init(context: Context) {
-        prefs = context.applicationContext
-            .getSharedPreferences("tani_auth", Context.MODE_PRIVATE)
+        val appContext = context.applicationContext
+        secureStorage = SecureTokenStorage(appContext)
+
+        // One-time migration from the legacy plaintext preferences used by older builds.
+        val legacy = appContext.getSharedPreferences("tani_auth", Context.MODE_PRIVATE)
+        if (secureStorage.getString(ACCESS_TOKEN_KEY).isNullOrBlank()) {
+            secureStorage.putString(ACCESS_TOKEN_KEY, legacy.getString(ACCESS_TOKEN_KEY, null))
+            secureStorage.putString(REFRESH_TOKEN_KEY, legacy.getString(REFRESH_TOKEN_KEY, null))
+            secureStorage.putString(USER_ID_KEY, legacy.getString(USER_ID_KEY, null))
+        }
+        legacy.edit().clear().apply()
     }
 
     var token: String?
-        get() = prefs.getString(ACCESS_TOKEN_KEY, null)
+        get() = secureStorage.getString(ACCESS_TOKEN_KEY)
         private set(value) {
-            prefs.edit().putString(ACCESS_TOKEN_KEY, value).apply()
+            secureStorage.putString(ACCESS_TOKEN_KEY, value)
         }
 
     var refreshToken: String?
-        get() = prefs.getString(REFRESH_TOKEN_KEY, null)
+        get() = secureStorage.getString(REFRESH_TOKEN_KEY)
         private set(value) {
-            prefs.edit().putString(REFRESH_TOKEN_KEY, value).apply()
+            secureStorage.putString(REFRESH_TOKEN_KEY, value)
         }
 
     var userId: String?
-        get() = prefs.getString(USER_ID_KEY, null)
+        get() = secureStorage.getString(USER_ID_KEY)
         private set(value) {
-            prefs.edit().putString(USER_ID_KEY, value).apply()
+            secureStorage.putString(USER_ID_KEY, value)
         }
 
     /**
@@ -87,15 +97,13 @@ object Supabase {
 
     fun saveSession(accessToken: String, refreshToken: String, id: String?) {
         val resolvedUserId = id ?: jwtStringClaim(accessToken, "sub")
-        prefs.edit()
-            .putString(ACCESS_TOKEN_KEY, accessToken)
-            .putString(REFRESH_TOKEN_KEY, refreshToken)
-            .putString(USER_ID_KEY, resolvedUserId)
-            .apply()
+        secureStorage.putString(ACCESS_TOKEN_KEY, accessToken)
+        secureStorage.putString(REFRESH_TOKEN_KEY, refreshToken)
+        secureStorage.putString(USER_ID_KEY, resolvedUserId)
     }
 
     fun clearSession() {
-        prefs.edit().clear().apply()
+        secureStorage.clear()
     }
 
     @PublishedApi

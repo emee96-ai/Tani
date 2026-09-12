@@ -12,6 +12,11 @@
 **تنفيذ الطلب:** كامل داخل التطبيق  
 **الهدف:** بناء تجربة شراء محلية سهلة، موثوقة، ممتعة ومتكررة الاستخدام، مع قيمة واضحة وقابلة للقياس للتاجر.
 
+**إصدار الملف:** tani v1  
+**خط الأساس:** آخر نسخة من وثيقة المنتج + خطة الصيانة والتحديث الشامل  
+**حالة الوثيقة:** Production-Readiness Specification  
+**قاعدة الترقيم:** كل تحديث لاحق للملف يزيد الرقم تسلسلياً: tani v2، tani v3، ...
+
 > **ملاحظة إصدار:** هذه الوثيقة تصف المنتج الكامل المستهدف لـ **تاني**. تم حذف جميع تصنيفات ومراحل ومصطلحات MVP، واستبدال اسم Waffer/وافر باسم تاني/TANI.
 
 ---
@@ -953,39 +958,171 @@ More completed transactions → better reputation data → higher trust → more
 
 # 28. Technical Architecture
 
+البنية المستهدفة لتاني هي بنية **Modular, Testable, Low-Bandwidth First** بدون إعادة كتابة المشروع بالكامل دفعة واحدة.
+
 ## Client
 
-**Android / Kotlin / Jetpack**
+**Android / Kotlin / Jetpack + Material 3**
 
-مع:
-- MVVM أو Architecture منظمة مكافئة.
-- Navigation.
-- Repository pattern.
-- Local caching.
-- Image optimization.
-- Error states.
-- Loading states.
+المسار المعماري الإلزامي:
+
+```text
+Fragment / Compose
+        ↓
+ViewModel
+        ↓
+UseCase
+        ↓
+Repository Interface
+        ↓
+Repository Implementation
+        ↓
+Supabase / Local Cache
+```
+
+لا تتصل أي شاشة مباشرة بـ Supabase.
+
+## Project Structure
+
+```text
+app/
+
+core/
+    network/
+    auth/
+    security/
+    database/
+    analytics/
+    monitoring/
+    ui/
+
+data/
+    auth/
+    marketplace/
+    cart/
+    orders/
+    merchant/
+    profile/
+
+domain/
+    model/
+    repository/
+    usecase/
+
+feature/
+    auth/
+    home/
+    categories/
+    search/
+    product/
+    cart/
+    checkout/
+    orders/
+    profile/
+    merchant/
+    support/
+```
+
+## Repository Boundaries
+
+بدلاً من Repository واحد ضخم، يعتمد المشروع على:
+
+```text
+AuthRepository
+ProfileRepository
+MarketplaceRepository
+ProductRepository
+CartRepository
+OrderRepository
+MerchantRepository
+SupportRepository
+GrowthRepository
+MonetizationRepository
+```
+
+## Use Cases
+
+أمثلة الحالات الأساسية:
+
+```text
+LoginUseCase
+SignupUseCase
+GetHomeFeedUseCase
+SearchProductsUseCase
+AddToCartUseCase
+ValidateCartUseCase
+CheckoutUseCase
+CancelOrderUseCase
+SubmitMerchantApplicationUseCase
+ReviewProductUseCase
+```
+
+## Session & Local State
+
+- `SessionManager` لإدارة دورة الجلسة.
+- `SecureTokenStorage` للتوكنات الحساسة باستخدام Android Keystore + تخزين محلي مشفر.
+- `Jetpack DataStore` للإعدادات والحالات غير الحساسة مثل onboarding، المدينة، الإشعارات، وخيارات العرض.
+- حذف بيانات الجلسة الحساسة عند Logout.
+- دعم refresh token rotation وانتهاء الجلسة بدون race conditions.
+
+## Network Layer
+
+طبقة موحدة تتكون من:
+
+```text
+ApiClient
+AuthInterceptor
+ErrorMapper
+RetryPolicy
+NetworkMonitor
+```
+
+وتوحّد:
+- timeout.
+- parsing.
+- retry rules.
+- unauthorized handling.
+- token refresh.
+- network state.
+- رسائل الأخطاء القابلة للعرض للمستخدم.
 
 ## Backend
 
 **Supabase + PostgreSQL**
 
-استخدام:
+يستخدم لـ:
 - Authentication.
 - PostgreSQL.
 - Storage.
-- Row Level Security.
-- Server-side functions where required.
+- RLS/RBAC.
+- Server-side RPCs للعمليات الحساسة.
+- Triggers عند الحاجة فقط.
+
+الخادم هو المرجع النهائي للأسعار، المخزون، الرسوم، الخصومات، الصلاحيات، والإجماليات.
 
 ## Admin
 
-**Web Admin Dashboard**
+لوحة إدارة Web مستقلة بصلاحيات server-side، مع فصل واضح بين:
+- `admin`
+- `support`
 
-صلاحيات منفصلة عن تطبيق العميل والتاجر.
+ولا يعتبر إخفاء عنصر في الواجهة وسيلة حماية.
+
+## Replaceable Platform Interfaces
+
+```text
+PaymentProvider
+DeliveryProvider
+NotificationProvider
+SearchProvider
+AnalyticsProvider
+StorageProvider
+RecommendationProvider
+```
 
 ## Notifications
 
-**FCM** أو طبقة إشعارات قابلة للاستبدال.
+يبدأ النظام بـ **FCM** عبر `NotificationProvider` حتى يمكن استبداله أو توسيعه لاحقاً.
 
 ---
 
@@ -1023,93 +1160,371 @@ More completed transactions → better reputation data → higher trust → more
 - refunds
 - system_settings
 
-العلاقات والصلاحيات يجب تصميمها حول:
+## Mandatory Database Rules
+
+العلاقات والصلاحيات تصمم حول:
 - ownership.
 - merchant isolation.
 - customer privacy.
 - order integrity.
-- admin authority.
+- admin/support authority.
+
+القواعد الإلزامية:
+- لا يوجد جدول public بدون RLS.
+- لا توجد privileged RPC متاحة لـ `anon`.
+- كل RPC حساس يتحقق من `auth.uid()` وrole وownership وaccount status.
+- تحديد `search_path` صراحة في الدوال الحساسة.
+- تقليل `SECURITY DEFINER` لأقل حد ممكن.
+- إضافة indexes للأعمدة المستخدمة داخل RLS والاستعلامات الحرجة.
+- منع direct writes للعمليات التي يجب أن تمر عبر RPC.
+
+## Commerce RPC Layer
+
+يجب أن تتضمن طبقة المعاملات على الأقل:
+
+```text
+quote_cart()
+checkout_atomic()
+transition_order_status()
+cancel_order()
+```
+
+`quote_cart()` يعيد من الخادم:
+
+```text
+Current price
+Current stock
+Product availability
+Merchant status
+Delivery fee
+Discounts
+Subtotal
+Grand total
+Validation warnings
+```
+
+`checkout_atomic()` ينفذ إنشاء الطلب والمخزون والتاريخ داخل transaction واحدة قدر الإمكان، مع idempotency key.
+
+## Auditability
+
+الإجراءات الحساسة تحفظ في `audit_logs` مع:
+- منفذ الإجراء.
+- وقت التنفيذ.
+- الكيان المستهدف.
+- السبب.
+- القيمة القديمة والجديدة عند الحاجة.
 
 ---
 
 # 30. Security
 
-## Mandatory
+الأمان أولوية P0 ولا يؤجل إلى ما بعد إضافة الميزات.
 
-- RLS.
-- RBAC.
-- Server-side authorization.
-- Input validation.
-- Secure file access.
-- Protected admin actions.
-- Audit logs.
-- Rate limiting.
-- Secure secrets.
-- Error logging دون كشف بيانات حساسة.
-- Backup strategy.
-- Account protection.
+## Session Security
 
-## Business Logic
+- عدم حفظ Access Token أو Refresh Token في SharedPreferences عادي.
+- استخدام Android Keystore + encrypted local storage.
+- حذف التوكنات عند Logout.
+- التعامل مع refresh token rotation.
+- session expiration handling.
+- منع refresh race conditions.
+- اختبار expired access token وrevoked refresh token وoffline refresh failure.
 
-أي منطق حساس يجب ألا يعتمد على العميل فقط، خصوصاً:
-- الأسعار النهائية.
-- رسوم التوصيل.
-- صلاحيات المستخدم.
-- حالة الطلب.
-- المخزون.
-- الخصومات.
-- التسويات.
-- الرسوم.
+## Password Reset
+
+يمنع استخدام deep link مخصص غير موثق مثل:
+
+```text
+tani://auth/reset
+```
+
+ويستخدم بدلاً منه:
+
+```text
+https://<TANI_DOMAIN>/auth/reset
+```
+
+مع:
+- Android Verified App Links.
+- `autoVerify=true`.
+- `assetlinks.json`.
+
+## Supabase Security Audit
+
+يجب مراجعة:
+
+```text
+Tables
+Views
+RLS Policies
+RPC Functions
+SECURITY DEFINER Functions
+Storage Buckets
+Storage Policies
+GRANT / REVOKE
+Triggers
+```
+
+## Supabase Auth Hardening
+
+تفعيل حيثما أمكن:
+
+```text
+Leaked Password Protection
+Password minimum strength
+Email verification
+Rate limits
+Session controls
+```
+
+ومراجعة:
+- signup abuse.
+- password reset abuse.
+- brute force.
+- account enumeration.
+
+## Admin & Support Authorization
+
+- كل صلاحية إدارية تتحقق داخل PostgreSQL أو طبقة server-side موثوقة.
+- فصل admin عن support.
+- تسجيل Audit Log لكل إجراء حساس.
+- لا تعتمد الحماية على عناصر الواجهة.
+
+## Business Logic Security
+
+لا يعتمد الخادم على أي قيمة حساسة مرسلة من Android في:
+
+```text
+Price
+Stock
+Delivery fee
+Discount
+Commission
+Subscription entitlement
+Featured status
+Order totals
+Role / permissions
+```
+
+## Secrets
+
+لا تحفظ الأسرار داخل:
+- GitHub repository.
+- Android source.
+- Admin source.
+
+تستخدم:
+- GitHub Secrets.
+- Supabase secrets.
+- Environment variables.
+
+## Security Test Matrix
+
+يجب أن تفشل السيناريوهات التالية:
+
+```text
+Customer → another customer data
+Customer → merchant private data
+Merchant → another merchant orders
+Merchant → admin RPC
+Anonymous → protected RPC
+Support → admin-only action
+```
 
 ---
 
 # 31. Images & Storage
 
-يجب:
+طبقة الصور والتخزين يجب أن تكون آمنة وخفيفة على الشبكات الضعيفة.
+
+## Upload & Storage
+
 - ضغط الصور قبل الرفع قدر الإمكان.
-- توليد أحجام مناسبة.
-- استخدام WebP عند الإمكان.
-- تحميل الصور عند الحاجة.
-- منع الصور الضخمة غير الضرورية.
-- حماية الملفات الخاصة.
-- تنظيم Storage حسب الكيان.
-- توفير سياسة حذف وتنظيف للملفات غير المستخدمة.
+- توليد أحجام مناسبة لكل موضع عرض.
+- WebP/AVIF عند الملاءمة.
+- حماية الملفات الخاصة عبر Storage policies.
+- تنظيم المسارات حسب المستخدم/التاجر/المنتج.
+- منع الوصول المتقاطع بين التجار.
+- سياسة حذف وتنظيف للملفات غير المستخدمة.
+
+## Client Loading
+
+تستخدم مكتبة تحميل صور مناسبة توفر:
+- memory cache.
+- disk cache.
+- resize.
+- placeholders.
+- failure state.
+- cancellation عند خروج العنصر من الشاشة.
+
+لا تحمل الصورة الأصلية كبيرة الحجم إذا كانت البطاقة تحتاج Thumbnail فقط.
 
 ---
 
 # 32. Performance
 
-أهداف الأداء:
-- Startup سريع.
-- أقل عدد ممكن من network requests.
-- Cache للمحتوى المناسب.
-- Pagination.
-- Lazy loading.
-- Debounced search.
-- صور بأحجام مناسبة.
-- عدم تحميل محتوى غير ضروري.
-- التعامل مع timeout وإعادة المحاولة.
+تاني **Low-Bandwidth First** ويجب أن يعمل بصورة مقبولة على أجهزة وشبكات محدودة.
+
+## Required Techniques
+
+```text
+Paging 3
+Room cache where justified
+Image memory/disk cache
+Retry with exponential backoff
+Offline states
+Network monitoring
+Timeout handling
+Skeleton loaders
+Image compression
+Lazy loading
+Debounced search
+```
+
+## Local Cache
+
+يمكن استخدام Room لـ:
+- Home cache.
+- Products cache.
+- Categories.
+- Search results.
+- Stores.
+- Orders read cache.
+
+لا يخزن الكاش بيانات حساسة بلا حاجة ولا يصبح مصدر الحقيقة للعمليات المالية.
+
+## Paging
+
+يستخدم Paging 3 في:
+- Products.
+- Search.
+- Stores.
+- Orders.
+- Reviews.
+- Admin lists.
+
+## Performance Validation
+
+إضافة:
+
+```text
+Macrobenchmark
+Baseline Profiles
+```
+
+للشاشات/المسارات:
+- Startup.
+- Home.
+- Search.
+- Product.
+- Cart.
+- Checkout.
 
 ---
 
 # 33. Poor Network & Resilience
 
-يجب ألا تنهار التجربة عند ضعف الشبكة.
+يجب ألا تنهار التجربة عند ضعف أو انقطاع الشبكة.
 
 يشمل ذلك:
-- Local cache.
-- Retry policy.
-- Timeout handling.
-- Offline-friendly browsing للمحتوى المخزن.
-- حفظ حالات الإدخال المهمة عند الانقطاع.
-- منع تكرار إنشاء الطلب عند إعادة المحاولة.
-- Idempotency للعمليات الحساسة.
+- Cache للمحتوى القابل للقراءة.
+- NetworkMonitor موحد.
+- Retry مع exponential backoff للعمليات المناسبة فقط.
+- timeout واضح.
+- Offline state مخصص بدلاً من شاشة فارغة.
+- حفظ إدخالات المستخدم المهمة عند الانقطاع.
+- عدم تكرار العمليات الحساسة تلقائياً بلا idempotency.
+- إظهار حالة البيانات المخزنة محلياً بوضوح عند الحاجة.
+
+## Sensitive Operations
+
+للـCheckout والعمليات التي تنشئ أثراً مالياً/تجارياً:
+- idempotency key إلزامي.
+- لا يعاد الطلب بشكل أعمى بعد timeout.
+- بعد reconnect يتم التحقق من نتيجة العملية السابقة قبل إعادة المحاولة.
 
 ---
 
 # 34. Order Integrity
 
-الطلب يجب أن يحتفظ Snapshot من:
+منطق التجارة والطلبات يخضع لقاعدة **Server Authority**.
+
+## Cart Model
+
+السلة المحلية لا تحفظ Product كامل كمصدر حقيقة. تحفظ فقط:
+
+```text
+productId
+variantId
+quantity
+addedAt
+```
+
+وقبل التأكيد يتم جلب الحالة الحالية من الخادم.
+
+## Server Quote
+
+قبل إنشاء الطلب يعرض التطبيق نتيجة `quote_cart()` التي تتضمن:
+- السعر الحالي.
+- المخزون الحالي.
+- حالة توفر المنتج.
+- حالة التاجر.
+- رسوم التوصيل.
+- الخصومات.
+- subtotal.
+- grand total.
+- validation warnings.
+
+## Checkout Flow
+
+```text
+Cart
+↓
+Validate
+↓
+Server Quote
+↓
+Customer Confirm
+↓
+Atomic Checkout RPC
+↓
+Order Group
+↓
+Merchant Orders
+↓
+Inventory Update
+↓
+Status History
+```
+
+## Idempotency
+
+تطبق idempotency على Checkout ويختبر:
+- double-click checkout.
+- retry after timeout.
+- network reconnect.
+- duplicated API request.
+- concurrent checkout.
+
+## Inventory Concurrency
+
+يمنع `stock < 0` بواسطة transaction-level locking أو atomic update داخل PostgreSQL.
+
+اختبار إلزامي:
+
+```text
+آخر قطعة
++
+عميلان
++
+Checkout في نفس اللحظة
+```
+
+يجب أن ينجح طلب واحد فقط.
+
+## Order Snapshot
+
+يحفظ الطلب Snapshot من:
 - اسم المنتج.
 - السعر.
 - الكمية.
@@ -1118,29 +1533,82 @@ More completed transactions → better reputation data → higher trust → more
 - الإجمالي.
 - بيانات العميل اللازمة للتنفيذ.
 
-لا يعتمد تاريخ الطلب على بيانات المنتج الحالية فقط.
-
 ## Order State Machine
 
-الحالات الأساسية:
-- Pending.
-- Accepted.
-- Preparing.
-- Ready.
-- Out for Delivery.
-- Delivered.
-- Cancelled.
-- Rejected.
-- Failed where required.
+الحالات الرسمية:
 
-كل انتقال يجب أن يكون:
-- مصرحاً.
-- مسجلاً.
-- قابلاً للتتبع.
+```text
+pending
+accepted
+preparing
+ready
+out_for_delivery
+delivered
+cancelled
+rejected
+failed
+```
+
+الانتقالات الأساسية:
+
+```text
+pending → accepted
+pending → rejected
+pending → cancelled
+accepted → preparing
+accepted → cancelled
+preparing → ready
+ready → out_for_delivery
+out_for_delivery → delivered
+```
+
+أي انتقال غير مصرح به يرفضه الخادم ويسجل الحدث في `order_status_history`.
+
+## Cancellation
+
+يحدد النظام صراحة:
+- متى يستطيع العميل الإلغاء.
+- متى يستطيع التاجر الإلغاء.
+- متى يلزم Admin.
+- إعادة المخزون تلقائياً.
+- سبب الإلغاء.
+- تحديث analytics.
+
+## Delivery & Payment Abstractions
+
+```text
+DeliveryProvider
+PaymentProvider
+```
+
+الحالة الأولى:
+- `MerchantDeliveryProvider`
+- `CashOnDeliveryProvider`
+
+مع قابلية إضافة Platform delivery / Third-party / Pickup والدفع البنكي أو المحافظ أو بوابات الدفع بدون إعادة كتابة Order Engine.
 
 ---
 
-# 35. Analytics
+# 35. Analytics, Monitoring & Observability
+
+## Product Analytics Events
+
+```text
+app_open
+signup
+login
+search
+product_view
+add_to_cart
+remove_from_cart
+begin_checkout
+checkout_success
+checkout_failure
+order_cancelled
+order_delivered
+review_created
+repeat_purchase
+```
 
 ## Marketplace
 
@@ -1166,14 +1634,14 @@ More completed transactions → better reputation data → higher trust → more
 
 ## Merchant
 
-- Active merchants.
-- Orders per merchant.
-- GMV per merchant.
 - Product views.
+- Orders.
 - Conversion.
-- Response rate.
+- GMV.
 - Cancellation.
+- Response time.
 - Repeat customers.
+- Best sellers.
 
 ## Business
 
@@ -1185,6 +1653,33 @@ More completed transactions → better reputation data → higher trust → more
 - Churn.
 - Contribution margin.
 - LTV.
+
+## Crash & Error Monitoring
+
+يجب تسجيل:
+
+```text
+Crash
+ANR
+Fatal errors
+Network errors
+Database errors
+Checkout failures
+```
+
+## Operational Alerts
+
+تنبيهات عند:
+
+```text
+Checkout failure spike
+Login failure spike
+Order cancellation spike
+Supabase error spike
+Database latency
+Crash increase
+Merchant delivery failure
+```
 
 ---
 
@@ -1316,117 +1811,179 @@ More completed transactions → better reputation data → higher trust → more
 
 # 42. Launch Readiness
 
-قبل الإطلاق التجاري الكامل يجب توفر:
+لا يعتبر تاني جاهزاً للإطلاق Production إلا بعد تحقق المتطلبات التجارية والتقنية التالية.
+
+## Marketplace & Operations
 
 - Supply حقيقي ومنظم.
 - تجار مقبولون وموثقون.
-- منتجات حقيقية.
-- أسعار وتوفر واضح.
+- منتجات حقيقية وأسعار وتوفر واضح.
 - مسار طلب كامل.
 - COD يعمل.
 - آلية توصيل واضحة.
 - سياسات الإلغاء والشكاوى.
 - Admin قادر على التدخل.
-- Analytics تعمل.
-- Crash/error monitoring.
-- Backup.
-- Security controls.
 - Support channel.
-- Terms and Privacy.
-- Merchant agreement.
-- Operational playbooks.
+- Terms / Privacy / Merchant / Delivery / Cancellation متاحة.
+
+## Security Gate
+
+- Critical security issues = 0.
+- High security issues = 0.
+- جميع RLS policies مختبرة.
+- RPC permissions مختبرة.
+- Password Reset عبر Verified App Links.
+- Admin authorization server-side.
+- Secrets خارج source control.
+
+## Commerce Gate
+
+- Server quote يعمل.
+- Atomic checkout يعمل.
+- Idempotency مختبرة.
+- Checkout concurrency مختبر.
+- Inventory race conditions مختبرة.
+- Order transitions مختبرة.
+- Cancellation وإعادة المخزون مختبران.
+
+## Quality Gate
+
+- Unit tests ناجحة.
+- Repository tests ناجحة.
+- Database/RLS/Security tests ناجحة.
+- UI tests للمسارات الحرجة ناجحة.
+- End-to-end purchase flow ناجح.
+- اختبار شبكة ضعيفة ومنقطعة ناجح.
+- لا توجد regressions معروفة في المسارات الأساسية.
+
+## Release & Operations Gate
+
+- Staging environment منفصل.
+- Release build ناجح.
+- Signed AAB جاهز.
+- R8/ProGuard مفعل ومختبر.
+- Crash monitoring يعمل.
+- Analytics تعمل.
+- Backup/restore strategy موجودة.
+- Operational alerts مفعلة.
+- تجربة المستخدم مختبرة على أجهزة حقيقية.
 
 ---
 
-# 43. Product Development Phases
+# 43. Product Development & Modernization Phases
 
-> هذه مراحل **تنفيذ للمنتج الكامل** وليست مستويات MVP.
+> التطوير يستمر تدريجياً، لكن إصلاح الأساس والأمان والمنطق التجاري يسبق التوسع في الميزات.
 
-## Phase 1 — Foundation
+## Track A — Maintenance & Production Readiness
 
-- Project setup.
-- Design system.
-- Authentication.
-- User profiles.
-- Database.
-- RLS/RBAC.
-- Storage.
-- Analytics foundation.
-- Error monitoring.
-- Admin foundation.
+### Phase 0 — Baseline Freeze
 
-## Phase 2 — Marketplace Core
+- اعتماد آخر نسخة ناجحة على `main` كنقطة مرجعية.
+- إنشاء branch صيانة مخصص.
+- إنشاء baseline tag.
+- حفظ Supabase schema وRLS وRPCs وStorage/Auth settings.
+- إنشاء `CURRENT_KNOWN_ISSUES.md`.
+- إضافة changelog رسمي.
+- منع Features جديدة حتى تثبيت الأساس.
 
-- Categories.
-- Home.
-- Search.
-- Products.
-- Stores.
-- Discovery.
-- Product details.
-- Merchant catalog.
+### Phase 1 — Security Hardening
 
-## Phase 3 — Commerce
+- Secure session storage.
+- Android Keystore.
+- DataStore للبيانات غير الحساسة.
+- Verified App Links لاستعادة كلمة المرور.
+- Supabase RLS/RPC/Storage audit.
+- Auth hardening.
+- Admin/support authorization audit.
 
-- Cart.
-- Multi-merchant grouping.
-- Checkout.
-- Addresses.
-- COD.
-- Order creation.
+### Phase 2 — Architecture Refactor
+
+- تقسيم Repository.
+- تقسيم Supabase access layer.
+- ViewModels.
+- Use Cases.
+- Network layer موحد.
+- Dependency boundaries واضحة.
+
+### Phase 3 — Commerce Hardening
+
+- Cart redesign.
+- Server quote.
+- Atomic checkout.
+- Idempotency.
+- Inventory concurrency.
 - Order state machine.
-- Customer order history.
+- Cancellation rules.
+- Delivery/Payment abstractions.
 
-## Phase 4 — Merchant Operations
+### Phase 4 — Automated Testing
 
-- Merchant onboarding.
-- Verification.
-- Store management.
-- Product management.
-- Inventory.
-- Order management.
-- Delivery settings.
-- Merchant dashboard.
+- Unit.
+- Repository.
+- Database.
+- RLS/Security.
+- UI.
+- End-to-End.
+- Checkout concurrency.
 
-## Phase 5 — Trust & Support
+### Phase 5 — UI/UX Modernization
 
-- Reviews.
-- Merchant reputation.
-- Trust levels.
-- Complaints.
-- Support.
-- Moderation.
+- Design System.
+- Material 3.
+- RTL/Arabic/accessibility.
+- Compose migration تدريجية.
+- Home/Search/Product/Cart/Checkout redesign.
+
+### Phase 6 — Performance & Offline
+
+- Room cache عند الحاجة.
+- Paging 3.
+- Image caching.
+- Offline UX.
+- Retry strategy.
+- Baseline Profiles.
+- Macrobenchmark.
+
+### Phase 7 — CI/CD & Release
+
+- Dependency verification.
+- Static analysis.
+- Android Lint.
+- Tests in CI.
+- Debug + Release builds.
+- Signed AAB.
+- R8.
+- Artifacts + release notes.
+
+### Phase 8 — Monitoring & Operations
+
+- Crash/ANR monitoring.
+- Product analytics.
+- Merchant analytics.
+- Operational alerts.
+
+### Phase 9 — Admin Modernization
+
+- الاحتفاظ باللوحة الحالية مؤقتاً إن لزم.
+- نقل تدريجي إلى Web Admin حديث.
+- فصل admin/support.
 - Audit logs.
 
-## Phase 6 — Growth
+### Phase 10 — Future-Ready Platform
 
-- Sharing.
-- Referrals.
-- Featured placement.
-- Merchant analytics.
-- Customer retention.
-- Notifications.
-- Content/discovery improvements.
+تجهيز البنية للدفع الإلكتروني، التوصيل، coupons، loyalty، AI search/recommendations، web/iOS، B2B، APIs، ومدن جديدة بدون إعادة كتابة الأساس.
 
-## Phase 7 — Monetization
+## Track B — Product Capability Delivery
 
-- Merchant subscriptions.
-- Premium tools.
-- Transaction/service fees where appropriate.
-- Advertising.
-- Featured placement.
-- Payment integrations.
+بعد استقرار Track A، يستمر بناء قدرات المنتج حسب الأولوية التجارية:
 
-## Phase 8 — Scale
-
-- Search improvements.
-- Recommendations.
-- Advanced analytics.
-- Delivery integrations.
-- More cities.
-- More categories.
-- Advanced merchant tools.
-- Reliability and infrastructure scaling.
+1. Marketplace Core: Categories, Home, Search, Products, Stores, Discovery.
+2. Commerce: Cart, Checkout, Addresses, COD, Orders.
+3. Merchant Operations: Onboarding, Verification, Catalog, Inventory, Orders, Delivery.
+4. Trust & Support: Reviews, Reputation, Complaints, Moderation.
+5. Growth: Sharing, Referrals, Notifications, Discovery improvements.
+6. Monetization: Subscriptions, Premium tools, Featured placement, Fees, Advertising.
+7. Scale: Search, Recommendations, Analytics, Delivery integrations, More cities/categories.
 
 ---
 
@@ -1783,5 +2340,399 @@ Android/Kotlin + Supabase/PostgreSQL + Web Admin + FCM + RLS/RBAC + Monitoring +
 # 57. Final Execution Principle
 
 > **نبني تاني كمنتج كامل ومتماسك، لكن نطوره على مراحل تنفيذية واضحة، ونقيس أثر كل مرحلة على العميل والتاجر والـMarketplace والاقتصاديات قبل الانتقال إلى مستوى أكبر من التعقيد.**
+
+# 58. Automated Testing Standard
+
+Build success وحده لا يعتبر دليلاً على صحة المشروع.
+
+## Unit Tests
+
+```text
+Password validation
+Phone validation
+Search normalization
+Cart calculations
+Order transitions
+Delivery rules
+Pricing rules
+Merchant eligibility
+```
+
+## Repository Tests
+
+```text
+AuthRepository
+CartRepository
+OrderRepository
+MerchantRepository
+```
+
+باستخدام fake/mock APIs.
+
+## Database & Security Tests
+
+```text
+RLS
+RPC permissions
+Order creation
+Inventory locking
+Cancellation
+Merchant ownership
+Admin permissions
+Support permissions
+Account deletion
+```
+
+## UI Tests
+
+المسارات الحرجة:
+
+```text
+Signup
+Login
+Password Reset
+Home
+Search
+Product Details
+Add to Cart
+Checkout
+Order Tracking
+Merchant onboarding
+Merchant order handling
+```
+
+## End-to-End
+
+```text
+Create customer
+→ Browse
+→ Cart
+→ Checkout
+→ Merchant accepts
+→ Preparing
+→ Delivery
+→ Delivered
+→ Review
+```
+
+---
+
+# 59. UI/UX Modernization Standard
+
+## Design System
+
+```text
+TaniTheme
+TaniColors
+TaniTypography
+TaniSpacing
+TaniShapes
+TaniElevation
+```
+
+المكونات الموحدة:
+
+```text
+TaniButton
+TaniCard
+TaniTextField
+TaniProductCard
+TaniStoreCard
+TaniBadge
+TaniLoading
+TaniEmptyState
+TaniErrorState
+```
+
+## Material 3
+
+التطبيق يدعم:
+- RTL.
+- Arabic typography.
+- dynamic font scaling.
+- dark mode.
+- accessibility.
+
+## Compose Migration
+
+الهجرة تدريجية وليست إعادة كتابة كاملة:
+
+```text
+XML الحالي
+↓
+Design System
+↓
+Compose للشاشات الجديدة
+↓
+Home
+↓
+Search
+↓
+Product
+↓
+Cart
+↓
+Checkout
+↓
+Orders
+↓
+Profile
+↓
+Merchant
+```
+
+بعد اكتمال الهجرة يمكن الانتقال الكامل إلى Navigation Compose.
+
+## Home
+
+- LazyColumn بدلاً من ScrollView + LinearLayouts الكبيرة.
+- Search Bar.
+- Banner.
+- Categories LazyRow.
+- Featured products.
+- Recommended products.
+- Newest products.
+- Top-rated products.
+- Stores.
+
+## Product Lists
+
+`LazyVerticalGrid` أو RecyclerView خلال مرحلة XML.
+
+كل بطاقة تعرض فقط:
+- Image.
+- Name.
+- Price.
+- Store.
+- Rating.
+- Stock state.
+- Favorite.
+- Featured label.
+
+## Search
+
+يدعم تدريجياً:
+- Arabic normalization.
+- Typo tolerance.
+- Ranking.
+- Recent searches.
+- Suggestions.
+- Filters/Sort.
+- Category/Price/Availability/Merchant.
+
+## Product Details
+
+- Image gallery.
+- Variant selector.
+- Stock state.
+- Delivery information.
+- Merchant trust.
+- Ratings/Reviews.
+- Related products.
+- Sticky Add to Cart.
+
+## Checkout UX
+
+تقسيم واضح:
+
+```text
+Address
+Merchant groups
+Items
+Delivery
+Payment
+Summary
+Confirm
+```
+
+ويعرض Product total + Delivery per merchant + Grand total قبل التأكيد.
+
+---
+
+# 60. CI/CD & Release Standard
+
+## Pipeline
+
+```text
+Checkout
+↓
+Dependency verification
+↓
+Static analysis
+↓
+Android Lint
+↓
+Unit tests
+↓
+Database tests
+↓
+Security tests
+↓
+Debug build
+↓
+UI tests
+↓
+Release build
+↓
+R8
+↓
+Signed AAB
+↓
+Artifacts
+```
+
+## Branching
+
+```text
+main
+develop
+feature/*
+fix/*
+release/*
+```
+
+يمكن استخدام trunk-based لاحقاً إذا كان الفريق صغيراً وسريعاً.
+
+## Environments
+
+يجب الفصل بين:
+
+```text
+Development
+Staging
+Production
+```
+
+ويكون لكل بيئة إعداد Supabase مستقل.
+
+## Release
+
+كل إصدار Production يتطلب:
+- release signing.
+- AAB.
+- R8/ProGuard.
+- versioning.
+- release notes.
+- changelog.
+
+---
+
+# 61. Admin Platform Modernization
+
+لوحة Admin الحالية يمكن الاحتفاظ بها مؤقتاً ثم نقلها تدريجياً إلى Web App حديث مثل:
+
+```text
+React / Next.js
++
+Supabase
+```
+
+أو إطار مناسب وقت التنفيذ.
+
+الوحدات المستهدفة:
+
+```text
+Dashboard
+Merchants
+Products
+Orders
+Complaints
+Support
+Reviews
+Featured
+Subscriptions
+Analytics
+Audit logs
+System configuration
+```
+
+الصلاحيات الحساسة تبقى دائماً Server-Side.
+
+---
+
+# 62. Future-Ready Platform Interfaces
+
+البنية يجب أن تسمح بإضافة:
+
+```text
+Electronic Payments
+Delivery integrations
+Coupons
+Loyalty
+Push notifications
+AI recommendations
+AI search
+Image search
+Voice search
+Merchant CRM
+Multiple cities
+Web customer app
+iOS
+B2B
+APIs
+```
+
+عبر interfaces قابلة للاستبدال:
+
+```text
+PaymentProvider
+DeliveryProvider
+NotificationProvider
+SearchProvider
+AnalyticsProvider
+StorageProvider
+RecommendationProvider
+```
+
+---
+
+# 63. Definition of Done
+
+لا تعتبر أي مرحلة مكتملة إلا إذا تحقق:
+
+```text
+Code implemented
++
+Tests added
++
+Tests passing
++
+Security reviewed
++
+Documentation updated
++
+CI passing
++
+No regression in existing flows
+```
+
+---
+
+# 64. Versioning & Change Log
+
+## File Versioning Rule
+
+- النسخة الحالية: **tani v1**.
+- أول تحديث لاحق: **tani v2**.
+- ثم **tani v3** وهكذا.
+- لا يعاد استخدام رقم نسخة قديم لملف جديد.
+
+## tani v1 — Changes Applied
+
+تم دمج خطة الصيانة والتحديث الشامل داخل مواصفة المشروع، وتشمل التغييرات الرئيسية:
+
+- تأمين Session/Token storage وإضافة Keystore/DataStore strategy.
+- استبدال Password Reset deep link غير الموثق بـ Verified App Links.
+- تشديد Supabase RLS/RPC/Storage/Auth/Admin security.
+- تقسيم Architecture إلى core/data/domain/feature مع Repository + UseCase + ViewModel boundaries.
+- إعادة تصميم Cart/Quote/Checkout وفق Server Authority وAtomic RPC.
+- إضافة Idempotency وInventory concurrency وOrder state machine صارمة.
+- إضافة Automated Testing standard.
+- إضافة Material 3/Design System/Compose migration تدريجية.
+- إضافة Low-Bandwidth/Room/Paging/Image caching/Macrobenchmark/Baseline Profiles.
+- توسيع Analytics إلى Monitoring/Observability/Operational alerts.
+- إضافة CI/CD إنتاجي وStaging/Production separation وSigned AAB/R8.
+- تحديد Admin modernization وFuture-ready provider abstractions.
+- تشديد Launch Readiness وDefinition of Done.
 
 **End of Document**
