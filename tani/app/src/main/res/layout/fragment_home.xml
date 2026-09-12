@@ -8,7 +8,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="18dp">
+        android:paddingStart="18dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="18dp"
+        android:paddingBottom="28dp">
 
         <ImageView android:layout_width="72dp" android:layout_height="72dp" android:src="@drawable/ic_brand" android:contentDescription="@string/app_name" android:layout_marginBottom="12dp"/>
         <TextView
@@ -39,7 +42,7 @@
                 android:layout_height="54dp"
                 android:layout_weight="1"
                 android:background="@drawable/bg_field"
-                android:hint="ابحثي عن منتج أو متجر"
+                android:hint="ابحث في تاني"
                 android:imeOptions="actionSearch"
                 android:padding="14dp"
                 android:singleLine="true" />
@@ -73,7 +76,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="5dp"
                 android:alpha="0.9"
-                android:text="منتجات من تجار ومشاريع محلية موثقة"
+                android:text="اكتشفي منتجات ومتاجر محلية موثوقة في مكان واحد"
                 android:textColor="@color/white" />
         </LinearLayout>
 
@@ -81,7 +84,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:text="الفئات"
+            android:text="اكتشفي حسب الفئة"
             android:textColor="@color/text_dark"
             android:textSize="21sp"
             android:textStyle="bold" />
@@ -145,7 +148,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="وصل حديثاً"
+                android:text="وصل حديثاً ليك"
                 android:textColor="@color/text_dark"
                 android:textSize="21sp"
                 android:textStyle="bold" />
@@ -191,7 +194,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="متاجر محلية"
+                android:text="متاجر تستحق الزيارة"
                 android:textColor="@color/text_dark"
                 android:textSize="21sp"
                 android:textStyle="bold" />
