@@ -11,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import com.tani.app.MainActivity
 import com.tani.app.R
 import com.tani.app.data.Repository
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class AuthFragment : Fragment(R.layout.fragment_auth) {
@@ -142,14 +143,20 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
                             "LOGIN_OK"
                         }
                         Mode.SIGNUP -> {
+                            val signupEmail = email.text.toString()
+                            val signupPassword = password.text.toString()
                             val hasSession = repository.signup(
-                                email = email.text.toString(),
-                                password = password.text.toString(),
+                                email = signupEmail,
+                                password = signupPassword,
                                 confirmPassword = confirmPassword.text.toString(),
                                 name = name.text.toString(),
                                 phone = phone.text.toString()
                             )
-                            if (hasSession) "SIGNUP_OK" else "EMAIL_CONFIRM"
+                            if (!hasSession) {
+                                delay(250)
+                                repository.login(signupEmail, signupPassword)
+                            }
+                            "SIGNUP_OK"
                         }
                         Mode.FORGOT -> {
                             repository.requestPasswordReset(email.text.toString())
@@ -168,7 +175,6 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
                 }.onSuccess { result ->
                     when (result) {
                         "LOGIN_OK", "SIGNUP_OK", "RESET_OK" -> (activity as? MainActivity)?.showApp()
-                        "EMAIL_CONFIRM" -> goLogin("تم إنشاء الحساب. افتحي رسالة التأكيد في بريدك ثم سجّلي الدخول.")
                         "RECOVERY_SENT" -> {
                             status.text = "إذا كان البريد مسجلاً، ستصلك رسالة لاستعادة كلمة المرور."
                         }
@@ -193,7 +199,7 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
         val raw = error.message.orEmpty()
         return when {
             raw.contains("Invalid login credentials", true) -> "البريد الإلكتروني أو كلمة المرور غير صحيحة"
-            raw.contains("Email not confirmed", true) -> "يجب تأكيد البريد الإلكتروني أولاً"
+            raw.contains("Email not confirmed", true) -> "تعذر تفعيل الحساب تلقائياً. حاولي تسجيل الدخول مرة أخرى"
             raw.contains("User already registered", true) -> "يوجد حساب مسجل بهذا البريد بالفعل"
             raw.contains("Password should be", true) -> "كلمة المرور لا تحقق متطلبات الأمان"
             raw.contains("rate limit", true) -> "تمت محاولات كثيرة. حاولي مرة أخرى لاحقاً"
