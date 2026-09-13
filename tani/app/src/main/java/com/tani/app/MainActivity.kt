@@ -41,6 +41,15 @@ class MainActivity : AppCompatActivity() {
         }
         setContentView(R.layout.activity_main)
 
+        val launchSplash = findViewById<View>(R.id.launch_splash)
+        launchSplash.postDelayed({
+            launchSplash.animate()
+                .alpha(0f)
+                .setDuration(220L)
+                .withEndAction { launchSplash.visibility = View.GONE }
+                .start()
+        }, 900L)
+
         toolbar = findViewById(R.id.top_app_bar)
         toolbar.setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
 
