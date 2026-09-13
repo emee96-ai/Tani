@@ -5,10 +5,11 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
-import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.tani.app.MainActivity
 import com.tani.app.R
 import com.tani.app.data.Repository
@@ -19,30 +20,35 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val search = view.findViewById<EditText>(R.id.stores_search)
-        val box = view.findViewById<LinearLayout>(R.id.stores_box)
         val loading = view.findViewById<TextView>(R.id.stores_loading)
+        val list = view.findViewById<RecyclerView>(R.id.stores_list)
+        arguments?.getString(ARG_QUERY)?.let(search::setText)
+
+        val adapter = StoreListAdapter(requireContext(), lifecycleScope) { store ->
+            (activity as MainActivity).show(StoreDetailsFragment.newInstance(store.id))
+        }
+        list.layoutManager = LinearLayoutManager(requireContext())
+        list.adapter = adapter
 
         fun load() {
             loading.visibility = View.VISIBLE
             loading.text = "جاري تحميل المتاجر..."
-            box.removeAllViews()
             lifecycleScope.launch {
-                runCatching { repository.stores(search.text.toString()) }
+                runCatching { repository.stores(search.text.toString(), limit = 100) }
                     .onSuccess { stores ->
-                        loading.visibility = View.GONE
+                        adapter.submitList(stores)
                         if (stores.isEmpty()) {
-                            box.addView(MarketplaceUi.empty(requireContext(), "لا توجد متاجر مطابقة حالياً"))
-                        } else stores.forEach { store ->
-                            MarketplaceUi.addWithSpacing(
-                                box,
-                                MarketplaceUi.storeCard(requireContext(), lifecycleScope, store) {
-                                    (activity as MainActivity).show(StoreDetailsFragment.newInstance(store.id))
-                                },
-                                requireContext()
-                            )
+                            loading.visibility = View.VISIBLE
+                            loading.text = "لا توجد متاجر مطابقة حالياً"
+                        } else {
+                            loading.visibility = View.GONE
                         }
                     }
-                    .onFailure { loading.text = "تعذر تحميل المتاجر\n${it.message ?: "حاولي مرة أخرى"}" }
+                    .onFailure {
+                        adapter.submitList(emptyList())
+                        loading.visibility = View.VISIBLE
+                        loading.text = "تعذر تحميل المتاجر\n${it.message ?: "حاولي مرة أخرى"}"
+                    }
             }
         }
 
@@ -51,5 +57,12 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
             if (actionId == EditorInfo.IME_ACTION_SEARCH) { load(); true } else false
         }
         load()
+    }
+
+    companion object {
+        private const val ARG_QUERY = "query"
+        fun newSearchInstance(query: String): StoresFragment = StoresFragment().apply {
+            arguments = Bundle().apply { putString(ARG_QUERY, query) }
+        }
     }
 }

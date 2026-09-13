@@ -1,133 +1,150 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/tani_background"
-    android:fillViewport="true">
+    android:orientation="vertical"
+    android:paddingStart="18dp"
+    android:paddingTop="16dp"
+    android:paddingEnd="18dp">
+
+    <TextView
+        android:id="@+id/products_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="المنتجات"
+        android:textColor="@color/text_dark"
+        android:textSize="26sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="3dp"
+        android:text="ابحثي، رتبي، وضيّقي النتائج بسرعة"
+        android:textColor="@color/text_muted"
+        android:textSize="14sp" />
+
+    <EditText
+        android:id="@+id/products_search"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_field"
+        android:hint="اسم المنتج أو المتجر"
+        android:imeOptions="actionSearch"
+        android:paddingHorizontal="14dp"
+        android:singleLine="true" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/products_filter_toggle"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="فلترة وترتيب" />
+
+        <Button
+            android:id="@+id/products_clear"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:layout_marginStart="6dp"
+            android:text="مسح" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/products_filter_summary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="الأحدث"
+        android:textColor="@color/text_muted"
+        android:textSize="13sp" />
+
+    <LinearLayout
+        android:id="@+id/products_filters_panel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_card"
         android:orientation="vertical"
-        android:padding="18dp">
-
-        <TextView
-            android:id="@+id/products_title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="المنتجات"
-            android:textColor="@color/text_dark"
-            android:textSize="28sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="اكتشفي أفضل المنتجات ورتبي النتائج بالطريقة المناسبة"
-            android:textColor="@color/text_muted"
-            android:textSize="14sp" />
+        android:padding="14dp"
+        android:visibility="gone">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:background="@drawable/bg_card"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:orientation="horizontal">
 
             <EditText
-                android:id="@+id/products_search"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
+                android:id="@+id/products_min_price"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
                 android:background="@drawable/bg_field"
-                android:hint="اسم المنتج أو المتجر"
+                android:hint="أقل سعر"
+                android:inputType="numberDecimal"
                 android:paddingHorizontal="14dp"
                 android:singleLine="true" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:orientation="horizontal">
-
-                <EditText
-                    android:id="@+id/products_min_price"
-                    android:layout_width="0dp"
-                    android:layout_height="48dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_field"
-                    android:hint="أقل سعر"
-                    android:inputType="numberDecimal"
-                    android:paddingHorizontal="14dp"
-                    android:singleLine="true" />
-
-                <EditText
-                    android:id="@+id/products_max_price"
-                    android:layout_width="0dp"
-                    android:layout_height="48dp"
-                    android:layout_marginStart="8dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_field"
-                    android:hint="أعلى سعر"
-                    android:inputType="numberDecimal"
-                    android:paddingHorizontal="14dp"
-                    android:singleLine="true" />
-            </LinearLayout>
-
-            <Spinner
-                android:id="@+id/products_sort"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginTop="10dp"
+            <EditText
+                android:id="@+id/products_max_price"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
                 android:background="@drawable/bg_field"
-                android:paddingHorizontal="10dp" />
-
-            <CheckBox
-                android:id="@+id/products_in_stock"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="عرض المتوفر فقط"
-                android:textColor="@color/text_dark" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/products_apply"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="تطبيق" />
-
-                <Button
-                    android:id="@+id/products_clear"
-                    style="@style/Widget.Material3.Button.OutlinedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_weight="1"
-                    android:text="مسح" />
-            </LinearLayout>
+                android:hint="أعلى سعر"
+                android:inputType="numberDecimal"
+                android:paddingHorizontal="14dp"
+                android:singleLine="true" />
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/products_loading"
+        <Spinner
+            android:id="@+id/products_sort"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:text="جاري تحميل المنتجات..."
-            android:textColor="@color/text_muted" />
-
-        <LinearLayout
-            android:id="@+id/products_box"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="50dp"
             android:layout_marginTop="10dp"
-            android:orientation="vertical" />
+            android:background="@drawable/bg_field"
+            android:paddingHorizontal="10dp" />
+
+        <CheckBox
+            android:id="@+id/products_in_stock"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:layout_marginTop="5dp"
+            android:text="عرض المتوفر فقط"
+            android:textColor="@color/text_dark" />
+
+        <Button
+            android:id="@+id/products_apply"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="8dp"
+            android:text="تطبيق الفلاتر" />
     </LinearLayout>
-</ScrollView>
+
+    <TextView
+        android:id="@+id/products_loading"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="جاري تحميل المنتجات..."
+        android:textColor="@color/text_muted" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/products_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingBottom="20dp" />
+</LinearLayout>

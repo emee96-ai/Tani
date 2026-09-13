@@ -51,15 +51,18 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             (activity as MainActivity).show(SearchFragment.newInstance(query))
         }
 
+        fun openProducts() {
+            (activity as MainActivity).show(ProductsFragment())
+        }
+
         view.findViewById<Button>(R.id.home_search_button).setOnClickListener { openSearch() }
         search.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 openSearch(); true
             } else false
         }
-        view.findViewById<Button>(R.id.home_all_products).setOnClickListener {
-            (activity as MainActivity).show(ProductsFragment())
-        }
+        view.findViewById<Button>(R.id.home_hero_cta).setOnClickListener { openProducts() }
+        view.findViewById<Button>(R.id.home_all_products).setOnClickListener { openProducts() }
         view.findViewById<Button>(R.id.home_all_stores).setOnClickListener {
             (activity as MainActivity).show(StoresFragment())
         }
@@ -75,7 +78,13 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                                 ProductsFragment.newInstance(category.id, category.name)
                             )
                         }
-                        categoriesBox.addView(button)
+                        categoriesBox.addView(
+                            button,
+                            LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.WRAP_CONTENT,
+                                LinearLayout.LayoutParams.WRAP_CONTENT
+                            ).apply { marginEnd = MarketplaceUi.dp(requireContext(), 8) }
+                        )
                     }
 
                     if (feed.featuredProducts.isNotEmpty()) {
@@ -151,11 +160,15 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                         (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id))
                     },
                     onAdd = {
-                        Cart.add(product.toProduct())
-                        lifecycleScope.launch {
-                            Analytics.track("add_to_cart", screen = "home", entityType = "product", entityId = product.id)
+                        if (Cart.add(product.toProduct())) {
+                            (activity as? MainActivity)?.refreshCartBadge()
+                            lifecycleScope.launch {
+                                Analytics.track("add_to_cart", screen = "home", entityType = "product", entityId = product.id)
+                            }
+                            Toast.makeText(requireContext(), "تمت إضافة ${product.name} للسلة", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(requireContext(), "تعذر إضافة كمية إضافية", Toast.LENGTH_SHORT).show()
                         }
-                        Toast.makeText(requireContext(), "تمت إضافة ${product.name} للسلة", Toast.LENGTH_SHORT).show()
                     }
                 ),
                 requireContext()
