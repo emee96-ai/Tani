@@ -112,7 +112,7 @@ object AdminApi {
         )
         val profile = rows.firstOrNull()?.jsonObject ?: error("لا يوجد ملف مستخدم لهذا الحساب")
         val active = profile.bool("is_active")
-        val role = profile.string("role")
+        val role = profile.string("role") ?: error("هذا الحساب بلا دور إداري")
         if (!active || role !in setOf("admin", "support")) {
             error("هذا الحساب لا يملك صلاحية تطبيق الإدارة")
         }
