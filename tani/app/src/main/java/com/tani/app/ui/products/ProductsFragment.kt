@@ -2,14 +2,27 @@ package com.tani.app.ui.products
 
 import android.os.Bundle
 import android.view.View
-import android.widget.*
+import android.view.inputmethod.EditorInfo
+import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.CheckBox
+import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.Spinner
+import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.tani.app.MainActivity
 import com.tani.app.R
-import com.tani.app.data.*
-import com.tani.app.ui.marketplace.MarketplaceUi
+import com.tani.app.data.Analytics
+import com.tani.app.data.Cart
+import com.tani.app.data.ProductSort
+import com.tani.app.data.Repository
 import com.tani.app.ui.marketplace.ProductDetailsFragment
+import com.tani.app.ui.marketplace.ProductListAdapter
 import kotlinx.coroutines.launch
 
 class ProductsFragment : Fragment(R.layout.fragment_products) {
@@ -22,8 +35,10 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
         val maxPrice = view.findViewById<EditText>(R.id.products_max_price)
         val inStock = view.findViewById<CheckBox>(R.id.products_in_stock)
         val sort = view.findViewById<Spinner>(R.id.products_sort)
-        val box = view.findViewById<LinearLayout>(R.id.products_box)
+        val filtersPanel = view.findViewById<LinearLayout>(R.id.products_filters_panel)
+        val filterSummary = view.findViewById<TextView>(R.id.products_filter_summary)
         val loading = view.findViewById<TextView>(R.id.products_loading)
+        val list = view.findViewById<RecyclerView>(R.id.products_list)
 
         val categoryId = arguments?.getString(ARG_CATEGORY_ID)
         val categoryName = arguments?.getString(ARG_CATEGORY_NAME)
@@ -34,10 +49,37 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
         val sortLabels = listOf("الأحدث", "السعر: الأقل أولاً", "السعر: الأعلى أولاً", "الأعلى تقييماً")
         sort.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, sortLabels)
 
+        val adapter = ProductListAdapter(
+            requireContext(),
+            lifecycleScope,
+            onOpen = { product -> (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id)) },
+            onAdd = { product ->
+                if (Cart.add(product.toProduct())) {
+                    (activity as? MainActivity)?.refreshCartBadge()
+                    lifecycleScope.launch {
+                        Analytics.track("add_to_cart", screen = "products", entityType = "product", entityId = product.id)
+                    }
+                    Toast.makeText(requireContext(), "تمت إضافة ${product.name} للسلة", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(requireContext(), "تعذر إضافة كمية إضافية", Toast.LENGTH_SHORT).show()
+                }
+            }
+        )
+        list.layoutManager = LinearLayoutManager(requireContext())
+        list.adapter = adapter
+
+        fun updateSummary() {
+            val parts = mutableListOf<String>()
+            parts += sortLabels[sort.selectedItemPosition.coerceIn(sortLabels.indices)]
+            minPrice.text.toString().toDoubleOrNull()?.let { parts += "من ${it.toLong()}" }
+            maxPrice.text.toString().toDoubleOrNull()?.let { parts += "حتى ${it.toLong()}" }
+            if (inStock.isChecked) parts += "المتوفر فقط"
+            filterSummary.text = parts.joinToString(" • ")
+        }
+
         fun load() {
             loading.visibility = View.VISIBLE
             loading.text = "جاري تحميل المنتجات..."
-            box.removeAllViews()
             lifecycleScope.launch {
                 val sortValue = when (sort.selectedItemPosition) {
                     1 -> ProductSort.PRICE_LOW
@@ -52,47 +94,48 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
                         minPrice = minPrice.text.toString().toDoubleOrNull(),
                         maxPrice = maxPrice.text.toString().toDoubleOrNull(),
                         inStockOnly = inStock.isChecked,
-                        sort = sortValue
+                        sort = sortValue,
+                        limit = 100
                     )
                 }.onSuccess { products ->
-                    loading.visibility = View.GONE
-                    render(box, products)
+                    adapter.submitList(products)
+                    updateSummary()
+                    if (products.isEmpty()) {
+                        loading.visibility = View.VISIBLE
+                        loading.text = "ما لقينا نتائج مطابقة. جرّبي تغيير البحث أو الفلاتر."
+                    } else {
+                        loading.visibility = View.GONE
+                    }
                 }.onFailure {
+                    adapter.submitList(emptyList())
+                    loading.visibility = View.VISIBLE
                     loading.text = "تعذر تحميل المنتجات\n${it.message ?: "حاولي مرة أخرى"}"
                 }
             }
         }
 
-        view.findViewById<Button>(R.id.products_apply).setOnClickListener { load() }
+        view.findViewById<Button>(R.id.products_filter_toggle).setOnClickListener {
+            filtersPanel.visibility = if (filtersPanel.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+        }
+        view.findViewById<Button>(R.id.products_apply).setOnClickListener {
+            filtersPanel.visibility = View.GONE
+            load()
+        }
         view.findViewById<Button>(R.id.products_clear).setOnClickListener {
-            search.text.clear(); minPrice.text.clear(); maxPrice.text.clear(); inStock.isChecked = false; sort.setSelection(0); load()
+            search.text.clear()
+            minPrice.text.clear()
+            maxPrice.text.clear()
+            inStock.isChecked = false
+            sort.setSelection(0)
+            filtersPanel.visibility = View.GONE
+            load()
+        }
+        search.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                load(); true
+            } else false
         }
         load()
-    }
-
-    private fun render(box: LinearLayout, list: List<ProductCard>) {
-        box.removeAllViews()
-        if (list.isEmpty()) {
-            box.addView(MarketplaceUi.empty(requireContext(), "ما لقينا نتائج مطابقة. جرّبي تغيير البحث أو الفلاتر."))
-            return
-        }
-        list.forEach { product ->
-            MarketplaceUi.addWithSpacing(
-                box,
-                MarketplaceUi.productCard(
-                    requireContext(), lifecycleScope, product,
-                    onOpen = { (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id)) },
-                    onAdd = {
-                        Cart.add(product.toProduct())
-                        lifecycleScope.launch {
-                            Analytics.track("add_to_cart", screen = "products", entityType = "product", entityId = product.id)
-                        }
-                        Toast.makeText(requireContext(), "تمت إضافة ${product.name} للسلة", Toast.LENGTH_SHORT).show()
-                    }
-                ),
-                requireContext()
-            )
-        }
     }
 
     companion object {

@@ -37,8 +37,9 @@ class StoreDetailsFragment : Fragment(R.layout.fragment_store_details) {
                 view.findViewById<TextView>(R.id.store_details_name).text = store.name
                 view.findViewById<TextView>(R.id.store_details_description).text =
                     store.description.ifBlank { "متجر محلي على تاني" }
+                val trust = MarketplaceUi.verificationLabel(store.verification_status)
                 view.findViewById<TextView>(R.id.store_details_status).text =
-                    "متجر موثق ✓ • ${if (store.is_open) "مفتوح الآن" else "مغلق حالياً"}"
+                    listOfNotNull(trust, if (store.is_open) "مفتوح الآن" else "مغلق حالياً").joinToString(" • ")
                 view.findViewById<TextView>(R.id.store_details_location).text =
                     "${store.city}${store.area?.let { " - $it" } ?: ""}"
                 view.findViewById<TextView>(R.id.store_details_rating).text =
@@ -59,8 +60,10 @@ class StoreDetailsFragment : Fragment(R.layout.fragment_store_details) {
                 }
 
                 val logo = view.findViewById<ImageView>(R.id.store_details_logo)
+                logo.setImageResource(R.drawable.ic_image_placeholder)
                 repository.storeImageUrl(store.logo_url)?.let { MarketplaceUi.loadImage(lifecycleScope, logo, it) }
                 val cover = view.findViewById<ImageView>(R.id.store_details_cover)
+                cover.setImageResource(R.drawable.ic_image_placeholder)
                 repository.storeImageUrl(store.cover_url)?.let { MarketplaceUi.loadImage(lifecycleScope, cover, it) }
 
                 val box = view.findViewById<LinearLayout>(R.id.store_details_products)
@@ -74,8 +77,12 @@ class StoreDetailsFragment : Fragment(R.layout.fragment_store_details) {
                             requireContext(), lifecycleScope, product,
                             onOpen = { (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id)) },
                             onAdd = {
-                                Cart.add(product.toProduct())
-                                Toast.makeText(requireContext(), "تمت إضافة ${product.name} للسلة", Toast.LENGTH_SHORT).show()
+                                if (Cart.add(product.toProduct())) {
+                                    (activity as? MainActivity)?.refreshCartBadge()
+                                    Toast.makeText(requireContext(), "تمت إضافة ${product.name} للسلة", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(requireContext(), "تعذر إضافة كمية إضافية", Toast.LENGTH_SHORT).show()
+                                }
                             }
                         ),
                         requireContext()

@@ -16,13 +16,13 @@
             android:layout_height="wrap_content"
             android:text="البحث"
             android:textColor="@color/text_dark"
-            android:textSize="28sp"
+            android:textSize="26sp"
             android:textStyle="bold" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="3dp"
             android:text="ابحثي عن منتج، متجر، أو فئة في السوق المحلي"
             android:textColor="@color/text_muted" />
 
@@ -79,6 +79,32 @@
             android:layout_marginTop="10dp"
             android:textColor="@color/text_muted"
             android:visibility="gone" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/search_refine_button"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:text="فلترة وترتيب"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/search_all_stores_button"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:text="كل المتاجر"
+                android:visibility="gone" />
+        </LinearLayout>
 
         <TextView
             android:layout_width="match_parent"
