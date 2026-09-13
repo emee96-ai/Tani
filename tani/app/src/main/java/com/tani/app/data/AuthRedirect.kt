@@ -20,7 +20,7 @@ object AuthRedirect {
 
         Supabase.client.plugin(HttpSend).intercept { request ->
             if (
-                request.url.encodedPath.endsWith("/auth/v1/signup") &&
+                request.url.toString().contains("/auth/v1/signup") &&
                 request.url.parameters["redirect_to"].isNullOrBlank()
             ) {
                 request.url.parameters.append(
