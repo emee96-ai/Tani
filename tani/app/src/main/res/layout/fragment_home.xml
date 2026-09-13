@@ -15,23 +15,39 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_card"
-            android:orientation="vertical"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
             android:padding="16dp">
 
             <ImageView
-                android:layout_width="220dp"
-                android:layout_height="wrap_content"
-                android:adjustViewBounds="true"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
                 android:contentDescription="@string/app_name"
-                android:src="@drawable/tani_wordmark_ar_asset" />
+                android:src="@drawable/ic_brand" />
 
-            <TextView
-                android:layout_width="match_parent"
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="@string/brand_slogan"
-                android:textColor="@color/text_muted"
-                android:textSize="14sp" />
+                android:layout_marginStart="14dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="تاني"
+                    android:textColor="@color/text_dark"
+                    android:textSize="30sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:text="@string/brand_slogan"
+                    android:textColor="@color/text_muted"
+                    android:textSize="14sp" />
+            </LinearLayout>
         </LinearLayout>
 
         <LinearLayout
