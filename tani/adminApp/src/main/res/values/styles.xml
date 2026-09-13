@@ -1,5 +1,5 @@
 <resources>
-    <style name="TaniAdmin.SectionTitle">
+    <style name="TaniAdmin.SectionTitle" parent="">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_marginTop">22dp</item>
@@ -9,7 +9,7 @@
         <item name="android:textStyle">bold</item>
     </style>
 
-    <style name="TaniAdmin.SectionContainer">
+    <style name="TaniAdmin.SectionContainer" parent="">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:orientation">vertical</item>
