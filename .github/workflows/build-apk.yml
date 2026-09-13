@@ -35,6 +35,13 @@ jobs:
         run: bash qa/run_static_checks.sh
       - name: Build APKs and run unit tests
         run: ./gradlew --no-daemon :app:assembleDebug :app:testDebugUnitTest :adminApp:assembleDebug :adminApp:testDebugUnitTest --stacktrace
+      - name: Verify Tani Admin APK
+        run: |
+          BUILD_TOOLS="$(ls -1 "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+          APK="adminApp/build/outputs/apk/debug/adminApp-debug.apk"
+          "$ANDROID_HOME/build-tools/$BUILD_TOOLS/zipalign" -c -v 4 "$APK"
+          "$ANDROID_HOME/build-tools/$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$APK"
+          cp "$APK" "adminApp/build/outputs/apk/debug/Tani-Admin-debug.apk"
       - name: Upload Tani APK
         uses: actions/upload-artifact@v4
         with:
@@ -44,8 +51,8 @@ jobs:
       - name: Upload Tani Admin APK
         uses: actions/upload-artifact@v4
         with:
-          name: tani-admin-debug-apk
-          path: tani/adminApp/build/outputs/apk/debug/adminApp-debug.apk
+          name: tani-admin-verified-apk
+          path: tani/adminApp/build/outputs/apk/debug/Tani-Admin-debug.apk
           if-no-files-found: error
 
   lint:
