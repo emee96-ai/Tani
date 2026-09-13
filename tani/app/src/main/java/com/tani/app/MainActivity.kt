@@ -10,6 +10,7 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.tani.app.data.Analytics
+import com.tani.app.data.AuthRedirect
 import com.tani.app.data.Cart
 import com.tani.app.data.ErrorMonitoring
 import com.tani.app.data.Supabase
@@ -31,6 +32,7 @@ class MainActivity : AppCompatActivity() {
         setTheme(R.style.Theme_Tani)
         super.onCreate(savedInstanceState)
         Supabase.init(this)
+        AuthRedirect.install()
         Cart.init(this)
         ErrorMonitoring.init(this)
         lifecycleScope.launch {
@@ -95,13 +97,33 @@ class MainActivity : AppCompatActivity() {
         val type = params["type"]
         val error = params["error_description"] ?: params["error"]
 
+        if (error != null) {
+            nav.visibility = View.GONE
+            toolbar.visibility = View.GONE
+            show(
+                AuthFragment.newResetInstance(null, null, error),
+                addToBackStack = false
+            )
+            return true
+        }
+
+        if (
+            (type == "signup" || type == "email") &&
+            !token.isNullOrBlank() &&
+            !refreshToken.isNullOrBlank()
+        ) {
+            Supabase.saveSession(token, refreshToken, null)
+            showApp()
+            return true
+        }
+
         nav.visibility = View.GONE
         toolbar.visibility = View.GONE
         show(
             if (type == null || type == "recovery") {
-                AuthFragment.newResetInstance(token, refreshToken, error)
+                AuthFragment.newResetInstance(token, refreshToken)
             } else {
-                AuthFragment.newResetInstance(null, null, "رابط الاستعادة غير صالح")
+                AuthFragment.newResetInstance(null, null, "رابط المصادقة غير صالح")
             },
             addToBackStack = false
         )
