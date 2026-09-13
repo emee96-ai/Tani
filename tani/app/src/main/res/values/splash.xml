@@ -1,1 +1,6 @@
-<resources><style name="Theme.Tani.Starting" parent="Theme.Tani"><item name="android:windowBackground">@drawable/brand_splash</item></style></resources>
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Tani.Starting" parent="Theme.Tani">
+        <item name="android:windowBackground">@color/white</item>
+    </style>
+</resources>
