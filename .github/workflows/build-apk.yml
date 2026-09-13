@@ -33,13 +33,19 @@ jobs:
         run: chmod +x gradlew
       - name: Project static QA
         run: bash qa/run_static_checks.sh
-      - name: Build APK and run unit tests
-        run: ./gradlew --no-daemon :app:assembleDebug :app:testDebugUnitTest --stacktrace
-      - name: Upload APK
+      - name: Build APKs and run unit tests
+        run: ./gradlew --no-daemon :app:assembleDebug :app:testDebugUnitTest :adminApp:assembleDebug :adminApp:testDebugUnitTest --stacktrace
+      - name: Upload Tani APK
         uses: actions/upload-artifact@v4
         with:
           name: tani-debug-apk
           path: tani/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+      - name: Upload Tani Admin APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tani-admin-debug-apk
+          path: tani/adminApp/build/outputs/apk/debug/adminApp-debug.apk
           if-no-files-found: error
 
   lint:
@@ -59,11 +65,13 @@ jobs:
       - name: Set up Gradle cache
         uses: gradle/actions/setup-gradle@v4
       - name: Android lint
-        run: chmod +x gradlew && ./gradlew --no-daemon :app:lintDebug --stacktrace
+        run: chmod +x gradlew && ./gradlew --no-daemon :app:lintDebug :adminApp:lintDebug --stacktrace
       - name: Upload lint reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: tani-lint-reports
-          path: tani/app/build/reports/lint-results-debug.*
+          path: |
+            tani/app/build/reports/lint-results-debug.*
+            tani/adminApp/build/reports/lint-results-debug.*
           if-no-files-found: ignore

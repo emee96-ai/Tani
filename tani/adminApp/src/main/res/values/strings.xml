@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">تاني إدارة</string>
+    <string name="login_title">لوحة إدارة تاني</string>
+    <string name="login_subtitle">الدخول متاح لحسابات الإدارة والدعم فقط</string>
+    <string name="email">البريد الإلكتروني</string>
+    <string name="password">كلمة المرور</string>
+    <string name="sign_in">تسجيل الدخول</string>
+    <string name="logout">خروج</string>
+    <string name="refresh">تحديث</string>
+</resources>

@@ -1,0 +1,15 @@
+<resources>
+    <color name="tani_primary">#5D50E6</color>
+    <color name="tani_primary_dark">#4338CA</color>
+    <color name="tani_secondary">#16233F</color>
+    <color name="tani_accent">#18B78F</color>
+    <color name="tani_background">#F5F7FC</color>
+    <color name="tani_surface">#FFFFFF</color>
+    <color name="text_dark">#101426</color>
+    <color name="text_muted">#667085</color>
+    <color name="border">#E6EAF3</color>
+    <color name="success">#0F9D58</color>
+    <color name="warning">#B36A00</color>
+    <color name="error">#D64550</color>
+    <color name="brand_soft">#EFEDFF</color>
+</resources>

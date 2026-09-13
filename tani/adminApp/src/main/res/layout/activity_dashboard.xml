@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/tani_background"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/tani_surface"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="14dp">
+
+        <ImageView
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:src="@drawable/ic_brand" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="تاني — الإدارة"
+                android:textColor="@color/text_dark"
+                android:textSize="19sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/roleBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="@color/tani_primary"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/refreshButton"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/refresh" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/logoutButton"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/logout"
+            android:textColor="@color/error" />
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/dashboardProgress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="3dp"
+        android:indeterminate="true"
+        android:visibility="gone" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/dashboardStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/error"
+                android:textSize="14sp" />
+
+            <GridLayout
+                android:id="@+id/metricsGrid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:columnCount="2"
+                android:useDefaultMargins="true" />
+
+            <TextView style="@style/TaniAdmin.SectionTitle" android:text="طلبات التجار" />
+            <LinearLayout android:id="@+id/merchantsContainer" style="@style/TaniAdmin.SectionContainer" />
+
+            <TextView style="@style/TaniAdmin.SectionTitle" android:text="الشكاوى" />
+            <LinearLayout android:id="@+id/complaintsContainer" style="@style/TaniAdmin.SectionContainer" />
+
+            <TextView style="@style/TaniAdmin.SectionTitle" android:text="تذاكر الدعم" />
+            <LinearLayout android:id="@+id/ticketsContainer" style="@style/TaniAdmin.SectionContainer" />
+
+            <TextView style="@style/TaniAdmin.SectionTitle" android:text="طلبات الاشتراك" />
+            <LinearLayout android:id="@+id/subscriptionsContainer" style="@style/TaniAdmin.SectionContainer" />
+
+            <TextView style="@style/TaniAdmin.SectionTitle" android:text="طلبات الظهور الممول" />
+            <LinearLayout android:id="@+id/featuredContainer" style="@style/TaniAdmin.SectionContainer" />
+
+            <TextView style="@style/TaniAdmin.SectionTitle" android:text="بلاغات التقييمات" />
+            <LinearLayout android:id="@+id/reviewReportsContainer" style="@style/TaniAdmin.SectionContainer" />
+
+            <TextView style="@style/TaniAdmin.SectionTitle" android:text="الثقة وأداء التجار" />
+            <LinearLayout android:id="@+id/trustContainer" style="@style/TaniAdmin.SectionContainer" />
+
+            <TextView style="@style/TaniAdmin.SectionTitle" android:text="المدن" />
+            <LinearLayout android:id="@+id/citiesContainer" style="@style/TaniAdmin.SectionContainer" />
+
+            <TextView style="@style/TaniAdmin.SectionTitle" android:text="مزودو التوصيل" />
+            <LinearLayout android:id="@+id/deliveryContainer" style="@style/TaniAdmin.SectionContainer" />
+
+            <TextView style="@style/TaniAdmin.SectionTitle" android:text="أخطاء التطبيق الأخيرة" />
+            <LinearLayout android:id="@+id/errorsContainer" style="@style/TaniAdmin.SectionContainer" />
+
+            <TextView style="@style/TaniAdmin.SectionTitle" android:text="Audit Log" />
+            <LinearLayout android:id="@+id/auditContainer" style="@style/TaniAdmin.SectionContainer" />
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
