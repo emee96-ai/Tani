@@ -42,13 +42,26 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         val launchSplash = findViewById<View>(R.id.launch_splash)
-        launchSplash.postDelayed({
-            launchSplash.animate()
-                .alpha(0f)
-                .setDuration(220L)
-                .withEndAction { launchSplash.visibility = View.GONE }
-                .start()
-        }, 900L)
+        launchSplash.alpha = 0f
+        launchSplash.scaleX = 0.94f
+        launchSplash.scaleY = 0.94f
+        launchSplash.animate()
+            .alpha(1f)
+            .scaleX(1f)
+            .scaleY(1f)
+            .setDuration(480L)
+            .withEndAction {
+                launchSplash.postDelayed({
+                    launchSplash.animate()
+                        .alpha(0f)
+                        .scaleX(1.03f)
+                        .scaleY(1.03f)
+                        .setDuration(260L)
+                        .withEndAction { launchSplash.visibility = View.GONE }
+                        .start()
+                }, 620L)
+            }
+            .start()
 
         toolbar = findViewById(R.id.top_app_bar)
         toolbar.setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
