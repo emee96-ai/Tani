@@ -149,10 +149,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             container.addView(MarketplaceUi.empty(requireContext(), "لا توجد منتجات متاحة حالياً"))
             return
         }
-        products.forEach { product ->
-            MarketplaceUi.addWithSpacing(
-                container,
-                MarketplaceUi.productCard(
+        val cards = products.map { product ->
+            MarketplaceUi.productCard(
                     requireContext(),
                     lifecycleScope,
                     product,
@@ -170,9 +168,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                             Toast.makeText(requireContext(), "تعذر إضافة كمية إضافية", Toast.LENGTH_SHORT).show()
                         }
                     }
-                ),
-                requireContext()
-            )
+                )
         }
+        MarketplaceUi.addTwoColumnGrid(container, cards, requireContext())
     }
 }

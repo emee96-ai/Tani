@@ -28,6 +28,8 @@ class ProductListAdapter(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             ).apply {
+                marginStart = MarketplaceUi.dp(context, 5)
+                marginEnd = MarketplaceUi.dp(context, 5)
                 bottomMargin = MarketplaceUi.dp(context, 12)
             }
         }

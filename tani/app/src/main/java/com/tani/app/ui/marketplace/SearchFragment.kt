@@ -47,10 +47,8 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             if (term.length >= 2) (activity as MainActivity).show(StoresFragment.newSearchInstance(term))
         }
 
-        fun renderProduct(product: com.tani.app.data.ProductCard) {
-            MarketplaceUi.addWithSpacing(
-                productBox,
-                MarketplaceUi.productCard(
+        fun productCard(product: com.tani.app.data.ProductCard): View =
+            MarketplaceUi.productCard(
                     requireContext(), lifecycleScope, product,
                     onOpen = { (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id)) },
                     onAdd = {
@@ -64,10 +62,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                             Toast.makeText(requireContext(), "تعذر إضافة كمية إضافية", Toast.LENGTH_SHORT).show()
                         }
                     }
-                ),
-                requireContext()
             )
-        }
 
         fun runSearch() {
             val term = currentTerm()
@@ -103,7 +98,13 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
 
                         if (products.isEmpty()) {
                             productBox.addView(MarketplaceUi.empty(requireContext(), "لا توجد منتجات مطابقة"))
-                        } else products.take(8).forEach(::renderProduct)
+                        } else {
+                            MarketplaceUi.addTwoColumnGrid(
+                                productBox,
+                                products.take(8).map(::productCard),
+                                requireContext()
+                            )
+                        }
 
                         if (stores.isEmpty()) {
                             storeBox.addView(MarketplaceUi.empty(requireContext(), "لا توجد متاجر مطابقة"))
@@ -122,7 +123,11 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                         if (cached.isNotEmpty()) {
                             status.text = "${cached.size} منتج • نتائج محفوظة بدون اتصال"
                             refine.visibility = View.VISIBLE
-                            cached.take(8).forEach(::renderProduct)
+                            MarketplaceUi.addTwoColumnGrid(
+                                productBox,
+                                cached.take(8).map(::productCard),
+                                requireContext()
+                            )
                         } else status.text = "تعذر البحث\n${error.message ?: "حاولي مرة أخرى"}"
                     }
             }

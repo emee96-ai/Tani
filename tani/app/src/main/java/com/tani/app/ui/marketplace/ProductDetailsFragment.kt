@@ -204,9 +204,8 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
         relatedBox.removeAllViews()
         if (details.related.isEmpty()) {
             relatedBox.addView(MarketplaceUi.empty(requireContext(), "لا توجد منتجات مشابهة حالياً"))
-        } else details.related.forEach { related ->
-            MarketplaceUi.addWithSpacing(
-                relatedBox,
+        } else {
+            val cards = details.related.map { related ->
                 MarketplaceUi.productCard(
                     requireContext(), lifecycleScope, related,
                     onOpen = { (activity as MainActivity).show(newInstance(related.id)) },
@@ -218,9 +217,9 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
                             Toast.makeText(requireContext(), "تعذر إضافة كمية إضافية", Toast.LENGTH_SHORT).show()
                         }
                     }
-                ),
-                requireContext()
-            )
+                )
+            }
+            MarketplaceUi.addTwoColumnGrid(relatedBox, cards, requireContext())
         }
     }
 

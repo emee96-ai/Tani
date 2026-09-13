@@ -37,7 +37,7 @@ object MarketplaceUi {
         val card = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
-            setPadding(dp(context, 12), dp(context, 12), dp(context, 12), dp(context, 12))
+            setPadding(dp(context, 10), dp(context, 10), dp(context, 10), dp(context, 10))
             background = ContextCompat.getDrawable(context, R.drawable.bg_card)
             isClickable = true
             isFocusable = true
@@ -48,7 +48,7 @@ object MarketplaceUi {
         val image = ImageView(context).apply {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                dp(context, 136)
+                dp(context, 142)
             )
             scaleType = ImageView.ScaleType.CENTER_CROP
             setImageResource(R.drawable.ic_image_placeholder)
@@ -57,45 +57,22 @@ object MarketplaceUi {
         }
         repository.productImageUrl(product.image)?.let { loadImage(scope, image, it) }
 
-        val categoryAndStock = LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            layoutDirection = View.LAYOUT_DIRECTION_RTL
-        }
-        product.category_name?.takeIf { it.isNotBlank() }?.let { category ->
-            categoryAndStock.addView(chipLabel(context, category))
-        }
-        categoryAndStock.addView(
-            text(
-                context,
-                if (product.stock > 0) "متوفر" else "غير متوفر",
-                12f,
-                true,
-                if (product.stock > 0) R.color.success else R.color.error
-            ),
-            LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
-                marginStart = dp(context, 8)
-            }
-        )
-
-        val title = text(context, product.name, 17f, true, R.color.text_dark).apply {
+        val title = text(context, product.name, 15f, true, R.color.text_dark).apply {
             maxLines = 2
             ellipsize = TextUtils.TruncateAt.END
         }
         val ratingText = if (product.review_count > 0) {
             String.format(Locale.US, "★ %.1f (%d)", product.average_rating, product.review_count)
         } else "جديد"
-        val merchantMeta = buildList {
-            add(product.store_name)
-            verificationLabel(product.verification_status)?.let(::add)
-            add(ratingText)
-        }.joinToString(" • ")
-        val meta = text(context, merchantMeta, 13f, false, R.color.text_muted).apply {
+        val meta = text(context, "${product.store_name} • $ratingText", 11.5f, false, R.color.text_muted).apply {
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
         }
 
-        val price = text(context, formatPrice(product.price), 19f, true, R.color.tani_primary)
+        val price = text(context, formatPrice(product.price), 16f, true, R.color.tani_secondary).apply {
+            maxLines = 1
+            ellipsize = TextUtils.TruncateAt.END
+        }
         val footer = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -103,31 +80,21 @@ object MarketplaceUi {
         }
         footer.addView(price, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         footer.addView(Button(context).apply {
-            text = if (product.stock > 0) "أضيفي" else "غير متوفر"
+            text = if (product.stock > 0) "+" else "×"
             isEnabled = product.stock > 0
-            minHeight = dp(context, 48)
+            minWidth = 0
+            minimumWidth = 0
+            minHeight = 0
+            minimumHeight = 0
             setAllCaps(false)
-            setOnClickListener {
-                it.parent?.let { _ -> }
-                onAdd()
-            }
-        }, LinearLayout.LayoutParams(dp(context, 104), LinearLayout.LayoutParams.WRAP_CONTENT))
+            setPadding(0, 0, 0, 0)
+            setOnClickListener { onAdd() }
+        }, LinearLayout.LayoutParams(dp(context, 40), dp(context, 40)))
 
         card.addView(image)
-        card.addView(categoryAndStock, marginTop(context, 9))
-        card.addView(title, marginTop(context, 7))
-        card.addView(meta, marginTop(context, 5))
-        if (product.delivery_fee > 0 || !product.delivery_area.isNullOrBlank()) {
-            val delivery = buildString {
-                if (product.delivery_fee > 0) append("التوصيل ${formatPrice(product.delivery_fee)}")
-                product.delivery_area?.takeIf { it.isNotBlank() }?.let {
-                    if (isNotEmpty()) append(" • ")
-                    append(it)
-                }
-            }
-            card.addView(text(context, delivery, 12f, false, R.color.text_muted), marginTop(context, 5))
-        }
-        card.addView(footer, marginTop(context, 9))
+        card.addView(title, marginTop(context, 10))
+        card.addView(meta, marginTop(context, 4))
+        card.addView(footer, marginTop(context, 7))
         return card
     }
 
@@ -244,6 +211,42 @@ object MarketplaceUi {
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply { bottomMargin = dp(context, bottomDp) }
         )
+    }
+
+    fun addTwoColumnGrid(container: LinearLayout, views: List<View>, context: Context) {
+        views.chunked(2).forEach { pair ->
+            val row = LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                layoutDirection = View.LAYOUT_DIRECTION_RTL
+            }
+            pair.forEachIndexed { index, item ->
+                row.addView(
+                    item,
+                    LinearLayout.LayoutParams(
+                        0,
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        1f
+                    ).apply {
+                        if (index == 0) marginEnd = dp(context, 10)
+                    }
+                )
+            }
+            if (pair.size == 1) {
+                row.addView(
+                    View(context),
+                    LinearLayout.LayoutParams(0, 1, 1f).apply {
+                        marginStart = dp(context, 10)
+                    }
+                )
+            }
+            container.addView(
+                row,
+                LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { bottomMargin = dp(context, 12) }
+            )
+        }
     }
 
     fun loadImage(scope: LifecycleCoroutineScope, imageView: ImageView, url: String) {

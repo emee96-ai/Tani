@@ -31,10 +31,12 @@ class FavoritesFragment : Fragment() {
         lifecycleScope.launch {
             runCatching { repository.favoriteProducts() }.onSuccess { products ->
                 if(products.isEmpty()) root.addView(ScreenUi.muted(c,"لم تحفظي أي منتج بعد."))
-                products.forEach { p -> MarketplaceUi.addWithSpacing(root, MarketplaceUi.productCard(c,lifecycleScope,p,
-                    onOpen={ (activity as MainActivity).show(ProductDetailsFragment.newInstance(p.id)) },
-                    onAdd={ Cart.add(p.toProduct()); Toast.makeText(c,"تمت الإضافة للسلة",Toast.LENGTH_SHORT).show() }
-                ),c) }
+                else MarketplaceUi.addTwoColumnGrid(root, products.map { p ->
+                    MarketplaceUi.productCard(c,lifecycleScope,p,
+                        onOpen={ (activity as MainActivity).show(ProductDetailsFragment.newInstance(p.id)) },
+                        onAdd={ Cart.add(p.toProduct()); Toast.makeText(c,"تمت الإضافة للسلة",Toast.LENGTH_SHORT).show() }
+                    )
+                },c)
             }.onFailure { root.addView(ScreenUi.muted(c,it.message?:"تعذر تحميل المفضلة")) }
         }
     }

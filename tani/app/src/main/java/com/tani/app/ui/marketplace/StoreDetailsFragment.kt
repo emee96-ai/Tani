@@ -70,9 +70,8 @@ class StoreDetailsFragment : Fragment(R.layout.fragment_store_details) {
                 box.removeAllViews()
                 if (products.isEmpty()) {
                     box.addView(MarketplaceUi.empty(requireContext(), "لا توجد منتجات متاحة في هذا المتجر حالياً"))
-                } else products.forEach { product ->
-                    MarketplaceUi.addWithSpacing(
-                        box,
+                } else {
+                    val cards = products.map { product ->
                         MarketplaceUi.productCard(
                             requireContext(), lifecycleScope, product,
                             onOpen = { (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id)) },
@@ -84,9 +83,9 @@ class StoreDetailsFragment : Fragment(R.layout.fragment_store_details) {
                                     Toast.makeText(requireContext(), "تعذر إضافة كمية إضافية", Toast.LENGTH_SHORT).show()
                                 }
                             }
-                        ),
-                        requireContext()
-                    )
+                        )
+                    }
+                    MarketplaceUi.addTwoColumnGrid(box, cards, requireContext())
                 }
 
                 lifecycleScope.launch {

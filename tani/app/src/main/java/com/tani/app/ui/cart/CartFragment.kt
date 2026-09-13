@@ -104,7 +104,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
         box.addView(summary)
 
         box.addView(Button(requireContext()).apply {
-            text = "متابعة لإتمام الطلب"
+            text = "إكمال الطلب"
             setOnClickListener {
                 lifecycleScope.launch { Analytics.track("checkout_started", screen = "cart") }
                 (activity as? MainActivity)?.show(CheckoutFragment())
@@ -152,7 +152,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
     private fun itemRow(item: CartItem): LinearLayout {
         val row = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(0, MarketplaceUi.dp(requireContext(), 14), 0, MarketplaceUi.dp(requireContext(), 8))
+            setPadding(0, MarketplaceUi.dp(requireContext(), 12), 0, MarketplaceUi.dp(requireContext(), 10))
         }
 
         val top = LinearLayout(requireContext()).apply {
@@ -161,11 +161,12 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
         }
         val image = ImageView(requireContext()).apply {
             layoutParams = LinearLayout.LayoutParams(
-                MarketplaceUi.dp(requireContext(), 76),
-                MarketplaceUi.dp(requireContext(), 76)
+                MarketplaceUi.dp(requireContext(), 92),
+                MarketplaceUi.dp(requireContext(), 92)
             )
             scaleType = ImageView.ScaleType.CENTER_CROP
             setImageResource(R.drawable.ic_image_placeholder)
+            setBackgroundColor(requireContext().getColor(R.color.brand_soft))
             contentDescription = item.product.name
         }
         repository.productImageUrl(item.product.image)?.let { MarketplaceUi.loadImage(lifecycleScope, image, it) }
@@ -178,7 +179,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
         }
         info.addView(TextView(requireContext()).apply {
             text = item.product.name
-            textSize = 16f
+            textSize = 17f
             setTextColor(requireContext().getColor(R.color.text_dark))
             setTypeface(typeface, android.graphics.Typeface.BOLD)
         })
@@ -238,11 +239,22 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
         return row
     }
 
-    private fun summaryLine(label: String, value: String) = TextView(requireContext()).apply {
-        text = "$label: $value"
-        textSize = 15f
-        setPadding(0, MarketplaceUi.dp(requireContext(), 4), 0, MarketplaceUi.dp(requireContext(), 4))
-        setTextColor(requireContext().getColor(R.color.text_muted))
+    private fun summaryLine(label: String, value: String) = LinearLayout(requireContext()).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+        layoutDirection = View.LAYOUT_DIRECTION_RTL
+        setPadding(0, MarketplaceUi.dp(requireContext(), 5), 0, MarketplaceUi.dp(requireContext(), 5))
+        addView(TextView(requireContext()).apply {
+            text = label
+            textSize = 14f
+            setTextColor(requireContext().getColor(R.color.text_muted))
+        }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        addView(TextView(requireContext()).apply {
+            text = value
+            textSize = 14f
+            setTextColor(requireContext().getColor(R.color.text_dark))
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+        })
     }
 
     private fun syncSilent() {

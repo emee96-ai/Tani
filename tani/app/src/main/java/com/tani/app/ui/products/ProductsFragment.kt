@@ -13,7 +13,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.tani.app.MainActivity
 import com.tani.app.R
@@ -65,7 +65,7 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
                 }
             }
         )
-        list.layoutManager = LinearLayoutManager(requireContext())
+        list.layoutManager = GridLayoutManager(requireContext(), 2)
         list.adapter = adapter
 
         fun updateSummary() {
