@@ -151,6 +151,18 @@
             android:textColor="@color/tani_primary"
             android:textStyle="bold" />
 
+
+        <TextView
+            android:id="@+id/browse_as_guest"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:layout_marginTop="2dp"
+            android:gravity="center"
+            android:paddingHorizontal="12dp"
+            android:text="تصفح السوق بدون حساب"
+            android:textColor="@color/text_muted"
+            android:textStyle="bold" />
+
         <TextView
             android:id="@+id/back_to_login"
             android:layout_width="wrap_content"

@@ -193,6 +193,25 @@ else: ok('Manifest backup security')
 if 'android:usesCleartextTraffic="false"' not in manifest: bad('Manifest cleartext security','usesCleartextTraffic must be false')
 else: ok('Manifest cleartext security')
 
+
+admin_manifest=(root/'adminApp/src/main/AndroidManifest.xml').read_text(errors='ignore')
+if 'android:usesCleartextTraffic="false"' not in admin_manifest:
+    bad('Admin manifest cleartext security','usesCleartextTraffic must be false')
+else: ok('Admin manifest cleartext security')
+
+debug_manifest=(root/'app/src/debug/AndroidManifest.xml').read_text(errors='ignore')
+if 'android:scheme="tani"' in manifest:
+    bad('Production auth redirect','custom auth scheme must not be in main manifest')
+elif 'android:scheme="tani"' not in debug_manifest:
+    bad('Debug auth redirect','debug custom scheme is missing')
+else: ok('Auth redirect build separation')
+
+order_rls=(root/'supabase/fix_recursive_order_rls.sql').read_text(errors='ignore')
+orders_policy=order_rls.split('drop policy if exists tani_order_items_own_read')[0]
+if 'order_items' in orders_policy.lower() or 'orders.seller_id' not in orders_policy:
+    bad('Order RLS recursion regression','orders policy must use orders.seller_id directly')
+else: ok('Order RLS recursion regression')
+
 # Required launch docs.
 required={
  'TERMS_AND_PRIVACY_DRAFT.md','MERCHANT_AGREEMENT_DRAFT.md','REFUND_CANCELLATION_POLICY_DRAFT.md',

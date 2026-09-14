@@ -56,5 +56,6 @@ Orders/customers/products/categories modules, case workspace, pagination/search/
 - [x] Lint API-level error repaired.
 - [x] Network timeout and cleartext hardening prepared.
 - [x] Production recovery restricted to verified HTTPS.
+- [x] Guest browsing with protected checkout/account routes prepared.
 - [ ] CI verification.
 - [ ] Real-device smoke test.

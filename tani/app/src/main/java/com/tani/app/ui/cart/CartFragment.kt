@@ -16,6 +16,8 @@ import com.tani.app.data.Analytics
 import com.tani.app.data.Cart
 import com.tani.app.data.CartItem
 import com.tani.app.data.Repository
+import com.tani.app.data.Supabase
+import com.tani.app.ui.auth.AuthFragment
 import com.tani.app.ui.commerce.CheckoutFragment
 import com.tani.app.ui.marketplace.MarketplaceUi
 import kotlinx.coroutines.launch
@@ -106,8 +108,13 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
         box.addView(Button(requireContext()).apply {
             text = "إكمال الطلب"
             setOnClickListener {
-                viewLifecycleOwner.lifecycleScope.launch { Analytics.track("checkout_started", screen = "cart") }
-                (activity as? MainActivity)?.show(CheckoutFragment())
+                if (Supabase.hasStoredSession()) {
+                    viewLifecycleOwner.lifecycleScope.launch { Analytics.track("checkout_started", screen = "cart") }
+                    (activity as? MainActivity)?.show(CheckoutFragment())
+                } else {
+                    Toast.makeText(requireContext(), "سجّلي الدخول لإتمام الطلب", Toast.LENGTH_SHORT).show()
+                    (activity as? MainActivity)?.show(AuthFragment())
+                }
             }
         }, LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,

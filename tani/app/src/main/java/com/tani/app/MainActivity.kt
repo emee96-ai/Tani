@@ -74,8 +74,8 @@ class MainActivity : AppCompatActivity() {
                 R.id.home -> showPrimary(HomeFragment())
                 R.id.categories -> showPrimary(CategoriesFragment())
                 R.id.cart -> showPrimary(CartFragment())
-                R.id.orders -> showPrimary(OrdersFragment())
-                R.id.profile -> showPrimary(ProfileFragment())
+                R.id.orders -> showProtected(OrdersFragment())
+                R.id.profile -> showProtected(ProfileFragment())
             }
             true
         }
@@ -87,7 +87,7 @@ class MainActivity : AppCompatActivity() {
                 showApp()
             } else {
                 Supabase.clearSession()
-                showAuth()
+                showApp()
             }
         }
     }
@@ -208,6 +208,14 @@ class MainActivity : AppCompatActivity() {
         show(fragment, addToBackStack = false)
     }
 
+    private fun showProtected(fragment: Fragment) {
+        if (Supabase.hasStoredSession()) {
+            showPrimary(fragment)
+        } else {
+            show(AuthFragment())
+        }
+    }
+
     fun refreshCartBadge() {
         if (!::nav.isInitialized || nav.menu.findItem(R.id.cart) == null) return
         val count = Cart.itemCount()
@@ -220,7 +228,7 @@ class MainActivity : AppCompatActivity() {
         val count = supportFragmentManager.backStackEntryCount
         if (count <= 0) {
             toolbar.visibility = View.GONE
-            nav.visibility = if (Supabase.hasStoredSession()) View.VISIBLE else View.GONE
+            nav.visibility = View.VISIBLE
             refreshCartBadge()
             return
         }

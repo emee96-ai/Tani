@@ -55,6 +55,7 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
         val forgot = view.findViewById<TextView>(R.id.forgot_password)
         val toggle = view.findViewById<TextView>(R.id.toggle)
         val backToLogin = view.findViewById<TextView>(R.id.back_to_login)
+        val browseAsGuest = view.findViewById<TextView>(R.id.browse_as_guest)
         val status = view.findViewById<TextView>(R.id.status)
         val progress = view.findViewById<ProgressBar>(R.id.progress)
 
@@ -79,6 +80,7 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
             forgot.visibility = if (mode == Mode.LOGIN) View.VISIBLE else View.GONE
             toggle.visibility = if (mode == Mode.LOGIN || mode == Mode.SIGNUP) View.VISIBLE else View.GONE
             backToLogin.visibility = if (mode == Mode.FORGOT || mode == Mode.RESET) View.VISIBLE else View.GONE
+            browseAsGuest.visibility = if (mode == Mode.LOGIN || mode == Mode.SIGNUP) View.VISIBLE else View.GONE
 
             when (mode) {
                 Mode.LOGIN -> {
@@ -132,6 +134,7 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
         }
 
         backToLogin.setOnClickListener { goLogin() }
+        browseAsGuest.setOnClickListener { (activity as? MainActivity)?.showApp() }
 
         action.setOnClickListener {
             viewLifecycleOwner.lifecycleScope.launch {
