@@ -36,7 +36,7 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
 
     private fun load() {
         progress.visibility = View.VISIBLE
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching { repository.orderGroups() }
                 .onSuccess { groups = it; render() }
                 .onFailure {

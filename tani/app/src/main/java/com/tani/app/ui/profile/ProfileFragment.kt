@@ -101,7 +101,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
     private fun loadProfile() {
         setLoading(true)
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching {
                 val account = repository.accountProfile()
                 val merchant = repository.merchantProfile()
@@ -133,7 +133,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
     private fun saveProfile() {
         setActionsEnabled(false)
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching {
                 val uploadedAvatar = selectedAvatarBytes?.let { repository.uploadAvatar(it) }
                 repository.updateProfile(
@@ -160,7 +160,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
     private fun prepareAvatar(uri: Uri) {
         setActionsEnabled(false)
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching {
                 withContext(Dispatchers.IO) {
                     val bitmap = requireContext().contentResolver.openInputStream(uri)?.use {
@@ -204,7 +204,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
     }
 
     private fun loadRemoteAvatar(url: String) {
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             val bitmap = withContext(Dispatchers.IO) {
                 runCatching {
                     URL(url).openStream().use { BitmapFactory.decodeStream(it) }
@@ -298,7 +298,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
     private fun deleteAccount() {
         setActionsEnabled(false)
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching { repository.softDeleteAccount() }
                 .onSuccess { deleted ->
                     if (deleted && isAdded) {
@@ -327,7 +327,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
     private fun logout() {
         setActionsEnabled(false)
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             repository.logout()
             if (isAdded) (activity as? MainActivity)?.showAuth()
         }

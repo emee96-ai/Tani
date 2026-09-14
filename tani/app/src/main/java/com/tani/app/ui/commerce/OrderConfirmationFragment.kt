@@ -28,7 +28,7 @@ class OrderConfirmationFragment : Fragment(R.layout.fragment_order_confirmation)
             (activity as? MainActivity)?.nav?.selectedItemId = R.id.orders
         }
 
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching { repository.orderGroupDetails(groupId) }
                 .onSuccess { details ->
                     message.text = buildString {

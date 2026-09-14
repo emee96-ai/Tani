@@ -205,8 +205,20 @@ missing_docs=sorted(required-existing)
 if missing_docs: bad('Launch documents',missing_docs)
 else: ok('Launch documents',str(len(required)))
 
+
+# Fragment coroutines must be bound to the view lifecycle. Bare lifecycleScope
+# can outlive onDestroyView and crash when touching requireContext()/views.
+fragment_scope_issues=[]
+for p in (root/'app/src/main/java').rglob('*Fragment.kt'):
+    txt='\n'.join(line for line in p.read_text(errors='ignore').splitlines() if not line.lstrip().startswith('import '))
+    if re.search(r'(?<!viewLifecycleOwner\.)\blifecycleScope\b',txt):
+        fragment_scope_issues.append(str(p))
+if fragment_scope_issues: bad('Fragment view lifecycle',fragment_scope_issues)
+else: ok('Fragment view lifecycle')
+
 if errors:
     print(f"\nQA FAILED: {len(errors)} category/categories")
     sys.exit(1)
 print('\nSTATIC QA PASSED')
 PY
+

@@ -134,7 +134,7 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
         backToLogin.setOnClickListener { goLogin() }
 
         action.setOnClickListener {
-            lifecycleScope.launch {
+            viewLifecycleOwner.lifecycleScope.launch {
                 setBusy(true)
                 runCatching {
                     when (mode) {

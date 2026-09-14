@@ -46,7 +46,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
 
     private fun load(groupId: String) {
         progress.visibility = View.VISIBLE
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching { repository.orderGroupDetails(groupId) }
                 .onSuccess {
                     details = it
@@ -163,7 +163,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
             .setMessage("التقييم متاح فقط للطلبات التي تم تسليمها فعلياً.")
             .setView(container)
             .setPositiveButton("إرسال") { _, _ ->
-                lifecycleScope.launch {
+                viewLifecycleOwner.lifecycleScope.launch {
                     runCatching {
                         trustRepository.submitDeliveredOrderReviews(
                             orderId = order.id,
@@ -190,7 +190,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
             .setTitle("إلغاء الطلب")
             .setMessage("يمكن الإلغاء الآن فقط لأن جميع طلبات التجار ما زالت بانتظار القبول. هل تريدين المتابعة؟")
             .setPositiveButton("إلغاء الطلب") { _, _ ->
-                lifecycleScope.launch {
+                viewLifecycleOwner.lifecycleScope.launch {
                     progress.visibility = View.VISIBLE
                     runCatching { repository.cancelOrderGroup(groupId) }
                         .onSuccess {

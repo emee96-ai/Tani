@@ -31,7 +31,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
     }
 
     private fun restoreOrSync() {
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             if (Cart.all().isEmpty()) {
                 runCatching { repository.remoteCart() }
                     .onSuccess { remote ->
@@ -106,7 +106,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
         box.addView(Button(requireContext()).apply {
             text = "إكمال الطلب"
             setOnClickListener {
-                lifecycleScope.launch { Analytics.track("checkout_started", screen = "cart") }
+                viewLifecycleOwner.lifecycleScope.launch { Analytics.track("checkout_started", screen = "cart") }
                 (activity as? MainActivity)?.show(CheckoutFragment())
             }
         }, LinearLayout.LayoutParams(
@@ -169,7 +169,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
             setBackgroundColor(requireContext().getColor(R.color.brand_soft))
             contentDescription = item.product.name
         }
-        repository.productImageUrl(item.product.image)?.let { MarketplaceUi.loadImage(lifecycleScope, image, it) }
+        repository.productImageUrl(item.product.image)?.let { MarketplaceUi.loadImage(viewLifecycleOwner.lifecycleScope, image, it) }
 
         val info = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.VERTICAL
@@ -259,6 +259,6 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
 
     private fun syncSilent() {
         (activity as? MainActivity)?.refreshCartBadge()
-        lifecycleScope.launch { runCatching { repository.syncCart(Cart.all()) } }
+        viewLifecycleOwner.lifecycleScope.launch { runCatching { repository.syncCart(Cart.all()) } }
     }
 }

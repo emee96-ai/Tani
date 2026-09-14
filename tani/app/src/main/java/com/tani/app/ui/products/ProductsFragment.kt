@@ -51,12 +51,12 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
 
         val adapter = ProductListAdapter(
             requireContext(),
-            lifecycleScope,
+            viewLifecycleOwner.lifecycleScope,
             onOpen = { product -> (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id)) },
             onAdd = { product ->
                 if (Cart.add(product.toProduct())) {
                     (activity as? MainActivity)?.refreshCartBadge()
-                    lifecycleScope.launch {
+                    viewLifecycleOwner.lifecycleScope.launch {
                         Analytics.track("add_to_cart", screen = "products", entityType = "product", entityId = product.id)
                     }
                     Toast.makeText(requireContext(), "تمت إضافة ${product.name} للسلة", Toast.LENGTH_SHORT).show()
@@ -80,7 +80,7 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
         fun load() {
             loading.visibility = View.VISIBLE
             loading.text = "جاري تحميل المنتجات..."
-            lifecycleScope.launch {
+            viewLifecycleOwner.lifecycleScope.launch {
                 val sortValue = when (sort.selectedItemPosition) {
                     1 -> ProductSort.PRICE_LOW
                     2 -> ProductSort.PRICE_HIGH

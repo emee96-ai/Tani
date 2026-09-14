@@ -26,7 +26,7 @@ class StoreDetailsFragment : Fragment(R.layout.fragment_store_details) {
         val loading = view.findViewById<TextView>(R.id.store_details_loading)
         val content = view.findViewById<LinearLayout>(R.id.store_details_content)
 
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching {
                 val store = repository.store(storeId)
                 val products = repository.storeProducts(store.seller_id)
@@ -61,10 +61,10 @@ class StoreDetailsFragment : Fragment(R.layout.fragment_store_details) {
 
                 val logo = view.findViewById<ImageView>(R.id.store_details_logo)
                 logo.setImageResource(R.drawable.ic_image_placeholder)
-                repository.storeImageUrl(store.logo_url)?.let { MarketplaceUi.loadImage(lifecycleScope, logo, it) }
+                repository.storeImageUrl(store.logo_url)?.let { MarketplaceUi.loadImage(viewLifecycleOwner.lifecycleScope, logo, it) }
                 val cover = view.findViewById<ImageView>(R.id.store_details_cover)
                 cover.setImageResource(R.drawable.ic_image_placeholder)
-                repository.storeImageUrl(store.cover_url)?.let { MarketplaceUi.loadImage(lifecycleScope, cover, it) }
+                repository.storeImageUrl(store.cover_url)?.let { MarketplaceUi.loadImage(viewLifecycleOwner.lifecycleScope, cover, it) }
 
                 val box = view.findViewById<LinearLayout>(R.id.store_details_products)
                 box.removeAllViews()
@@ -73,7 +73,7 @@ class StoreDetailsFragment : Fragment(R.layout.fragment_store_details) {
                 } else {
                     val cards = products.map { product ->
                         MarketplaceUi.productCard(
-                            requireContext(), lifecycleScope, product,
+                            requireContext(), viewLifecycleOwner.lifecycleScope, product,
                             onOpen = { (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id)) },
                             onAdd = {
                                 if (Cart.add(product.toProduct())) {
@@ -88,7 +88,7 @@ class StoreDetailsFragment : Fragment(R.layout.fragment_store_details) {
                     MarketplaceUi.addTwoColumnGrid(box, cards, requireContext())
                 }
 
-                lifecycleScope.launch {
+                viewLifecycleOwner.lifecycleScope.launch {
                     Analytics.track("store_view", screen = "store_details", entityType = "store", entityId = store.id)
                 }
             }.onFailure {

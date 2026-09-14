@@ -57,7 +57,7 @@ class SellerFragment : Fragment(R.layout.fragment_seller) {
 
     private fun loadEntry() {
         loading("جاري تحميل حساب التاجر…")
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching {
                 merchant = repository.merchantProfile()
                 seller = repository.seller()
@@ -108,7 +108,7 @@ class SellerFragment : Fragment(R.layout.fragment_seller) {
 
     private fun showOnboarding(existing: MerchantProfile?) {
         loading("جاري تجهيز نموذج التسجيل…")
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching {
                 val cats = repository.categories()
                 val docs = repository.merchantIdentityDocuments()
@@ -132,14 +132,14 @@ class SellerFragment : Fragment(R.layout.fragment_seller) {
         val otp = input("رمز التحقق المكوّن من 6 أرقام", null, number = true)
         row().apply {
             addView(actionButton("إرسال رمز التحقق") {
-                lifecycleScope.launch {
+                viewLifecycleOwner.lifecycleScope.launch {
                     runCatching { repository.requestMerchantPhoneVerification(phone.text.toString()) }
                         .onSuccess { toast("تم طلب رمز التحقق. أدخلي الرمز الذي وصلك.") }
                         .onFailure { toast(it.message ?: "تعذر إرسال الرمز") }
                 }
             })
             addView(actionButton("تحقق") {
-                lifecycleScope.launch {
+                viewLifecycleOwner.lifecycleScope.launch {
                     runCatching { repository.verifyMerchantPhone(phone.text.toString(), otp.text.toString()) }
                         .onSuccess { toast("تم التحقق من الهاتف ✓") }
                         .onFailure { toast(it.message ?: "تعذر التحقق من الهاتف") }
@@ -199,7 +199,7 @@ class SellerFragment : Fragment(R.layout.fragment_seller) {
                 return@button
             }
             val docType = listOf("national_id", "passport", "other")[documentSpinner.selectedItemPosition.coerceIn(0, 2)]
-            lifecycleScope.launch {
+            viewLifecycleOwner.lifecycleScope.launch {
                 runCatching {
                     repository.submitMerchantApplication(
                         businessName.text.toString(), businessDescription.text.toString(),
@@ -217,7 +217,7 @@ class SellerFragment : Fragment(R.layout.fragment_seller) {
     }
 
     private fun uploadIdentity(uri: Uri) {
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching {
                 val pair = withContext(Dispatchers.IO) { identityBytes(uri) }
                 repository.uploadMerchantIdentity(pair.first, pair.second)
@@ -241,7 +241,7 @@ class SellerFragment : Fragment(R.layout.fragment_seller) {
 
     private fun showStore() {
         loading("جاري تحميل المتجر…")
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching { repository.merchantStore() ?: error("لم يتم إنشاء المتجر بعد") }
                 .onSuccess(::renderStore)
                 .onFailure { showError(it.message ?: "تعذر تحميل المتجر") }
@@ -267,7 +267,7 @@ class SellerFragment : Fragment(R.layout.fragment_seller) {
         box.addView(storeLogoStatus); button("تغيير الشعار") { pendingStoreAsset = "logo"; pickStoreImage.launch("image/*") }
         box.addView(storeCoverStatus); button("تغيير الغلاف") { pendingStoreAsset = "cover"; pickStoreImage.launch("image/*") }
         button("حفظ المتجر") {
-            lifecycleScope.launch {
+            viewLifecycleOwner.lifecycleScope.launch {
                 runCatching {
                     repository.updateMerchantStore(
                         store.id, name.text.toString(), description.text.toString(), city.text.toString(),
@@ -282,7 +282,7 @@ class SellerFragment : Fragment(R.layout.fragment_seller) {
 
     private fun uploadStoreImage(uri: Uri) {
         val kind = pendingStoreAsset ?: return
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching {
                 val bytes = withContext(Dispatchers.IO) { imageBytes(uri, 1600, 85) }
                 repository.uploadStoreAsset(bytes, kind)
@@ -302,7 +302,7 @@ class SellerFragment : Fragment(R.layout.fragment_seller) {
     private fun showDelivery() {
         val sellerId = seller?.id ?: return showError("حساب التاجر غير مكتمل")
         loading("جاري تحميل إعدادات التوصيل…")
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching { repository.merchantDeliverySettings(sellerId) }
                 .onSuccess { renderDelivery(sellerId, it) }
                 .onFailure { showError(it.message ?: "تعذر تحميل التوصيل") }
@@ -321,7 +321,7 @@ class SellerFragment : Fragment(R.layout.fragment_seller) {
         button("حفظ التوصيل") {
             val f = fee.text.toString().toDoubleOrNull()
             if (f == null) return@button toast("أدخلي رسوم التوصيل")
-            lifecycleScope.launch {
+            viewLifecycleOwner.lifecycleScope.launch {
                 runCatching { repository.saveMerchantDeliverySettings(sellerId, f, area.text.toString(), minutes.text.toString().toIntOrNull(), notes.text.toString(), active.isChecked) }
                     .onSuccess { toast("تم حفظ إعدادات التوصيل"); showDelivery() }
                     .onFailure { toast(it.message ?: "تعذر حفظ التوصيل") }
@@ -332,7 +332,7 @@ class SellerFragment : Fragment(R.layout.fragment_seller) {
     private fun showProducts() {
         val sellerId = seller?.id ?: return showError("حساب التاجر غير مكتمل")
         loading("جاري تحميل المنتجات…")
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching { repository.sellerProducts(sellerId) to repository.categories() }
                 .onSuccess { (products, categories) -> renderProducts(sellerId, products, categories) }
                 .onFailure { showError(it.message ?: "تعذر تحميل المنتجات") }
@@ -349,7 +349,7 @@ class SellerFragment : Fragment(R.layout.fragment_seller) {
                 addView(row().apply {
                     addView(actionButton("تعديل") { productDialog(product, sellerId, categories) })
                     addView(actionButton(if (product.is_active) "إيقاف" else "نشر") {
-                        lifecycleScope.launch {
+                        viewLifecycleOwner.lifecycleScope.launch {
                             runCatching { repository.deactivateMerchantProduct(product.id, !product.is_active) }
                                 .onSuccess { showProducts() }.onFailure { toast(it.message ?: "تعذر تحديث المنتج") }
                         }
@@ -383,7 +383,7 @@ class SellerFragment : Fragment(R.layout.fragment_seller) {
                 val st = stock.text.toString().toIntOrNull()
                 val cat = categories.getOrNull(category.selectedItemPosition)
                 if (p == null || st == null) return@setPositiveButton toast("راجعي السعر والمخزون")
-                lifecycleScope.launch {
+                viewLifecycleOwner.lifecycleScope.launch {
                     runCatching {
                         if (product == null) repository.createMerchantProduct(sellerId, cat?.id, name.text.toString(), description.text.toString(), p, st, active.isChecked)
                         else repository.updateMerchantProduct(product.id, cat?.id, name.text.toString(), description.text.toString(), p, st, active.isChecked)
@@ -400,7 +400,7 @@ class SellerFragment : Fragment(R.layout.fragment_seller) {
             .setTitle("حذف المنتج")
             .setMessage("سيتم الحذف نهائياً فقط إذا لم يكن للمنتج سجل طلبات. وإلا استخدمي إيقاف المنتج.")
             .setPositiveButton("حذف") { _, _ ->
-                lifecycleScope.launch {
+                viewLifecycleOwner.lifecycleScope.launch {
                     runCatching { repository.deleteMerchantProduct(product.id) }
                         .onSuccess { toast("تم حذف المنتج"); showProducts() }
                         .onFailure { toast(it.message ?: "تعذر حذف المنتج") }
@@ -411,7 +411,7 @@ class SellerFragment : Fragment(R.layout.fragment_seller) {
     }
 
     private fun imageManager(product: Product) {
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching { repository.productImages(product.id) }.onSuccess { images ->
                 val content = LinearLayout(requireContext()).apply { orientation = LinearLayout.VERTICAL; setPadding(20, 10, 20, 10) }
                 val add = actionButton("إضافة صورة") {
@@ -424,7 +424,7 @@ class SellerFragment : Fragment(R.layout.fragment_seller) {
                     content.addView(row().apply {
                         addView(textView(if (image.is_primary) "الصورة الرئيسية" else "صورة المنتج", 15f, image.is_primary), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
                         addView(actionButton("حذف") {
-                            lifecycleScope.launch {
+                            viewLifecycleOwner.lifecycleScope.launch {
                                 runCatching { repository.deleteProductImage(image) }
                                     .onSuccess { toast("تم حذف الصورة") }
                                     .onFailure { toast(it.message ?: "تعذر حذف الصورة") }
@@ -438,7 +438,7 @@ class SellerFragment : Fragment(R.layout.fragment_seller) {
     }
 
     private fun uploadProductImage(uri: Uri, productId: String) {
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching {
                 val bytes = withContext(Dispatchers.IO) { imageBytes(uri, 1600, 84) }
                 val path = repository.uploadProductImage(bytes, productId)
@@ -450,7 +450,7 @@ class SellerFragment : Fragment(R.layout.fragment_seller) {
     }
 
     private fun variantManager(product: Product) {
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching { repository.productVariants(product.id) }.onSuccess { variants -> renderVariantDialog(product, variants) }
                 .onFailure { toast(it.message ?: "تعذر تحميل الخيارات") }
         }
@@ -465,7 +465,7 @@ class SellerFragment : Fragment(R.layout.fragment_seller) {
                 addView(textView("${v.name} • مخزون ${v.stock}${v.price?.let { " • ${money(it)}" } ?: ""}", 14f), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
                 addView(actionButton("تعديل") { editVariantDialog(v, product) })
                 addView(actionButton("حذف") {
-                    lifecycleScope.launch {
+                    viewLifecycleOwner.lifecycleScope.launch {
                         runCatching { repository.deleteProductVariant(v.id) }
                             .onSuccess { toast("تم حذف الخيار") }
                             .onFailure { toast(it.message ?: "تعذر حذف الخيار") }
@@ -491,7 +491,7 @@ class SellerFragment : Fragment(R.layout.fragment_seller) {
             .setPositiveButton("حفظ") { _, _ ->
                 val st = stock.text.toString().toIntOrNull() ?: return@setPositiveButton toast("المخزون غير صحيح")
                 val pr = price.text.toString().takeIf { it.isNotBlank() }?.toDoubleOrNull()
-                lifecycleScope.launch {
+                viewLifecycleOwner.lifecycleScope.launch {
                     runCatching {
                         if (variant == null) repository.addProductVariant(product.id, name.text.toString(), sku.text.toString(), pr, st)
                         else repository.updateProductVariant(variant.id, name.text.toString(), sku.text.toString(), pr, st, active.isChecked)
@@ -503,7 +503,7 @@ class SellerFragment : Fragment(R.layout.fragment_seller) {
     private fun showOrders() {
         val sellerId = seller?.id ?: return showError("حساب التاجر غير مكتمل")
         loading("جاري تحميل الطلبات…")
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching { repository.merchantOrders(sellerId) }
                 .onSuccess { renderOrders(it) }
                 .onFailure { showError(it.message ?: "تعذر تحميل الطلبات") }
@@ -527,7 +527,7 @@ class SellerFragment : Fragment(R.layout.fragment_seller) {
     }
 
     private fun showMerchantOrderItems(order: Order) {
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching { repository.merchantOrderItems(order.id) }.onSuccess { items ->
                 val message = if (items.isEmpty()) "لا توجد منتجات" else items.joinToString("\n") {
                     "• ${it.product_name_snapshot ?: it.product_id.take(8)} × ${it.quantity} — ${money(it.line_total ?: it.unit_price * it.quantity)} جنيه"
@@ -550,7 +550,7 @@ class SellerFragment : Fragment(R.layout.fragment_seller) {
         AlertDialog.Builder(requireContext()).setTitle("تأكيد تحديث الطلب")
             .setMessage("تغيير الحالة إلى ${statusText(status)}؟")
             .setPositiveButton("تأكيد") { _, _ ->
-                lifecycleScope.launch {
+                viewLifecycleOwner.lifecycleScope.launch {
                     runCatching { repository.transitionMerchantOrder(order.id, status) }
                         .onSuccess { showOrders() }
                         .onFailure { toast(it.message ?: "تعذر تحديث الطلب") }
@@ -560,7 +560,7 @@ class SellerFragment : Fragment(R.layout.fragment_seller) {
 
     private fun showDashboard() {
         loading("جاري حساب المؤشرات…")
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching { repository.merchantDashboardSummary() }
                 .onSuccess(::renderDashboard)
                 .onFailure { showError(it.message ?: "تعذر تحميل المؤشرات") }

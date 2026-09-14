@@ -89,7 +89,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
     private fun loadAddresses() {
         progress.visibility = View.VISIBLE
         confirm.isEnabled = false
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching {
                 coroutineScope {
                     val addressesDeferred = async { repository.addresses() }
@@ -167,7 +167,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
             .create()
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                lifecycleScope.launch {
+                viewLifecycleOwner.lifecycleScope.launch {
                     runCatching {
                         repository.addAddress(
                             label.text.toString(), description.text.toString(), area.text.toString(),
@@ -196,7 +196,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
 
         confirm.isEnabled = false
         progress.visibility = View.VISIBLE
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching { repository.quoteCart(Cart.all()) }
                 .onSuccess { quote ->
                     progress.visibility = View.GONE
@@ -255,7 +255,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
     private fun placeOrder(addressId: String) {
         confirm.isEnabled = false
         progress.visibility = View.VISIBLE
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching {
                 repository.checkout(
                     addressId = addressId,

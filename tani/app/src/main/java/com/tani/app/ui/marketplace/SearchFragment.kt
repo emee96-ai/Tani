@@ -49,12 +49,12 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
 
         fun productCard(product: com.tani.app.data.ProductCard): View =
             MarketplaceUi.productCard(
-                    requireContext(), lifecycleScope, product,
+                    requireContext(), viewLifecycleOwner.lifecycleScope, product,
                     onOpen = { (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id)) },
                     onAdd = {
                         if (Cart.add(product.toProduct())) {
                             (activity as? MainActivity)?.refreshCartBadge()
-                            lifecycleScope.launch {
+                            viewLifecycleOwner.lifecycleScope.launch {
                                 Analytics.track("add_to_cart", screen = "search", entityType = "product", entityId = product.id)
                             }
                             Toast.makeText(requireContext(), "تمت إضافة ${product.name} للسلة", Toast.LENGTH_SHORT).show()
@@ -76,7 +76,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             allStores.visibility = View.GONE
             productBox.removeAllViews()
             storeBox.removeAllViews()
-            lifecycleScope.launch {
+            viewLifecycleOwner.lifecycleScope.launch {
                 val cache = MarketplaceCache(requireContext())
                 val cacheKey = "search_" + term.lowercase().replace(Regex("[^\\p{L}\\p{N}]+"), "_").take(40)
                 runCatching {
@@ -86,7 +86,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                     products to stores
                 }
                     .onSuccess { (products, stores) ->
-                        lifecycleScope.launch {
+                        viewLifecycleOwner.lifecycleScope.launch {
                             Analytics.track("search_submitted", screen = "search", metadata = buildJsonObject {
                                 put("query", term.take(80))
                                 put("results", products.size)
@@ -111,7 +111,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                         } else stores.take(6).forEach { store ->
                             MarketplaceUi.addWithSpacing(
                                 storeBox,
-                                MarketplaceUi.storeCard(requireContext(), lifecycleScope, store) {
+                                MarketplaceUi.storeCard(requireContext(), viewLifecycleOwner.lifecycleScope, store) {
                                     (activity as MainActivity).show(StoreDetailsFragment.newInstance(store.id))
                                 },
                                 requireContext()
@@ -133,7 +133,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             }
         }
 
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching { repository.categories() }.onSuccess { categories ->
                 suggestionsBox.removeAllViews()
                 categories.take(8).forEach { category ->

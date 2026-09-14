@@ -26,7 +26,7 @@ class CategoriesFragment : Fragment(R.layout.fragment_categories) {
             (activity as MainActivity).show(StoresFragment())
         }
 
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching { Repository().categories() }
                 .onSuccess { categories ->
                     loading.visibility = View.GONE

@@ -54,7 +54,7 @@ class SupportCenterFragment : Fragment() {
     }
 
     private fun loadExisting() {
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching { repository.tickets() to repository.complaints() }
                 .onSuccess { (tickets, complaints) ->
                     val context = requireContext()
@@ -92,7 +92,7 @@ class SupportCenterFragment : Fragment() {
         root.addView(subject)
         root.addView(body)
         root.addView(ScreenUi.button(context, "إرسال") {
-            lifecycleScope.launch {
+            viewLifecycleOwner.lifecycleScope.launch {
                 runCatching { repository.createTicket(subject.text.toString(), body.text.toString()) }
                     .onSuccess { toast("تم إنشاء التذكرة"); renderHome() }
                     .onFailure { toast(it.message ?: "تعذر إنشاء التذكرة") }
@@ -130,7 +130,7 @@ class SupportCenterFragment : Fragment() {
         root.addView(subject)
         root.addView(body)
         root.addView(ScreenUi.button(context, "إرسال الشكوى") {
-            lifecycleScope.launch {
+            viewLifecycleOwner.lifecycleScope.launch {
                 val category = categories[spinner.selectedItemPosition.coerceIn(categories.indices)]
                 runCatching {
                     repository.createComplaint(

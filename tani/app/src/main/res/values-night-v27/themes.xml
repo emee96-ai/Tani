@@ -10,6 +10,7 @@
         <item name="android:statusBarColor">@color/tani_background</item>
         <item name="android:navigationBarColor">@color/tani_surface</item>
         <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
         <item name="android:windowBackground">@color/tani_background</item>
         <item name="materialButtonStyle">@style/Widget.Tani.Button</item>
     </style>

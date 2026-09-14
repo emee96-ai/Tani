@@ -1,13 +1,19 @@
 plugins { id("com.android.application"); id("org.jetbrains.kotlin.android"); id("org.jetbrains.kotlin.plugin.serialization") }
 
 val taniResetRedirect = providers.gradleProperty("TANI_RESET_REDIRECT")
-    .orElse("tani://auth/reset")
+    .orElse("https://tani.invalid/auth/reset")
     .get()
 val taniAppLinkHost = providers.gradleProperty("TANI_APP_LINK_HOST")
     .orElse("tani.invalid")
     .get()
 
 android {
+    buildTypes {
+        getByName("debug") {
+            buildConfigField("String", "PASSWORD_RESET_REDIRECT", "\"tani://auth/reset\"")
+        }
+    }
+
     buildFeatures {
         buildConfig = true
     }

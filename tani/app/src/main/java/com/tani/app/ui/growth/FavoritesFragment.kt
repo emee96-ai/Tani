@@ -28,11 +28,11 @@ class FavoritesFragment : Fragment() {
     override fun onViewCreated(view: View, state: Bundle?) { load() }
     private fun load() {
         val c=requireContext(); root.removeAllViews(); root.addView(ScreenUi.title(c,"المفضلة")); root.addView(ScreenUi.subtitle(c,"المنتجات التي حفظتيها للرجوع إليها بسهولة."))
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching { repository.favoriteProducts() }.onSuccess { products ->
                 if(products.isEmpty()) root.addView(ScreenUi.muted(c,"لم تحفظي أي منتج بعد."))
                 else MarketplaceUi.addTwoColumnGrid(root, products.map { p ->
-                    MarketplaceUi.productCard(c,lifecycleScope,p,
+                    MarketplaceUi.productCard(c,viewLifecycleOwner.lifecycleScope,p,
                         onOpen={ (activity as MainActivity).show(ProductDetailsFragment.newInstance(p.id)) },
                         onAdd={ Cart.add(p.toProduct()); Toast.makeText(c,"تمت الإضافة للسلة",Toast.LENGTH_SHORT).show() }
                     )

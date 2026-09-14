@@ -35,7 +35,7 @@ class AddressesFragment : Fragment(R.layout.fragment_addresses) {
 
     private fun load() {
         progress.visibility = View.VISIBLE
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching { repository.addresses() }
                 .onSuccess {
                     addresses = it
@@ -139,7 +139,7 @@ class AddressesFragment : Fragment(R.layout.fragment_addresses) {
             .create()
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                lifecycleScope.launch {
+                viewLifecycleOwner.lifecycleScope.launch {
                     runCatching {
                         if (existing == null) {
                             repository.addAddress(
@@ -169,7 +169,7 @@ class AddressesFragment : Fragment(R.layout.fragment_addresses) {
             .setTitle("حذف العنوان")
             .setMessage("هل تريدين حذف ${address.label}؟")
             .setPositiveButton("حذف") { _, _ ->
-                lifecycleScope.launch {
+                viewLifecycleOwner.lifecycleScope.launch {
                     runCatching { repository.deleteAddress(address.id) }
                         .onSuccess { load() }
                         .onFailure { Toast.makeText(requireContext(), it.message ?: "تعذر الحذف", Toast.LENGTH_LONG).show() }

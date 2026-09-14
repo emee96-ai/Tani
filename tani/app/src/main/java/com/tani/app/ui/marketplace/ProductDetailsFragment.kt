@@ -32,7 +32,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
         val loading = view.findViewById<TextView>(R.id.product_details_loading)
         val content = view.findViewById<LinearLayout>(R.id.product_details_content)
 
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching { repository.productDetails(productId) }
                 .onSuccess { details ->
                     loading.visibility = View.GONE
@@ -65,7 +65,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
 
         val trustText = view.findViewById<TextView>(R.id.product_details_trust)
         trustText.text = "جاري حساب مستوى الثقة…"
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching { trustRepository.merchantTrust(product.seller_id) }.onSuccess { trust ->
                 trustText.text = if (trust == null) {
                     verification?.let { "حالة المتجر: $it" } ?: "لا توجد بيانات ثقة إضافية"
@@ -98,7 +98,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
         val imagePath = details.images.firstOrNull { it.is_primary }?.storage_path
             ?: details.images.firstOrNull()?.storage_path
             ?: product.image
-        repository.productImageUrl(imagePath)?.let { MarketplaceUi.loadImage(lifecycleScope, image, it) }
+        repository.productImageUrl(imagePath)?.let { MarketplaceUi.loadImage(viewLifecycleOwner.lifecycleScope, image, it) }
 
         val gallery = view.findViewById<LinearLayout>(R.id.product_details_images)
         gallery.removeAllViews()
@@ -112,10 +112,10 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
                 scaleType = ImageView.ScaleType.CENTER_CROP
                 setImageResource(R.drawable.ic_image_placeholder)
                 setOnClickListener {
-                    repository.productImageUrl(path)?.let { url -> MarketplaceUi.loadImage(lifecycleScope, image, url) }
+                    repository.productImageUrl(path)?.let { url -> MarketplaceUi.loadImage(viewLifecycleOwner.lifecycleScope, image, url) }
                 }
             }
-            repository.productImageUrl(path)?.let { MarketplaceUi.loadImage(lifecycleScope, thumb, it) }
+            repository.productImageUrl(path)?.let { MarketplaceUi.loadImage(viewLifecycleOwner.lifecycleScope, thumb, it) }
             gallery.addView(thumb)
         }
 
@@ -125,7 +125,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
             setOnClickListener {
                 if (Cart.add(product.toProduct())) {
                     (activity as? MainActivity)?.refreshCartBadge()
-                    lifecycleScope.launch {
+                    viewLifecycleOwner.lifecycleScope.launch {
                         Analytics.track("add_to_cart", screen = "product_details", entityType = "product", entityId = product.id)
                     }
                     Toast.makeText(requireContext(), "تمت إضافة ${product.name} للسلة", Toast.LENGTH_SHORT).show()
@@ -139,14 +139,14 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
         val shareButton = view.findViewById<Button>(R.id.product_details_share)
         var favoriteState = false
         favoriteButton.isEnabled = !Supabase.userId.isNullOrBlank()
-        if (favoriteButton.isEnabled) lifecycleScope.launch {
+        if (favoriteButton.isEnabled) viewLifecycleOwner.lifecycleScope.launch {
             runCatching { growthRepository.isFavorite(product.id) }.onSuccess { value ->
                 favoriteState = value
                 favoriteButton.text = if (value) "محفوظ ✓" else "حفظ"
             }
         } else favoriteButton.text = "دخول للحفظ"
         favoriteButton.setOnClickListener {
-            lifecycleScope.launch {
+            viewLifecycleOwner.lifecycleScope.launch {
                 val target = !favoriteState
                 runCatching { growthRepository.setFavorite(product.id, target) }
                     .onSuccess {
@@ -207,7 +207,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
         } else {
             val cards = details.related.map { related ->
                 MarketplaceUi.productCard(
-                    requireContext(), lifecycleScope, related,
+                    requireContext(), viewLifecycleOwner.lifecycleScope, related,
                     onOpen = { (activity as MainActivity).show(newInstance(related.id)) },
                     onAdd = {
                         if (Cart.add(related.toProduct())) {

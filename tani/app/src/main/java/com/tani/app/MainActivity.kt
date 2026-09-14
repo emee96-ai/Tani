@@ -106,7 +106,7 @@ class MainActivity : AppCompatActivity() {
     private fun handleAuthDeepLink(intent: Intent?): Boolean {
         val uri = intent?.data ?: return false
         val isLegacyRecovery =
-            uri.scheme == "tani" && uri.host == "auth" && uri.path == "/reset"
+            BuildConfig.DEBUG && uri.scheme == "tani" && uri.host == "auth" && uri.path == "/reset"
         val isVerifiedRecovery =
             uri.scheme == "https" &&
                 uri.host.equals(BuildConfig.APP_LINK_HOST, ignoreCase = true) &&

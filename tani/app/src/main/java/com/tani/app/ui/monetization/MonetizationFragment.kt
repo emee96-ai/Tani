@@ -47,7 +47,7 @@ class MonetizationFragment : Fragment() {
             )
         )
 
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching {
                 Triple(
                     repository.plans(),
@@ -67,7 +67,7 @@ class MonetizationFragment : Fragment() {
                             addView(ScreenUi.muted(context, "${plan.price} SDG • ${plan.duration_days} يوم"))
                             addView(
                                 ScreenUi.button(context, "طلب الاشتراك") {
-                                    lifecycleScope.launch {
+                                    viewLifecycleOwner.lifecycleScope.launch {
                                         runCatching {
                                             repository.requestSubscription(sellerId, plan.id, "")
                                         }.onSuccess {
@@ -103,7 +103,7 @@ class MonetizationFragment : Fragment() {
                 root.addView(ScreenUi.text(context, "الظهور المميز", 19f, true))
                 root.addView(
                     ScreenUi.button(context, "طلب ظهور ممول في الصفحة الرئيسية") {
-                        lifecycleScope.launch {
+                        viewLifecycleOwner.lifecycleScope.launch {
                             runCatching {
                                 repository.requestFeatured(
                                     sellerId = sellerId,
@@ -140,7 +140,7 @@ class MonetizationFragment : Fragment() {
                 root.addView(ScreenUi.text(context, "الإعلانات", 19f, true))
                 root.addView(
                     ScreenUi.button(context, "إنشاء حملة للمراجعة") {
-                        lifecycleScope.launch {
+                        viewLifecycleOwner.lifecycleScope.launch {
                             runCatching {
                                 repository.createAdCampaign(
                                     sellerId = sellerId,

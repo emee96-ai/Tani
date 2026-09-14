@@ -67,7 +67,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             (activity as MainActivity).show(StoresFragment())
         }
 
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             runCatching { repository.homeFeed() }
                 .onSuccess { feed ->
                     loading.visibility = View.GONE
@@ -104,7 +104,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     } else feed.stores.forEach { store ->
                         MarketplaceUi.addWithSpacing(
                             storesBox,
-                            MarketplaceUi.storeCard(requireContext(), lifecycleScope, store) {
+                            MarketplaceUi.storeCard(requireContext(), viewLifecycleOwner.lifecycleScope, store) {
                                 (activity as MainActivity).show(StoreDetailsFragment.newInstance(store.id))
                             },
                             requireContext()
@@ -117,7 +117,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
 
         val cache = MarketplaceCache(requireContext())
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             if (Supabase.userId.isNullOrBlank()) {
                 recommendedTitle.text = "منتجات مقترحة"
                 val fallback = cache.load("home_recommendations")
@@ -152,7 +152,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val cards = products.map { product ->
             MarketplaceUi.productCard(
                     requireContext(),
-                    lifecycleScope,
+                    viewLifecycleOwner.lifecycleScope,
                     product,
                     onOpen = {
                         (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id))
@@ -160,7 +160,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     onAdd = {
                         if (Cart.add(product.toProduct())) {
                             (activity as? MainActivity)?.refreshCartBadge()
-                            lifecycleScope.launch {
+                            viewLifecycleOwner.lifecycleScope.launch {
                                 Analytics.track("add_to_cart", screen = "home", entityType = "product", entityId = product.id)
                             }
                             Toast.makeText(requireContext(), "تمت إضافة ${product.name} للسلة", Toast.LENGTH_SHORT).show()

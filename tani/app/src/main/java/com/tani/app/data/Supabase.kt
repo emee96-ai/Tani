@@ -5,6 +5,7 @@ import android.util.Base64
 import com.tani.app.BuildConfig
 import com.tani.app.security.SecureTokenStorage
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.engine.android.Android
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.get
@@ -53,6 +54,11 @@ object Supabase {
 
     val client = HttpClient(Android) {
         expectSuccess = false
+        install(HttpTimeout) {
+            connectTimeoutMillis = 10_000
+            requestTimeoutMillis = 20_000
+            socketTimeoutMillis = 20_000
+        }
     }
 
     fun init(context: Context) {

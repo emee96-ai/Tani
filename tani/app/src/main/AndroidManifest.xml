@@ -20,16 +20,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <intent-filter android:autoVerify="false">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:scheme="tani"
-                    android:host="auth"
-                    android:path="/reset" />
-            </intent-filter>
-
             <!-- Production-ready Verified App Link path. Set TANI_APP_LINK_HOST
                  and TANI_RESET_REDIRECT to the real HTTPS domain in release CI. -->
             <intent-filter android:autoVerify="true">

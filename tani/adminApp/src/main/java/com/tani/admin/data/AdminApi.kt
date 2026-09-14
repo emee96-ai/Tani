@@ -3,6 +3,7 @@ package com.tani.admin.data
 import android.content.Context
 import com.tani.admin.security.SecureTokenStorage
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.call.body
 import io.ktor.client.engine.android.Android
 import io.ktor.client.request.HttpRequestBuilder
@@ -45,7 +46,14 @@ object AdminApi {
         isLenient = true
     }
 
-    private val client = HttpClient(Android) { expectSuccess = false }
+    private val client = HttpClient(Android) {
+        expectSuccess = false
+        install(HttpTimeout) {
+            connectTimeoutMillis = 10_000
+            requestTimeoutMillis = 20_000
+            socketTimeoutMillis = 20_000
+        }
+    }
 
     fun init(context: Context) {
         storage = SecureTokenStorage(context.applicationContext)

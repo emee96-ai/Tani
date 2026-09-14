@@ -24,7 +24,7 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
         val list = view.findViewById<RecyclerView>(R.id.stores_list)
         arguments?.getString(ARG_QUERY)?.let(search::setText)
 
-        val adapter = StoreListAdapter(requireContext(), lifecycleScope) { store ->
+        val adapter = StoreListAdapter(requireContext(), viewLifecycleOwner.lifecycleScope) { store ->
             (activity as MainActivity).show(StoreDetailsFragment.newInstance(store.id))
         }
         list.layoutManager = LinearLayoutManager(requireContext())
@@ -33,7 +33,7 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
         fun load() {
             loading.visibility = View.VISIBLE
             loading.text = "جاري تحميل المتاجر..."
-            lifecycleScope.launch {
+            viewLifecycleOwner.lifecycleScope.launch {
                 runCatching { repository.stores(search.text.toString(), limit = 100) }
                     .onSuccess { stores ->
                         adapter.submitList(stores)
