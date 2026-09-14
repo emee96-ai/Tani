@@ -21,26 +21,26 @@ declare
   v_seen_sellers uuid[] := array[]::uuid[];
 begin
   if v_uid is null then
-    raise exception 'Authentication required';
+    raise exception 'يجب تسجيل الدخول أولاً';
   end if;
 
   if not exists (
     select 1 from public.profiles p
     where p.id = v_uid and p.is_active = true and p.deleted_at is null
   ) then
-    raise exception 'Account is not active';
+    raise exception 'الحساب غير نشط';
   end if;
 
   if jsonb_typeof(coalesce(p_items, '[]'::jsonb)) <> 'array' then
-    raise exception 'Invalid cart';
+    raise exception 'بيانات السلة غير صحيحة';
   end if;
 
   if jsonb_array_length(coalesce(p_items, '[]'::jsonb)) = 0 then
-    raise exception 'Cart is empty';
+    raise exception 'السلة فارغة';
   end if;
 
   if jsonb_array_length(p_items) > 100 then
-    raise exception 'Cart has too many items';
+    raise exception 'السلة تحتوي على منتجات كثيرة جداً';
   end if;
 
   for v_item in
@@ -75,18 +75,8 @@ begin
     where p.id = v_product_id;
 
     if not found then
-      v_warnings := v_warnings || jsonb_build_array('A product no longer exists');
+      v_warnings := v_warnings || jsonb_build_array('أحد المنتجات لم يعد متاحاً');
       continue;
-    end if;
-
-    if not v_product.is_active or v_product.verification_status <> 'approved' then
-      v_warnings := v_warnings || jsonb_build_array(
-        format('%s is not available', v_product.name)
-      );
-    elsif v_product.stock < v_qty then
-      v_warnings := v_warnings || jsonb_build_array(
-        format('Insufficient stock for %s', v_product.name)
-      );
     end if;
 
     v_items := v_items || jsonb_build_array(
@@ -118,7 +108,7 @@ begin
 
       if not found then
         v_warnings := v_warnings || jsonb_build_array(
-          format('Delivery settings are incomplete for seller %s', v_product.seller_id)
+          'إعدادات التوصيل غير مكتملة لهذا المتجر'
         );
         v_delivery_fee := 0;
       end if;
