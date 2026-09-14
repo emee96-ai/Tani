@@ -271,20 +271,30 @@ class Repository {
         "select=*&seller_id=eq.$sellerId&order=created_at.desc&limit=${limit.coerceIn(1,100)}"
     )
 
-    suspend fun productDetails(productId: String): ProductDetails {
+    suspend fun productDetails(productId: String): ProductDetails = coroutineScope {
         val product = productCard(productId)
-        val images = productImages(productId)
-        val variants = productVariants(productId)
-        val reviews = productReviews(productId)
-        val related = product.category_id?.let { categoryId ->
-            Supabase.get<List<ProductCard>>(
-                "marketplace_product_cards",
-                "select=*&category_id=eq.$categoryId&id=neq.$productId&order=average_rating.desc,created_at.desc&limit=6"
-            )
-        }.orEmpty()
-        val store = storeBySeller(product.seller_id)
+        val imagesDeferred = async { productImages(productId) }
+        val variantsDeferred = async { productVariants(productId) }
+        val reviewsDeferred = async { productReviews(productId) }
+        val relatedDeferred = async {
+            product.category_id?.let { categoryId ->
+                Supabase.get<List<ProductCard>>(
+                    "marketplace_product_cards",
+                    "select=*&category_id=eq.$categoryId&id=neq.$productId&order=average_rating.desc,created_at.desc&limit=6"
+                )
+            }.orEmpty()
+        }
+        val storeDeferred = async { storeBySeller(product.seller_id) }
+
         Analytics.track("product_view", screen = "product_details", entityType = "product", entityId = productId)
-        return ProductDetails(product, images, variants, reviews, related, store)
+        ProductDetails(
+            product = product,
+            images = imagesDeferred.await(),
+            variants = variantsDeferred.await(),
+            reviews = reviewsDeferred.await(),
+            related = relatedDeferred.await(),
+            store = storeDeferred.await()
+        )
     }
 
     suspend fun featuredProducts(limit: Int = 6): List<ProductCard> {

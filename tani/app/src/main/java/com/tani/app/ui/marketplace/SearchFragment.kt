@@ -18,6 +18,8 @@ import com.tani.app.data.Repository
 import com.tani.app.data.cache.MarketplaceCache
 import com.tani.app.data.repository.ScaleRepository
 import com.tani.app.ui.products.ProductsFragment
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -80,10 +82,16 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                 val cache = MarketplaceCache(requireContext())
                 val cacheKey = "search_" + term.lowercase().replace(Regex("[^\\p{L}\\p{N}]+"), "_").take(40)
                 runCatching {
-                    val products = scaleRepository.rankedSearch(term, city = "كوستي", limit = 40)
-                    val stores = repository.stores(term, limit = 20)
-                    cache.save(cacheKey, products)
-                    products to stores
+                    coroutineScope {
+                        val productsDeferred = async {
+                            scaleRepository.rankedSearch(term, city = "كوستي", limit = 40)
+                        }
+                        val storesDeferred = async { repository.stores(term, limit = 20) }
+                        val products = productsDeferred.await()
+                        val stores = storesDeferred.await()
+                        cache.save(cacheKey, products)
+                        products to stores
+                    }
                 }
                     .onSuccess { (products, stores) ->
                         viewLifecycleOwner.lifecycleScope.launch {

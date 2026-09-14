@@ -57,5 +57,10 @@ Orders/customers/products/categories modules, case workspace, pagination/search/
 - [x] Network timeout and cleartext hardening prepared.
 - [x] Production recovery restricted to verified HTTPS.
 - [x] Guest browsing with protected checkout/account routes prepared.
-- [ ] CI verification.
+- [x] CI verification for the P0 release-blocker repair.
+- [x] Authoritative cart quotation deployed and verified live.
+- [x] Product-details and search requests parallelized.
+- [x] Image decoding moved off the main thread.
+- [x] Marketplace cache expiry/versioning added with unit coverage.
+- [ ] CI verification for this performance phase.
 - [ ] Real-device smoke test.

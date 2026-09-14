@@ -18,7 +18,9 @@ import com.tani.app.data.ProductCard
 import com.tani.app.data.Repository
 import com.tani.app.data.StoreCard
 import com.tani.app.data.Supabase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Locale
 
 object MarketplaceUi {
@@ -256,7 +258,9 @@ object MarketplaceUi {
         }
         scope.launch {
             val bytes = Supabase.downloadPublicBytes(url) ?: return@launch
-            val bitmap = decodeSampledBitmap(bytes, 900) ?: return@launch
+            val bitmap = withContext(Dispatchers.Default) {
+                decodeSampledBitmap(bytes, 900)
+            } ?: return@launch
             imageCache.put(url, bitmap)
             imageView.setImageBitmap(bitmap)
         }

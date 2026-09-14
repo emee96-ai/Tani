@@ -4,7 +4,7 @@
 create or replace function public.quote_cart(p_items jsonb)
 returns jsonb
 language plpgsql
-security definer
+security invoker
 set search_path = ''
 as $$
 declare

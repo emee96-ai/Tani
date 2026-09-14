@@ -212,6 +212,13 @@ if 'order_items' in orders_policy.lower() or 'orders.seller_id' not in orders_po
     bad('Order RLS recursion regression','orders policy must use orders.seller_id directly')
 else: ok('Order RLS recursion regression')
 
+quote_sql=(root/'supabase/maintenance_v1_quote_cart.sql').read_text(errors='ignore').lower()
+if 'create or replace function public.quote_cart' not in quote_sql:
+    bad('Cart quote RPC','quote_cart migration is missing')
+elif 'security definer' in quote_sql or 'security invoker' not in quote_sql:
+    bad('Cart quote RPC security','quote_cart must run as security invoker')
+else: ok('Cart quote RPC security')
+
 # Required launch docs.
 required={
  'TERMS_AND_PRIVACY_DRAFT.md','MERCHANT_AGREEMENT_DRAFT.md','REFUND_CANCELLATION_POLICY_DRAFT.md',
