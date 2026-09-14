@@ -207,7 +207,7 @@ elif 'android:scheme="tani"' not in debug_manifest:
 else: ok('Auth redirect build separation')
 
 order_rls=(root/'supabase/fix_recursive_order_rls.sql').read_text(errors='ignore')
-orders_policy=order_rls.split('drop policy if exists tani_order_items_own_read')[0]
+orders_policy=order_rls.split('create policy tani_orders_own_read', 1)[1].split('drop policy if exists tani_order_items_own_read', 1)[0]
 if 'order_items' in orders_policy.lower() or 'orders.seller_id' not in orders_policy:
     bad('Order RLS recursion regression','orders policy must use orders.seller_id directly')
 else: ok('Order RLS recursion regression')
