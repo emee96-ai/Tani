@@ -2,6 +2,7 @@ package com.tani.admin.data
 
 import android.content.Context
 import com.tani.admin.security.SecureTokenStorage
+import com.tani.admin.AdminUiText
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.call.body
@@ -143,8 +144,8 @@ object AdminApi {
             HttpMethod.Get,
             extraHeaders = mapOf("Prefer" to "count=exact", "Range" to "0-0")
         )
-        response.bodyAsText()
-        if (response.status.value !in 200..299) return 0
+        val text = response.bodyAsText()
+        ensureOk(response, text)
         val total = response.headers["Content-Range"]?.substringAfterLast('/')?.toIntOrNull()
         return total ?: 0
     }
@@ -162,8 +163,13 @@ object AdminApi {
     }
 
     suspend fun patchRow(table: String, id: String, body: JsonObject) {
+        patchRowBy(table, "id", id, body)
+    }
+
+    suspend fun patchRowBy(table: String, column: String, value: String, body: JsonObject) {
+        require(column.matches(Regex("[a-z_]+"))) { "Invalid column" }
         val response = authedRequest(
-            "$URL/rest/v1/$table?id=eq.${enc(id)}",
+            "$URL/rest/v1/$table?$column=eq.${enc(value)}",
             HttpMethod.Patch,
             body = body.toString(),
             extraHeaders = mapOf("Prefer" to "return=minimal")
@@ -259,10 +265,10 @@ object AdminApi {
                 .mapNotNull { obj[it]?.jsonPrimitive?.contentOrNull }
                 .firstOrNull { it.isNotBlank() }
         }.getOrNull()
-        error(message ?: "تعذر تنفيذ العملية (${response.status.value})")
+        error(AdminUiText.backendMessage(message, response.status.value))
     }
 
-    private fun enc(value: String): String = URLEncoder.encode(value, Charsets.UTF_8.name())
+    fun enc(value: String): String = URLEncoder.encode(value, Charsets.UTF_8.name())
 }
 
 fun JsonObject.string(key: String): String? = this[key]?.let { el ->

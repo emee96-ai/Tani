@@ -7,4 +7,5 @@
     <string name="sign_in">تسجيل الدخول</string>
     <string name="logout">خروج</string>
     <string name="refresh">تحديث</string>
+    <string name="search">بحث</string>
 </resources>

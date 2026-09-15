@@ -27,7 +27,9 @@ def bad(label, items):
     print(f"FAIL: {label}: {items}")
 
 # XML / manifest parsing
-xmls=[root/'app/src/main/AndroidManifest.xml'] + list((root/'app/src/main/res').rglob('*.xml'))
+app_xmls=[root/'app/src/main/AndroidManifest.xml'] + list((root/'app/src/main/res').rglob('*.xml'))
+admin_xmls=[root/'adminApp/src/main/AndroidManifest.xml'] + list((root/'adminApp/src/main/res').rglob('*.xml'))
+xmls=app_xmls+admin_xmls
 for p in xmls:
     try: ET.parse(p)
     except Exception as e: bad('XML parse', f'{p}: {e}')
@@ -43,6 +45,16 @@ id_refs=set(re.findall(r'(?<!android\.)R\.id\.([A-Za-z0-9_]+)',kt))
 missing=sorted(id_refs-id_defs)
 if missing: bad('Android R.id references', missing)
 else: ok('Android R.id references', str(len(id_refs)))
+
+admin_id_defs=set()
+for p in (root/'adminApp/src/main/res').rglob('*.xml'):
+    txt=p.read_text(errors='ignore')
+    admin_id_defs |= set(re.findall(r'@\+id/([A-Za-z0-9_]+)',txt))
+admin_kt='\n'.join(p.read_text(errors='ignore') for p in (root/'adminApp/src/main/java').rglob('*.kt'))
+admin_id_refs=set(re.findall(r'(?<!android\.)R\.id\.([A-Za-z0-9_]+)',admin_kt))
+missing_admin_android=sorted(admin_id_refs-admin_id_defs)
+if missing_admin_android: bad('Admin Android R.id references',missing_admin_android)
+else: ok('Admin Android R.id references',str(len(admin_id_refs)))
 
 # Resource references from Kotlin and XML.
 res=root/'app/src/main/res'
@@ -75,7 +87,7 @@ res_defs["style"] |= {name.replace(".", "_") for name in res_defs["style"]}
 refs=[]
 for m in re.finditer(r'(?<!android\.)R\.(layout|drawable|mipmap|menu|xml|font|raw|anim|animator|navigation|transition|color|string|style|dimen|integer|bool|array|plurals|attr)\.([A-Za-z0-9_]+)',kt):
     refs.append((m.group(1),m.group(2),'Kotlin'))
-for p in xmls:
+for p in app_xmls:
     txt=p.read_text(errors='ignore')
     for m in re.finditer(r'(?<!android:)@(layout|drawable|mipmap|menu|xml|font|raw|anim|animator|navigation|transition|color|string|style|dimen|integer|bool|array|plurals|attr)/([A-Za-z0-9_.]+)',txt):
         
@@ -144,6 +156,10 @@ for m in re.finditer(r'\brpc\(\s*[`\'"]([A-Za-z0-9_]+)[`\'"]',admin): kt_rpc.add
 for m in re.finditer(r'/rest/v1/([A-Za-z0-9_]+)(?:\?|[?`\'"])',admin):
     if m.group(1) != 'rpc': kt_rel.add(m.group(1))
 for m in re.finditer(r'/rest/v1/rpc/([A-Za-z0-9_]+)',admin): kt_rpc.add(m.group(1))
+for m in re.finditer(r'AdminApi\.(?:rows|exactCount|patchRow|patchRowBy)\(\s*"([A-Za-z0-9_]+)"',admin_kt):
+    kt_rel.add(m.group(1))
+for m in re.finditer(r'AdminApi\.rpc\(\s*"([A-Za-z0-9_]+)"',admin_kt):
+    kt_rpc.add(m.group(1))
 missing_tables=sorted(x for x in kt_rel if x not in relations and x not in {'marketplace_product_cards','marketplace_store_cards'})
 # views may be created with security_invoker syntax, catch generic create view separately
 for x in list(missing_tables):
@@ -161,7 +177,7 @@ for p in (root/'supabase').glob('*.sql'):
 if not any(x[0]=='SQL dollar-quote balance' for x in errors): ok('SQL dollar-quote balance')
 
 # Secret scan: publishable keys are allowed; privileged keys are not.
-scan_files=[p for p in list((root/'app').rglob('*'))+list((root/'admin').rglob('*')) if p.suffix.lower() not in {'.md','.txt'}]
+scan_files=[p for p in list((root/'app').rglob('*'))+list((root/'adminApp').rglob('*'))+list((root/'admin').rglob('*')) if p.suffix.lower() not in {'.md','.txt'}]
 secret_hits=[]
 patterns=[r'(?i)service[_ -]?role',r'(?i)supabase_service_role',r'\bsk_[A-Za-z0-9_-]{16,}\b',r'(?i)private[_ -]?key']
 for p in scan_files:
@@ -175,7 +191,7 @@ else: ok('Privileged secret scan')
 
 # Unfinished/debug placeholders.
 unfinished=[]
-for p in list((root/'app/src/main/java').rglob('*.kt'))+list((root/'admin').rglob('*.js')):
+for p in list((root/'app/src/main/java').rglob('*.kt'))+list((root/'adminApp/src/main/java').rglob('*.kt'))+list((root/'admin').rglob('*.js')):
     txt=p.read_text(errors='ignore')
     if re.search(r'\b(TODO|FIXME|NotImplementedError)\b|TODO\(',txt): unfinished.append(str(p))
 if unfinished: bad('Unfinished-code scan',unfinished)
@@ -234,6 +250,16 @@ elif 'auth.uid()' in re.sub(r'\(select\s+auth\.uid\(\)\)', '', hot_rls):
     bad('Hot RLS optimization','auth.uid() must be wrapped in a scalar select')
 else: ok('Hot RLS optimization')
 
+admin_ops=(root/'supabase/admin_operations_v2.sql').read_text(errors='ignore').lower()
+required_admin_ops={'admin_set_product_active','admin_set_category_active'}
+if not required_admin_ops.issubset(set(re.findall(r'create or replace function public\.([a-z0-9_]+)',admin_ops))):
+    bad('Admin operation RPCs','one or more protected admin operations are missing')
+elif 'security definer' in admin_ops or admin_ops.count('security invoker') < len(required_admin_ops):
+    bad('Admin operation RPC security','admin operations must keep RLS active with security invoker')
+elif 'admin permission required' not in admin_ops or 'revoke all on function' not in admin_ops:
+    bad('Admin operation authorization','explicit admin checks and grants are required')
+else: ok('Admin operation RPC security')
+
 # Required launch docs.
 required={
  'TERMS_AND_PRIVACY_DRAFT.md','MERCHANT_AGREEMENT_DRAFT.md','REFUND_CANCELLATION_POLICY_DRAFT.md',
@@ -262,4 +288,3 @@ if errors:
     sys.exit(1)
 print('\nSTATIC QA PASSED')
 PY
-
