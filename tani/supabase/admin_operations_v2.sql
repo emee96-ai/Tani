@@ -1,7 +1,16 @@
 -- Protected moderation actions used by Admin App v2.
--- These functions intentionally use SECURITY DEFINER because product/category rows
--- are otherwise writable only by their merchant owners. Every function performs an
--- explicit active-admin check, fixes search_path, validates input, and writes audit.
+-- These functions run as SECURITY INVOKER so the underlying RLS policies remain
+-- authoritative. Every function also performs an explicit active-admin check,
+-- fixes search_path, validates input, and writes an audit record atomically.
+
+drop policy if exists tani_audit_admin_insert on public.audit_logs;
+create policy tani_audit_admin_insert
+on public.audit_logs for insert to authenticated
+with check(
+  actor_id=(select auth.uid())
+  and (select public.current_user_role())='admin'
+);
+grant insert on public.audit_logs to authenticated;
 
 create or replace function public.admin_set_product_active(
   p_product_id uuid,
@@ -10,7 +19,7 @@ create or replace function public.admin_set_product_active(
 )
 returns boolean
 language plpgsql
-security definer
+security invoker
 set search_path=''
 as $$
 declare
@@ -60,7 +69,7 @@ create or replace function public.admin_set_category_active(
 )
 returns boolean
 language plpgsql
-security definer
+security invoker
 set search_path=''
 as $$
 declare

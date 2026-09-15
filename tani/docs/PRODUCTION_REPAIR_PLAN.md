@@ -65,3 +65,13 @@ Orders/customers/products/categories modules, case workspace, pagination/search/
 - [x] Hot-path RLS policies optimized without changing customer, merchant, or guest visibility.
 - [ ] CI verification for this performance phase.
 - [ ] Real-device smoke test.
+
+## Admin App V2
+
+- [x] Split the single long dashboard into independently loaded sections.
+- [x] Add bottom navigation for daily operations and a drawer for management/reporting.
+- [x] Add server-backed filters, search, pagination, confirmations, and required decision notes.
+- [x] Add 7/30/90-day marketplace reports and a dedicated system-health screen.
+- [x] Hide raw backend errors from operational UI while retaining technical detail access.
+- [x] Add RLS-preserving audited product/category moderation actions.
+- [ ] Real-device admin workflow smoke test.
