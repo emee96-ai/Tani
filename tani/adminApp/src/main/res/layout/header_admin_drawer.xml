@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="176dp"
+    android:layout_height="wrap_content"
     android:background="@color/brand_soft"
     android:gravity="bottom"
     android:orientation="vertical"
@@ -29,4 +29,11 @@
         android:layout_marginTop="3dp"
         android:textColor="@color/tani_primary_dark"
         android:textSize="13sp" />
+
+    <com.tani.admin.AdminManagementButton
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="12dp"
+        android:text="إدارة المشرفين"
+        android:visibility="gone" />
 </LinearLayout>

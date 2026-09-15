@@ -74,7 +74,11 @@ object AdminUiText {
     fun backendMessage(raw: String?, status: Int): String {
         val value = raw.orEmpty().lowercase()
         return when {
-            "admin permission required" in value || "admin required" in value -> "هذه العملية متاحة للمدير فقط"
+            "cannot remove the last active admin" in value -> "لا يمكن إزالة آخر مدير نشط. أضيفي مديراً آخر أولاً"
+            "no registered account found for this email" in value -> "هذا البريد غير مسجل في تاني"
+            "user profile not found" in value -> "الحساب موجود لكن ملف المستخدم غير مكتمل"
+            "invalid role" in value -> "الصلاحية المختارة غير صالحة"
+            "admin permission required" in value || "admin required" in value || "admin access required" in value -> "هذه العملية متاحة للمدير فقط"
             "merchant application is incomplete" in value -> "بيانات التاجر غير مكتملة ولا يمكن اعتمادها"
             "identity document" in value -> "مستند هوية التاجر غير موجود أو غير صالح"
             "order is already in a final state" in value -> "الطلب وصل إلى حالة نهائية ولا يمكن تغييره"
