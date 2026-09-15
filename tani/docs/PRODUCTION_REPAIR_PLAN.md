@@ -62,5 +62,6 @@ Orders/customers/products/categories modules, case workspace, pagination/search/
 - [x] Product-details and search requests parallelized.
 - [x] Image decoding moved off the main thread.
 - [x] Marketplace cache expiry/versioning added with unit coverage.
+- [x] Hot-path RLS policies optimized without changing customer, merchant, or guest visibility.
 - [ ] CI verification for this performance phase.
 - [ ] Real-device smoke test.

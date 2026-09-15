@@ -219,6 +219,21 @@ elif 'security definer' in quote_sql or 'security invoker' not in quote_sql:
     bad('Cart quote RPC security','quote_cart must run as security invoker')
 else: ok('Cart quote RPC security')
 
+hot_rls=(root/'supabase/optimize_hot_rls_policies.sql').read_text(errors='ignore').lower()
+required_hot_policies={
+    'tani_addresses_owner_all',
+    'tani_carts_owner_all',
+    'tani_cart_items_owner_all',
+    'tani_order_groups_owner_read',
+    'tani_store_public_read',
+    'tani_variants_public_read',
+}
+if not required_hot_policies.issubset(set(re.findall(r'create policy\s+([a-z0-9_]+)', hot_rls))):
+    bad('Hot RLS optimization','one or more optimized policies are missing')
+elif 'auth.uid()' in re.sub(r'\(select\s+auth\.uid\(\)\)', '', hot_rls):
+    bad('Hot RLS optimization','auth.uid() must be wrapped in a scalar select')
+else: ok('Hot RLS optimization')
+
 # Required launch docs.
 required={
  'TERMS_AND_PRIVACY_DRAFT.md','MERCHANT_AGREEMENT_DRAFT.md','REFUND_CANCELLATION_POLICY_DRAFT.md',
