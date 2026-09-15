@@ -4,11 +4,15 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.navigation.NavigationView
 import com.tani.app.data.Analytics
 import com.tani.app.data.AuthRedirect
 import com.tani.app.data.Cart
@@ -17,7 +21,10 @@ import com.tani.app.data.Supabase
 import com.tani.app.ui.auth.AuthFragment
 import com.tani.app.ui.cart.CartFragment
 import com.tani.app.ui.categories.CategoriesFragment
+import com.tani.app.ui.growth.FavoritesFragment
+import com.tani.app.ui.growth.NotificationsFragment
 import com.tani.app.ui.home.HomeFragment
+import com.tani.app.ui.marketplace.StoresFragment
 import com.tani.app.ui.orders.OrdersFragment
 import com.tani.app.ui.profile.ProfileFragment
 import java.net.URLDecoder
@@ -27,6 +34,8 @@ class MainActivity : AppCompatActivity() {
 
     lateinit var nav: BottomNavigationView
     private lateinit var toolbar: MaterialToolbar
+    private lateinit var drawer: DrawerLayout
+    private lateinit var drawerNav: NavigationView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(R.style.Theme_Tani)
@@ -40,6 +49,10 @@ class MainActivity : AppCompatActivity() {
             Analytics.track("app_open", screen = "app")
         }
         setContentView(R.layout.activity_main)
+
+        drawer = findViewById(R.id.drawer_layout)
+        drawerNav = findViewById(R.id.drawer_nav)
+        setDrawerEnabled(false)
 
         val launchSplash = findViewById<View>(R.id.launch_splash)
         launchSplash.alpha = 0f
@@ -64,7 +77,13 @@ class MainActivity : AppCompatActivity() {
             .start()
 
         toolbar = findViewById(R.id.top_app_bar)
-        toolbar.setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
+        toolbar.setNavigationOnClickListener {
+            if (supportFragmentManager.backStackEntryCount > 0) {
+                onBackPressedDispatcher.onBackPressed()
+            } else {
+                drawer.openDrawer(GravityCompat.START)
+            }
+        }
 
         nav = findViewById(R.id.bottom_nav)
         nav.menu.clear()
@@ -79,8 +98,21 @@ class MainActivity : AppCompatActivity() {
             }
             true
         }
+        setupDrawerNavigation()
         supportFragmentManager.addOnBackStackChangedListener { updateChromeFromBackStack() }
         refreshCartBadge()
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (drawer.isDrawerOpen(GravityCompat.START)) {
+                    drawer.closeDrawer(GravityCompat.START)
+                    return
+                }
+                isEnabled = false
+                onBackPressedDispatcher.onBackPressed()
+                isEnabled = true
+            }
+        })
 
         if (!handleAuthDeepLink(intent)) {
             if (Supabase.hasStoredSession()) {
@@ -89,6 +121,24 @@ class MainActivity : AppCompatActivity() {
                 Supabase.clearSession()
                 showApp()
             }
+        }
+    }
+
+    private fun setupDrawerNavigation() {
+        drawerNav.setNavigationItemSelectedListener { item ->
+            drawer.closeDrawer(GravityCompat.START)
+            when (item.itemId) {
+                R.id.drawer_home -> showPrimary(HomeFragment())
+                R.id.drawer_categories -> showPrimary(CategoriesFragment())
+                R.id.drawer_stores -> show(StoresFragment())
+                R.id.drawer_favorites -> showProtectedSecondary(FavoritesFragment())
+                R.id.drawer_cart -> showPrimary(CartFragment())
+                R.id.drawer_orders -> showProtected(OrdersFragment())
+                R.id.drawer_notifications -> showProtectedSecondary(NotificationsFragment())
+                R.id.drawer_profile -> showProtected(ProfileFragment())
+                else -> return@setNavigationItemSelectedListener false
+            }
+            true
         }
     }
 
@@ -120,6 +170,7 @@ class MainActivity : AppCompatActivity() {
         val error = params["error_description"] ?: params["error"]
 
         if (error != null) {
+            setDrawerEnabled(false)
             nav.visibility = View.GONE
             toolbar.visibility = View.GONE
             show(
@@ -139,6 +190,7 @@ class MainActivity : AppCompatActivity() {
             return true
         }
 
+        setDrawerEnabled(false)
         nav.visibility = View.GONE
         toolbar.visibility = View.GONE
         show(
@@ -169,27 +221,30 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun showAuth() {
+        drawer.closeDrawer(GravityCompat.START)
+        setDrawerEnabled(false)
         nav.visibility = View.GONE
         toolbar.visibility = View.GONE
         show(AuthFragment(), addToBackStack = false)
     }
 
     fun showApp() {
-        nav.visibility = View.VISIBLE
-        toolbar.visibility = View.GONE
         showPrimary(HomeFragment())
     }
 
     fun show(fragment: Fragment, addToBackStack: Boolean = true) {
         val screen = fragment.javaClass.simpleName
             .removeSuffix("Fragment")
-            .replace(Regex("([a-z])([A-Z])"), "\$1_\$2")
+            .replace(Regex("([a-z])([A-Z])"), "$1_$2")
             .lowercase()
         lifecycleScope.launch { Analytics.track("screen_view", screen = screen) }
 
         if (addToBackStack) {
+            drawer.closeDrawer(GravityCompat.START)
+            setDrawerEnabled(false)
             nav.visibility = View.GONE
             toolbar.visibility = View.VISIBLE
+            toolbar.setNavigationIcon(R.drawable.ic_back)
             toolbar.title = screenTitle(fragment)
         }
 
@@ -201,10 +256,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showPrimary(fragment: Fragment) {
-        supportFragmentManager.popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
-        toolbar.visibility = View.GONE
+        supportFragmentManager.popBackStackImmediate(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
+        setDrawerEnabled(true)
+        toolbar.visibility = View.VISIBLE
+        toolbar.setNavigationIcon(R.drawable.ic_menu)
+        toolbar.title = screenTitle(fragment)
         nav.visibility = View.VISIBLE
         refreshCartBadge()
+        updateDrawerSelection(fragment)
         show(fragment, addToBackStack = false)
     }
 
@@ -214,6 +273,33 @@ class MainActivity : AppCompatActivity() {
         } else {
             show(AuthFragment())
         }
+    }
+
+    private fun showProtectedSecondary(fragment: Fragment) {
+        if (Supabase.hasStoredSession()) {
+            show(fragment)
+        } else {
+            show(AuthFragment())
+        }
+    }
+
+    private fun setDrawerEnabled(enabled: Boolean) {
+        drawer.setDrawerLockMode(
+            if (enabled) DrawerLayout.LOCK_MODE_UNLOCKED else DrawerLayout.LOCK_MODE_LOCKED_CLOSED,
+            GravityCompat.START
+        )
+    }
+
+    private fun updateDrawerSelection(fragment: Fragment) {
+        val item = when (fragment.javaClass.simpleName) {
+            "HomeFragment" -> R.id.drawer_home
+            "CategoriesFragment" -> R.id.drawer_categories
+            "CartFragment" -> R.id.drawer_cart
+            "OrdersFragment" -> R.id.drawer_orders
+            "ProfileFragment" -> R.id.drawer_profile
+            else -> return
+        }
+        drawerNav.setCheckedItem(item)
     }
 
     fun refreshCartBadge() {
@@ -226,18 +312,36 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateChromeFromBackStack() {
         val count = supportFragmentManager.backStackEntryCount
+        val current = supportFragmentManager.findFragmentById(R.id.nav_host)
         if (count <= 0) {
-            toolbar.visibility = View.GONE
+            if (current is AuthFragment && !Supabase.hasStoredSession()) {
+                setDrawerEnabled(false)
+                toolbar.visibility = View.GONE
+                nav.visibility = View.GONE
+                return
+            }
+            setDrawerEnabled(true)
+            toolbar.visibility = View.VISIBLE
+            toolbar.setNavigationIcon(R.drawable.ic_menu)
+            toolbar.title = current?.let(::screenTitle) ?: "تاني"
             nav.visibility = View.VISIBLE
+            current?.let(::updateDrawerSelection)
             refreshCartBadge()
             return
         }
+        setDrawerEnabled(false)
         nav.visibility = View.GONE
         toolbar.visibility = View.VISIBLE
-        supportFragmentManager.findFragmentById(R.id.nav_host)?.let { toolbar.title = screenTitle(it) }
+        toolbar.setNavigationIcon(R.drawable.ic_back)
+        current?.let { toolbar.title = screenTitle(it) }
     }
 
     private fun screenTitle(fragment: Fragment): String = when (fragment.javaClass.simpleName) {
+        "HomeFragment" -> "تاني"
+        "CategoriesFragment" -> "التصنيفات"
+        "CartFragment" -> "السلة"
+        "OrdersFragment" -> "طلباتي"
+        "ProfileFragment" -> "حسابي"
         "ProductDetailsFragment" -> "تفاصيل المنتج"
         "SearchFragment" -> "البحث"
         "ProductsFragment" -> "المنتجات"

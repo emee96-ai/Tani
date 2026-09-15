@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="176dp"
+    android:layoutDirection="rtl"
+    android:orientation="vertical"
+    android:gravity="bottom|start"
+    android:padding="24dp"
+    android:background="@color/brand_soft">
+
+    <ImageView
+        android:layout_width="108dp"
+        android:layout_height="46dp"
+        android:contentDescription="تاني"
+        android:scaleType="fitStart"
+        android:src="@drawable/tani_wordmark_ar_asset" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="كل السوق في مكان واحد"
+        android:textColor="@color/text_muted"
+        android:textSize="14sp" />
+</LinearLayout>
