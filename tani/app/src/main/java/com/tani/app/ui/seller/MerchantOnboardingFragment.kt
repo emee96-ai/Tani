@@ -629,10 +629,13 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
     }
 
     private fun addSecondaryButton(label: String, action: () -> Unit) {
-        content.addView(MaterialButton(requireContext(), null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+        content.addView(MaterialButton(requireContext()).apply {
             text = label
             isAllCaps = false
             setTextColor(ContextCompat.getColor(requireContext(), R.color.tani_primary))
+            backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.tani_surface)
+            strokeColor = ContextCompat.getColorStateList(requireContext(), R.color.tani_primary)
+            strokeWidth = dp(1)
             setOnClickListener { action() }
         }, matchWrapWithMargins())
     }
