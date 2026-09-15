@@ -22,6 +22,7 @@ import com.tani.app.data.Repository
 import com.tani.app.data.Seller
 import com.tani.app.data.MerchantProfile
 import com.tani.app.ui.seller.SellerFragment
+import com.tani.app.ui.seller.MerchantOnboardingFragment
 import com.tani.app.ui.commerce.AddressesFragment
 import com.tani.app.ui.growth.FavoritesFragment
 import com.tani.app.ui.growth.NotificationsFragment
@@ -219,7 +220,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
     private fun updateSellerState(merchant: MerchantProfile?, seller: Seller?) {
         if (merchant == null) {
-            sellerStatus.text = "حسابك حالياً حساب عميل. يمكنك بدء مسار التحقق كتاجر."
+            sellerStatus.text = "حسابك حالياً حساب عميل. يمكنك بدء التسجيل كتاجر."
             sellerButton.visibility = View.VISIBLE
             sellerButton.isEnabled = true
             sellerButton.text = "ابدئي البيع على تاني"
@@ -266,7 +267,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
     private fun openSeller() {
         parentFragmentManager.beginTransaction()
-            .replace(R.id.nav_host, SellerFragment())
+            .replace(R.id.nav_host, MerchantOnboardingFragment())
             .addToBackStack(null)
             .commit()
     }
@@ -275,7 +276,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
         AlertDialog.Builder(requireContext())
             .setTitle("التسجيل كتاجر")
             .setMessage(
-                "حسب نظام تاني، تسجيل التاجر يتطلب التحقق من الهاتف والهوية وبيانات النشاط والمتجر والتوصيل قبل المراجعة والاعتماد."
+                "تسجيل التاجر في تاني يتم على أربع خطوات: بيانات النشاط، بيانات المتجر، التوصيل والهوية، ثم المراجعة والإرسال. تتم مراجعة الهاتف والهوية يدويًا بواسطة الإدارة."
             )
             .setPositiveButton("حسناً", null)
             .show()
