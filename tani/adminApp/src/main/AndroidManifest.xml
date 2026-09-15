@@ -22,6 +22,11 @@
         </provider>
 
         <activity
+            android:name=".AdminManagementActivity"
+            android:exported="false"
+            android:screenOrientation="unspecified" />
+
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:screenOrientation="unspecified">
