@@ -4,12 +4,13 @@
     android:viewportWidth="512"
     android:viewportHeight="512">
 
-    <!-- Keep the mark at the same proportions/padding as the approved icon artwork. -->
+    <!-- Tuned for Android adaptive-icon masking so the rendered icon matches the approved artwork proportions. -->
     <group
         android:pivotX="256"
         android:pivotY="256"
-        android:scaleX="0.84"
-        android:scaleY="0.84">
+        android:scaleX="0.58"
+        android:scaleY="0.58"
+        android:translateY="6">
         <path
             android:fillColor="#FFFFFF"
             android:pathData="M190,219 L189,220 L189,354 L194,374 L203,393 L209,401 L225,416 L242,425 L258,430 L272,431 L273,432 L298,430 L314,425 L322,421 L336,410 L342,403 L350,389 L350,382 L349,381 L344,381 L339,383 L325,383 L319,381 L308,375 L297,363 L292,352 L290,342 L290,335 L289,334 L289,283 L287,278 L287,273 L280,256 L273,246 L263,236 L256,231 L244,225 L228,220 Z" />
