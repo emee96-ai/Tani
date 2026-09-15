@@ -27,9 +27,9 @@ def bad(label, items):
     print(f"FAIL: {label}: {items}")
 
 # XML / manifest parsing
-xmls=[root/'app/src/main/AndroidManifest.xml',root/'adminApp/src/main/AndroidManifest.xml'] \
-    + list((root/'app/src/main/res').rglob('*.xml')) \
-    + list((root/'adminApp/src/main/res').rglob('*.xml'))
+app_xmls=[root/'app/src/main/AndroidManifest.xml'] + list((root/'app/src/main/res').rglob('*.xml'))
+admin_xmls=[root/'adminApp/src/main/AndroidManifest.xml'] + list((root/'adminApp/src/main/res').rglob('*.xml'))
+xmls=app_xmls+admin_xmls
 for p in xmls:
     try: ET.parse(p)
     except Exception as e: bad('XML parse', f'{p}: {e}')
@@ -87,7 +87,7 @@ res_defs["style"] |= {name.replace(".", "_") for name in res_defs["style"]}
 refs=[]
 for m in re.finditer(r'(?<!android\.)R\.(layout|drawable|mipmap|menu|xml|font|raw|anim|animator|navigation|transition|color|string|style|dimen|integer|bool|array|plurals|attr)\.([A-Za-z0-9_]+)',kt):
     refs.append((m.group(1),m.group(2),'Kotlin'))
-for p in xmls:
+for p in app_xmls:
     txt=p.read_text(errors='ignore')
     for m in re.finditer(r'(?<!android:)@(layout|drawable|mipmap|menu|xml|font|raw|anim|animator|navigation|transition|color|string|style|dimen|integer|bool|array|plurals|attr)/([A-Za-z0-9_.]+)',txt):
         
