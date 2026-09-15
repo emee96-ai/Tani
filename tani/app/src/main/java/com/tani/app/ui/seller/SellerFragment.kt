@@ -161,7 +161,7 @@ class SellerFragment : Fragment(R.layout.fragment_seller) {
         val area = input("المنطقة / الحي", existing?.area)
         val deliveryArea = input("مناطق التوصيل", existing?.delivery_area, multiline = true)
         val deliveryFee = input("رسوم التوصيل", existing?.delivery_fee?.toString(), numberDecimal = true)
-        val estimated = input("زمن التوصيل التقريبي بالدقائق", existing?.estimated_minutes?.toString(), number = true)
+        val estimated = input("زمن الوصول بعد تسليم الطلب للمندوب — بالدقائق", existing?.estimated_minutes?.toString(), number = true)
 
         label("مستند الهوية")
         val identityStatus = textView(if (identityPath.isNullOrBlank()) "لم يتم رفع مستند" else "تم رفع مستند الهوية ✓")
@@ -202,11 +202,26 @@ class SellerFragment : Fragment(R.layout.fragment_seller) {
             viewLifecycleOwner.lifecycleScope.launch {
                 runCatching {
                     repository.submitMerchantApplication(
-                        businessName.text.toString(), businessDescription.text.toString(),
-                        phone.text.toString(), whatsapp.text.toString(), category.id,
-                        storeName.text.toString(), storeDescription.text.toString(), city.text.toString(),
-                        area.text.toString(), deliveryArea.text.toString(), fee,
-                        estimated.text.toString().toIntOrNull(), identity, docType, policies.isChecked
+                        businessName = businessName.text.toString(),
+                        description = businessDescription.text.toString(),
+                        phone = phone.text.toString(),
+                        whatsapp = whatsapp.text.toString(),
+                        categoryId = category.id,
+                        requestedCategory = "",
+                        storeName = storeName.text.toString(),
+                        storeDescription = storeDescription.text.toString(),
+                        city = city.text.toString(),
+                        area = area.text.toString(),
+                        deliveryZones = listOf(
+                            MerchantDeliveryZoneInput(
+                                area = deliveryArea.text.toString(),
+                                fee = fee,
+                                estimated_minutes = estimated.text.toString().toIntOrNull()
+                            )
+                        ),
+                        identityPath = identity,
+                        documentType = docType,
+                        acceptPolicies = policies.isChecked
                     )
                 }.onSuccess {
                     toast("تم إرسال طلب التاجر للمراجعة")

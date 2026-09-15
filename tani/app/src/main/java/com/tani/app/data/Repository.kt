@@ -104,6 +104,26 @@ class Repository {
         Analytics.track("password_reset_completed", screen = "auth")
     }
 
+    suspend fun changePassword(
+        currentPassword: String,
+        newPassword: String,
+        confirmPassword: String
+    ) {
+        require(currentPassword.isNotBlank()) { "كلمة المرور الحالية مطلوبة" }
+        require(currentPassword != newPassword) { "كلمة المرور الجديدة يجب أن تختلف عن الحالية" }
+        validateNewPassword(newPassword, confirmPassword)
+        val access = Supabase.token ?: error("تسجيل الدخول مطلوب")
+        Supabase.authPut<AuthUser>(
+            "user",
+            buildJsonObject {
+                put("current_password", currentPassword)
+                put("password", newPassword)
+            }.toString(),
+            access
+        )
+        Analytics.track("password_changed", screen = "profile")
+    }
+
     suspend fun logout() {
         Analytics.track("logout", screen = "profile")
         Cart.clear()
@@ -749,21 +769,23 @@ class Repository {
         description: String,
         phone: String,
         whatsapp: String,
-        categoryId: String,
+        categoryId: String?,
+        requestedCategory: String,
         storeName: String,
         storeDescription: String,
         city: String,
         area: String,
-        deliveryArea: String,
-        deliveryFee: Double,
-        estimatedMinutes: Int?,
+        deliveryZones: List<MerchantDeliveryZoneInput>,
         identityPath: String,
         documentType: String,
         acceptPolicies: Boolean
     ): String {
         require(businessName.trim().length in 2..120) { "اسم النشاط مطلوب" }
         require(storeName.trim().length in 2..120) { "اسم المتجر مطلوب" }
-        require(deliveryFee >= 0) { "رسوم التوصيل غير صحيحة" }
+        require(categoryId != null || requestedCategory.trim().length in 2..80) { "اختاري فئة أو اكتبي الفئة المطلوبة" }
+        require(deliveryZones.isNotEmpty()) { "أضيفي منطقة توصيل واحدة على الأقل" }
+        require(deliveryZones.all { it.area.trim().length in 2..100 && it.fee >= 0 }) { "راجعي مناطق ورسوم التوصيل" }
+        require(deliveryZones.all { it.estimated_minutes == null || it.estimated_minutes in 1..1440 }) { "راجعي زمن الوصول" }
         require(identityPath.isNotBlank()) { "ارفعي مستند الهوية أولاً" }
         require(acceptPolicies) { "يجب الموافقة على سياسات التاجر" }
         val merchantId: String = Supabase.post(
@@ -774,13 +796,24 @@ class Repository {
                 put("p_phone", normalizePhone(phone))
                 put("p_whatsapp", whatsapp.trim())
                 put("p_category_id", categoryId)
+                put("p_requested_category", requestedCategory.trim())
                 put("p_store_name", storeName.trim())
                 put("p_store_description", storeDescription.trim())
                 put("p_city", city.trim())
                 put("p_area", area.trim())
-                put("p_delivery_area", deliveryArea.trim())
-                put("p_delivery_fee", deliveryFee)
-                estimatedMinutes?.let { put("p_estimated_minutes", it) }
+                val firstZone = deliveryZones.first()
+                put("p_delivery_area", firstZone.area.trim())
+                put("p_delivery_fee", firstZone.fee)
+                put("p_estimated_minutes", firstZone.estimated_minutes)
+                put("p_delivery_zones", buildJsonArray {
+                    deliveryZones.forEach { zone ->
+                        add(buildJsonObject {
+                            put("area", zone.area.trim())
+                            put("fee", zone.fee)
+                            zone.estimated_minutes?.let { put("estimated_minutes", it) }
+                        })
+                    }
+                })
                 put("p_identity_path", identityPath)
                 put("p_document_type", documentType)
                 put("p_accept_policies", acceptPolicies)

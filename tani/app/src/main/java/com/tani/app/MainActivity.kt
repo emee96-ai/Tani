@@ -24,6 +24,7 @@ import com.tani.app.ui.categories.CategoriesFragment
 import com.tani.app.ui.growth.FavoritesFragment
 import com.tani.app.ui.growth.NotificationsFragment
 import com.tani.app.ui.home.HomeFragment
+import com.tani.app.ui.legal.AboutFragment
 import com.tani.app.ui.marketplace.StoresFragment
 import com.tani.app.ui.orders.OrdersFragment
 import com.tani.app.ui.profile.ProfileFragment
@@ -77,11 +78,21 @@ class MainActivity : AppCompatActivity() {
             .start()
 
         toolbar = findViewById(R.id.top_app_bar)
+        toolbar.inflateMenu(R.menu.top_app_bar)
         toolbar.setNavigationOnClickListener {
             if (supportFragmentManager.backStackEntryCount > 0) {
                 onBackPressedDispatcher.onBackPressed()
             } else {
                 drawer.openDrawer(GravityCompat.START)
+            }
+        }
+        toolbar.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.action_notifications -> {
+                    showProtectedSecondary(NotificationsFragment())
+                    true
+                }
+                else -> false
             }
         }
 
@@ -135,6 +146,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.drawer_cart -> showPrimary(CartFragment())
                 R.id.drawer_orders -> showProtected(OrdersFragment())
                 R.id.drawer_notifications -> showProtectedSecondary(NotificationsFragment())
+                R.id.drawer_about -> show(AboutFragment())
                 R.id.drawer_profile -> showProtected(ProfileFragment())
                 else -> return@setNavigationItemSelectedListener false
             }
@@ -245,6 +257,7 @@ class MainActivity : AppCompatActivity() {
             nav.visibility = View.GONE
             toolbar.visibility = View.VISIBLE
             toolbar.setNavigationIcon(R.drawable.ic_back)
+            toolbar.logo = null
             toolbar.title = screenTitle(fragment)
         }
 
@@ -260,7 +273,13 @@ class MainActivity : AppCompatActivity() {
         setDrawerEnabled(true)
         toolbar.visibility = View.VISIBLE
         toolbar.setNavigationIcon(R.drawable.ic_menu)
-        toolbar.title = screenTitle(fragment)
+        if (fragment is HomeFragment) {
+            toolbar.logo = getDrawable(R.drawable.ic_brand)
+            toolbar.title = "تاني"
+        } else {
+            toolbar.logo = null
+            toolbar.title = screenTitle(fragment)
+        }
         nav.visibility = View.VISIBLE
         refreshCartBadge()
         updateDrawerSelection(fragment)
@@ -323,7 +342,13 @@ class MainActivity : AppCompatActivity() {
             setDrawerEnabled(true)
             toolbar.visibility = View.VISIBLE
             toolbar.setNavigationIcon(R.drawable.ic_menu)
-            toolbar.title = current?.let(::screenTitle) ?: "تاني"
+            if (current is HomeFragment) {
+                toolbar.logo = getDrawable(R.drawable.ic_brand)
+                toolbar.title = "تاني"
+            } else {
+                toolbar.logo = null
+                toolbar.title = current?.let(::screenTitle) ?: "تاني"
+            }
             nav.visibility = View.VISIBLE
             current?.let(::updateDrawerSelection)
             refreshCartBadge()
@@ -333,6 +358,7 @@ class MainActivity : AppCompatActivity() {
         nav.visibility = View.GONE
         toolbar.visibility = View.VISIBLE
         toolbar.setNavigationIcon(R.drawable.ic_back)
+        toolbar.logo = null
         current?.let { toolbar.title = screenTitle(it) }
     }
 
@@ -353,6 +379,7 @@ class MainActivity : AppCompatActivity() {
         "OrderConfirmationFragment" -> "تم الطلب"
         "FavoritesFragment" -> "المفضلة"
         "NotificationsFragment" -> "الإشعارات"
+        "AboutFragment" -> "من نحن"
         "SupportCenterFragment" -> "مركز المساعدة"
         else -> "تاني"
     }

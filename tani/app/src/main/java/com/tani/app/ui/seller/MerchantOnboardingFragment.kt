@@ -10,6 +10,7 @@ import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -27,12 +28,15 @@ import com.tani.app.MainActivity
 import com.tani.app.R
 import com.tani.app.data.Category
 import com.tani.app.data.MerchantProfile
+import com.tani.app.data.MerchantDeliveryZoneInput
 import com.tani.app.data.Repository
 import com.tani.app.ui.legal.PoliciesFragment
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import org.json.JSONArray
+import org.json.JSONObject
 
 class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboarding) {
 
@@ -43,6 +47,8 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
     private lateinit var progress: LinearProgressIndicator
     private lateinit var backButton: MaterialButton
     private lateinit var nextButton: MaterialButton
+    private lateinit var submitProgress: ProgressBar
+    private lateinit var submitStatus: TextView
 
     private var step = 1
     private var merchant: MerchantProfile? = null
@@ -53,6 +59,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
     private var documentField: MaterialAutoCompleteTextView? = null
     private var policiesCheck: MaterialCheckBox? = null
     private var identityStatus: TextView? = null
+    private var whatsappSameCheck: MaterialCheckBox? = null
 
     private val prefs by lazy {
         requireContext().getSharedPreferences("merchant_onboarding_draft", android.content.Context.MODE_PRIVATE)
@@ -72,6 +79,8 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         progress = view.findViewById(R.id.merchant_onboarding_progress)
         backButton = view.findViewById(R.id.merchant_onboarding_back)
         nextButton = view.findViewById(R.id.merchant_onboarding_next)
+        submitProgress = view.findViewById(R.id.merchant_onboarding_submit_progress)
+        submitStatus = view.findViewById(R.id.merchant_onboarding_status)
 
         backButton.setOnClickListener {
             captureCurrentStep()
@@ -88,6 +97,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
     }
 
     private fun loadEntry() {
+        submitStatus.text = "جاري تجهيز تسجيل التاجر…"
         setBusy(true)
         content.removeAllViews()
         addInfoText("جاري تجهيز تسجيل التاجر…")
@@ -125,14 +135,14 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
             draft.description = prefs.getString("description", "").orEmpty()
             draft.phone = prefs.getString("phone", "").orEmpty()
             draft.whatsapp = prefs.getString("whatsapp", "").orEmpty()
+            draft.whatsappSameAsPhone = prefs.getBoolean("whatsapp_same", false)
             draft.categoryId = prefs.getString("category_id", "").orEmpty()
+            draft.requestedCategory = prefs.getString("requested_category", "").orEmpty()
             draft.storeName = prefs.getString("store_name", "").orEmpty()
             draft.storeDescription = prefs.getString("store_description", "").orEmpty()
             draft.city = prefs.getString("city", "كوستي").orEmpty()
             draft.area = prefs.getString("area", "").orEmpty()
-            draft.deliveryArea = prefs.getString("delivery_area", "").orEmpty()
-            draft.deliveryFee = prefs.getString("delivery_fee", "").orEmpty()
-            draft.estimatedMinutes = prefs.getString("estimated_minutes", "").orEmpty()
+            draft.deliveryZones = restoreDeliveryZones()
             draft.documentType = prefs.getString("document_type", "national_id").orEmpty()
             draft.policiesAccepted = prefs.getBoolean("policies", false)
             step = prefs.getInt("step", 1).coerceIn(1, 4)
@@ -143,14 +153,24 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         draft.description = profile?.description.orEmpty()
         draft.phone = profile?.phone.orEmpty()
         draft.whatsapp = profile?.whatsapp.orEmpty()
+        draft.whatsappSameAsPhone = draft.phone.isNotBlank() && draft.phone == draft.whatsapp
         draft.categoryId = profile?.category_id.orEmpty()
+        draft.requestedCategory = profile?.requested_category.orEmpty()
         draft.storeName = profile?.store_name ?: profile?.business_name.orEmpty()
         draft.storeDescription = profile?.store_description ?: profile?.description.orEmpty()
         draft.city = profile?.city?.takeIf { it.isNotBlank() } ?: "كوستي"
         draft.area = profile?.area.orEmpty()
-        draft.deliveryArea = profile?.delivery_area.orEmpty()
-        draft.deliveryFee = profile?.delivery_fee?.toString().orEmpty()
-        draft.estimatedMinutes = profile?.estimated_minutes?.toString().orEmpty()
+        draft.deliveryZones = profile?.delivery_zones
+            ?.takeIf { it.isNotEmpty() }
+            ?.map { DeliveryZoneDraft(it.area, it.fee.toString(), it.estimated_minutes?.toString().orEmpty()) }
+            ?.toMutableList()
+            ?: mutableListOf(
+                DeliveryZoneDraft(
+                    profile?.delivery_area.orEmpty(),
+                    profile?.delivery_fee?.toString().orEmpty(),
+                    profile?.estimated_minutes?.toString().orEmpty()
+                )
+            )
         draft.policiesAccepted = profile?.policies_accepted_at != null
     }
 
@@ -161,14 +181,14 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
             .putString("description", draft.description)
             .putString("phone", draft.phone)
             .putString("whatsapp", draft.whatsapp)
+            .putBoolean("whatsapp_same", draft.whatsappSameAsPhone)
             .putString("category_id", draft.categoryId)
+            .putString("requested_category", draft.requestedCategory)
             .putString("store_name", draft.storeName)
             .putString("store_description", draft.storeDescription)
             .putString("city", draft.city)
             .putString("area", draft.area)
-            .putString("delivery_area", draft.deliveryArea)
-            .putString("delivery_fee", draft.deliveryFee)
-            .putString("estimated_minutes", draft.estimatedMinutes)
+            .putString("delivery_zones", deliveryZonesJson())
             .putString("document_type", draft.documentType)
             .putBoolean("policies", draft.policiesAccepted)
             .putInt("step", step)
@@ -183,6 +203,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         documentField = null
         policiesCheck = null
         identityStatus = null
+        whatsappSameCheck = null
 
         progress.max = 4
         progress.setProgressCompat(step, true)
@@ -207,6 +228,22 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
             addField(this, "description", "وصف النشاط", draft.description, multiline = true, optional = true)
             addField(this, "phone", "رقم الهاتف", draft.phone, phone = true)
             addField(this, "whatsapp", "واتساب (اختياري)", draft.whatsapp, phone = true, optional = true)
+            whatsappSameCheck = MaterialCheckBox(requireContext()).apply {
+                text = "رقم الواتساب هو نفس رقم الهاتف"
+                isChecked = draft.whatsappSameAsPhone
+                setOnCheckedChangeListener { _, checked ->
+                    draft.whatsappSameAsPhone = checked
+                    val whatsapp = inputs["whatsapp"]
+                    if (checked) {
+                        whatsapp?.setText(inputs["phone"]?.text?.toString().orEmpty())
+                        whatsapp?.isEnabled = false
+                    } else {
+                        whatsapp?.isEnabled = true
+                    }
+                }
+            }
+            addView(whatsappSameCheck, matchWrapWithBottomMargin())
+            if (draft.whatsappSameAsPhone) inputs["whatsapp"]?.isEnabled = false
         }
     }
 
@@ -218,9 +255,19 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
             addDropdown(
                 this,
                 label = "فئة المتجر",
-                labels = categories.map { it.name },
+                labels = categories.map { it.name } + "فئة غير موجودة في القائمة",
                 selected = categories.firstOrNull { it.id == draft.categoryId }?.name.orEmpty()
-            ) { index -> draft.categoryId = categories.getOrNull(index)?.id.orEmpty() }
+            ) { index ->
+                draft.categoryId = categories.getOrNull(index)?.id.orEmpty()
+                if (index == categories.size) inputs["requested_category"]?.requestFocus()
+            }
+            addField(
+                this,
+                "requested_category",
+                "الفئة غير موجودة؟ اكتبي اسمها هنا",
+                draft.requestedCategory,
+                optional = true
+            )
             addField(this, "store_description", "وصف المتجر", draft.storeDescription, multiline = true, optional = true)
             addField(this, "city", "المدينة", draft.city)
             addField(this, "area", "المنطقة / الحي (اختياري)", draft.area, optional = true)
@@ -229,11 +276,39 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
 
     private fun renderDeliveryIdentityStep() {
         title.text = "التوصيل والهوية"
-        addInfoText("التاجر يحدد مناطق ورسوم التوصيل. الهوية تُراجع يدويًا بواسطة إدارة تاني.")
-        addCard {
-            addField(this, "delivery_area", "مناطق التوصيل", draft.deliveryArea, multiline = true)
-            addField(this, "delivery_fee", "رسوم التوصيل بالجنيه", draft.deliveryFee, decimal = true)
-            addField(this, "estimated_minutes", "زمن التوصيل التقريبي بالدقائق (اختياري)", draft.estimatedMinutes, number = true, optional = true)
+        addInfoText("أضيفي كل منطقة مع رسومها وزمن الوصول المتوقع بعد تسليم الطلب للمندوب.")
+        draft.deliveryZones.forEachIndexed { index, zone ->
+            addCard {
+                addView(sectionText("منطقة التوصيل ${index + 1}"))
+                addField(this, "zone_area_$index", "اسم المنطقة أو الحي", zone.area)
+                addField(this, "zone_fee_$index", "رسوم التوصيل بالجنيه", zone.fee, decimal = true)
+                addField(
+                    this,
+                    "zone_eta_$index",
+                    "زمن الوصول بعد تسليم الطلب للمندوب — بالدقائق",
+                    zone.estimatedMinutes,
+                    number = true,
+                    optional = true
+                )
+                if (draft.deliveryZones.size > 1) {
+                    addView(MaterialButton(requireContext()).apply {
+                        text = "حذف هذه المنطقة"
+                        isAllCaps = false
+                        setOnClickListener {
+                            captureDeliveryZones()
+                            draft.deliveryZones.removeAt(index)
+                            saveDraft()
+                            renderStep()
+                        }
+                    }, matchWrap())
+                }
+            }
+        }
+        addSecondaryButton("+ إضافة منطقة توصيل أخرى") {
+            captureDeliveryZones()
+            draft.deliveryZones.add(DeliveryZoneDraft())
+            saveDraft()
+            renderStep()
         }
         addIdentityCard()
     }
@@ -249,12 +324,14 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         ))
         addSummaryCard("المتجر", listOf(
             "اسم المتجر" to draft.storeName,
-            "الفئة" to (categories.firstOrNull { it.id == draft.categoryId }?.name ?: "—"),
+            "الفئة" to (categories.firstOrNull { it.id == draft.categoryId }?.name
+                ?: draft.requestedCategory.ifBlank { "—" }),
             "الموقع" to listOf(draft.city, draft.area).filter { it.isNotBlank() }.joinToString(" - ")
         ))
         addSummaryCard("التوصيل والتحقق", listOf(
-            "مناطق التوصيل" to draft.deliveryArea,
-            "رسوم التوصيل" to "${draft.deliveryFee} جنيه",
+            "المناطق والرسوم" to draft.deliveryZones.joinToString(" • ") {
+                "${it.area}: ${it.fee} جنيه${it.estimatedMinutes.takeIf(String::isNotBlank)?.let { eta -> "، $eta دقيقة بعد التسليم للمندوب" } ?: ""}"
+            },
             "الهوية" to if (identityPath.isNullOrBlank()) "غير مرفوعة" else "مرفوعة ✓"
         ))
 
@@ -331,20 +408,26 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
                 draft.businessName = value("business_name")
                 draft.description = value("description")
                 draft.phone = value("phone")
-                draft.whatsapp = value("whatsapp")
+                draft.whatsappSameAsPhone = whatsappSameCheck?.isChecked ?: draft.whatsappSameAsPhone
+                draft.whatsapp = if (draft.whatsappSameAsPhone) draft.phone else value("whatsapp")
             }
             2 -> {
                 draft.storeName = value("store_name")
+                draft.requestedCategory = value("requested_category")
                 draft.storeDescription = value("store_description")
                 draft.city = value("city")
                 draft.area = value("area")
             }
-            3 -> {
-                draft.deliveryArea = value("delivery_area")
-                draft.deliveryFee = value("delivery_fee")
-                draft.estimatedMinutes = value("estimated_minutes")
-            }
+            3 -> captureDeliveryZones()
             4 -> draft.policiesAccepted = policiesCheck?.isChecked ?: draft.policiesAccepted
+        }
+    }
+
+    private fun captureDeliveryZones() {
+        draft.deliveryZones.forEachIndexed { index, zone ->
+            zone.area = value("zone_area_$index")
+            zone.fee = value("zone_fee_$index")
+            zone.estimatedMinutes = value("zone_eta_$index")
         }
     }
 
@@ -364,17 +447,22 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
             }
             2 -> when {
                 draft.storeName.trim().length < 2 -> fail("أدخلي اسم المتجر")
-                draft.categoryId.isBlank() -> fail("اختاري فئة المتجر")
+                draft.categoryId.isBlank() && draft.requestedCategory.trim().length < 2 -> fail("اختاري فئة أو اكتبي الفئة غير الموجودة")
                 draft.city.trim().length < 2 -> fail("أدخلي المدينة")
                 else -> true
             }
             3 -> {
-                val fee = draft.deliveryFee.toDoubleOrNull()
-                val minutes = draft.estimatedMinutes.takeIf { it.isNotBlank() }?.toIntOrNull()
+                draft.deliveryZones.forEachIndexed { index, zone ->
+                    val fee = zone.fee.toDoubleOrNull()
+                    val minutes = zone.estimatedMinutes.takeIf { it.isNotBlank() }?.toIntOrNull()
+                    when {
+                        zone.area.trim().length < 2 -> return fail("أدخلي اسم منطقة التوصيل ${index + 1}")
+                        fee == null || fee < 0 -> return fail("راجعي رسوم المنطقة ${index + 1}")
+                        zone.estimatedMinutes.isNotBlank() && (minutes == null || minutes !in 1..1440) -> return fail("راجعي زمن الوصول للمنطقة ${index + 1}")
+                    }
+                }
                 when {
-                    draft.deliveryArea.trim().length < 2 -> fail("أدخلي مناطق التوصيل")
-                    fee == null || fee < 0 -> fail("راجعي رسوم التوصيل")
-                    draft.estimatedMinutes.isNotBlank() && (minutes == null || minutes !in 1..1440) -> fail("زمن التوصيل غير صحيح")
+                    draft.deliveryZones.isEmpty() -> fail("أضيفي منطقة توصيل واحدة على الأقل")
                     identityPath.isNullOrBlank() -> fail("ارفعي مستند الهوية")
                     else -> true
                 }
@@ -385,10 +473,16 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
 
     private fun submit() {
         val identity = identityPath ?: return
-        val category = draft.categoryId
-        val fee = draft.deliveryFee.toDoubleOrNull() ?: return
+        val category = draft.categoryId.takeIf { it.isNotBlank() }
+        val zones = draft.deliveryZones.map { zone ->
+            MerchantDeliveryZoneInput(
+                area = zone.area,
+                fee = zone.fee.toDoubleOrNull() ?: return,
+                estimated_minutes = zone.estimatedMinutes.toIntOrNull()
+            )
+        }
         setBusy(true)
-        nextButton.text = "جاري الإرسال…"
+        submitStatus.text = "جاري إرسال طلب التسجيل… لا تغلقي الصفحة"
         viewLifecycleOwner.lifecycleScope.launch {
             runCatching {
                 repository.submitMerchantApplication(
@@ -397,19 +491,19 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
                     phone = draft.phone,
                     whatsapp = draft.whatsapp,
                     categoryId = category,
+                    requestedCategory = draft.requestedCategory,
                     storeName = draft.storeName,
                     storeDescription = draft.storeDescription,
                     city = draft.city,
                     area = draft.area,
-                    deliveryArea = draft.deliveryArea,
-                    deliveryFee = fee,
-                    estimatedMinutes = draft.estimatedMinutes.toIntOrNull(),
+                    deliveryZones = zones,
                     identityPath = identity,
                     documentType = draft.documentType,
                     acceptPolicies = draft.policiesAccepted
                 )
             }.onSuccess {
                 prefs.edit().clear().apply()
+                submitStatus.text = "تم إرسال الطلب بنجاح ✓"
                 Toast.makeText(requireContext(), "تم إرسال طلب التاجر للمراجعة", Toast.LENGTH_LONG).show()
                 loadEntry()
             }.onFailure {
@@ -444,6 +538,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
     }
 
     private fun uploadIdentity(uri: Uri) {
+        submitStatus.text = "جاري رفع مستند الهوية…"
         setBusy(true)
         identityStatus?.text = "جاري رفع المستند…"
         viewLifecycleOwner.lifecycleScope.launch {
@@ -643,6 +738,44 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
     private fun setBusy(busy: Boolean) {
         backButton.isEnabled = !busy
         nextButton.isEnabled = !busy
+        submitProgress.visibility = if (busy) View.VISIBLE else View.GONE
+        submitStatus.visibility = if (busy) View.VISIBLE else View.GONE
+        if (busy && submitStatus.text.isNullOrBlank()) submitStatus.text = "جاري المعالجة…"
+    }
+
+    private fun deliveryZonesJson(): String = JSONArray().apply {
+        draft.deliveryZones.forEach { zone ->
+            put(JSONObject().apply {
+                put("area", zone.area)
+                put("fee", zone.fee)
+                put("estimated_minutes", zone.estimatedMinutes)
+            })
+        }
+    }.toString()
+
+    private fun restoreDeliveryZones(): MutableList<DeliveryZoneDraft> {
+        val raw = prefs.getString("delivery_zones", null)
+        if (!raw.isNullOrBlank()) {
+            val restored = runCatching {
+                val array = JSONArray(raw)
+                MutableList(array.length()) { index ->
+                    val item = array.getJSONObject(index)
+                    DeliveryZoneDraft(
+                        area = item.optString("area"),
+                        fee = item.optString("fee"),
+                        estimatedMinutes = item.optString("estimated_minutes")
+                    )
+                }
+            }.getOrNull()
+            if (!restored.isNullOrEmpty()) return restored
+        }
+        return mutableListOf(
+            DeliveryZoneDraft(
+                area = prefs.getString("delivery_area", "").orEmpty(),
+                fee = prefs.getString("delivery_fee", "").orEmpty(),
+                estimatedMinutes = prefs.getString("estimated_minutes", "").orEmpty()
+            )
+        )
     }
 
     private fun value(key: String): String = inputs[key]?.text?.toString()?.trim().orEmpty()
@@ -677,15 +810,21 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         var description: String = "",
         var phone: String = "",
         var whatsapp: String = "",
+        var whatsappSameAsPhone: Boolean = false,
         var categoryId: String = "",
+        var requestedCategory: String = "",
         var storeName: String = "",
         var storeDescription: String = "",
         var city: String = "كوستي",
         var area: String = "",
-        var deliveryArea: String = "",
-        var deliveryFee: String = "",
-        var estimatedMinutes: String = "",
+        var deliveryZones: MutableList<DeliveryZoneDraft> = mutableListOf(DeliveryZoneDraft()),
         var documentType: String = "national_id",
         var policiesAccepted: Boolean = false
+    )
+
+    private data class DeliveryZoneDraft(
+        var area: String = "",
+        var fee: String = "",
+        var estimatedMinutes: String = ""
     )
 }

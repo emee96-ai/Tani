@@ -25,8 +25,8 @@ android {
         applicationId = "com.tani.app"
         minSdk = 24
         targetSdk = 35
-        versionCode = 3
-        versionName = "3.0.0"
+        versionCode = 4
+        versionName = "3.1.0"
 
         buildConfigField("String", "PASSWORD_RESET_REDIRECT", "\"$taniResetRedirect\"")
         buildConfigField("String", "APP_LINK_HOST", "\"$taniAppLinkHost\"")

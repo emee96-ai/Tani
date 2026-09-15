@@ -304,6 +304,7 @@ data class OrderGroupDetails(
     val historyByOrder: Map<String, List<OrderStatusHistory>>
 )
 
+@Serializable
 data class HomeFeed(
     val categories: List<Category>,
     val featuredProducts: List<ProductCard>,
@@ -329,6 +330,13 @@ enum class ProductSort(val query: String) {
 }
 
 @Serializable
+data class MerchantDeliveryZoneInput(
+    val area: String,
+    val fee: Double,
+    val estimated_minutes: Int? = null
+)
+
+@Serializable
 data class MerchantProfile(
     val id: String,
     val user_id: String,
@@ -338,6 +346,7 @@ data class MerchantProfile(
     val phone: String? = null,
     val whatsapp: String? = null,
     val category_id: String? = null,
+    val requested_category: String? = null,
     val verification_status: String = "pending",
     val trust_badge: Boolean = false,
     val approved_at: String? = null,
@@ -355,6 +364,7 @@ data class MerchantProfile(
     val delivery_area: String? = null,
     val delivery_fee: Double = 0.0,
     val estimated_minutes: Int? = null,
+    val delivery_zones: List<MerchantDeliveryZoneInput> = emptyList(),
     val created_at: String? = null,
     val updated_at: String? = null
 )

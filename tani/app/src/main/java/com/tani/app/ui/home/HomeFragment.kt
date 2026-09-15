@@ -14,6 +14,7 @@ import com.tani.app.MainActivity
 import com.tani.app.R
 import com.tani.app.data.Analytics
 import com.tani.app.data.Cart
+import com.tani.app.data.HomeFeed
 import com.tani.app.data.Repository
 import com.tani.app.data.Supabase
 import com.tani.app.data.cache.MarketplaceCache
@@ -67,56 +68,65 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             (activity as MainActivity).show(StoresFragment())
         }
 
+        fun renderFeed(feed: HomeFeed) {
+            loading.visibility = View.GONE
+            categoriesBox.removeAllViews()
+            feed.categories.forEach { category ->
+                val button = MarketplaceUi.chipButton(requireContext(), category.name) {
+                    (activity as MainActivity).show(
+                        ProductsFragment.newInstance(category.id, category.name)
+                    )
+                }
+                categoriesBox.addView(
+                    button,
+                    LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply { marginEnd = MarketplaceUi.dp(requireContext(), 8) }
+                )
+            }
+
+            if (feed.featuredProducts.isNotEmpty()) {
+                featuredTitle.visibility = View.VISIBLE
+                featuredTitle.text = "ممول • ظهور مميز"
+                renderProducts(featuredBox, feed.featuredProducts)
+            } else {
+                featuredTitle.visibility = View.GONE
+                featuredBox.removeAllViews()
+            }
+            renderProducts(newestBox, feed.newestProducts)
+            renderProducts(popularBox, feed.popularProducts)
+
+            storesBox.removeAllViews()
+            if (feed.stores.isEmpty()) {
+                storesBox.addView(MarketplaceUi.empty(requireContext(), "لا توجد متاجر معتمدة حالياً"))
+            } else feed.stores.forEach { store ->
+                MarketplaceUi.addWithSpacing(
+                    storesBox,
+                    MarketplaceUi.storeCard(requireContext(), viewLifecycleOwner.lifecycleScope, store) {
+                        (activity as MainActivity).show(StoreDetailsFragment.newInstance(store.id))
+                    },
+                    requireContext()
+                )
+            }
+        }
+
+        val cache = MarketplaceCache(requireContext())
+        val cachedFeed = cache.loadHomeFeed()
+        if (cachedFeed != null) renderFeed(cachedFeed)
+
         viewLifecycleOwner.lifecycleScope.launch {
+            if (cachedFeed != null) return@launch
             runCatching { repository.homeFeed() }
                 .onSuccess { feed ->
-                    loading.visibility = View.GONE
-                    categoriesBox.removeAllViews()
-                    feed.categories.forEach { category ->
-                        val button = MarketplaceUi.chipButton(requireContext(), category.name) {
-                            (activity as MainActivity).show(
-                                ProductsFragment.newInstance(category.id, category.name)
-                            )
-                        }
-                        categoriesBox.addView(
-                            button,
-                            LinearLayout.LayoutParams(
-                                LinearLayout.LayoutParams.WRAP_CONTENT,
-                                LinearLayout.LayoutParams.WRAP_CONTENT
-                            ).apply { marginEnd = MarketplaceUi.dp(requireContext(), 8) }
-                        )
-                    }
-
-                    if (feed.featuredProducts.isNotEmpty()) {
-                        featuredTitle.visibility = View.VISIBLE
-                        featuredTitle.text = "ممول • ظهور مميز"
-                        renderProducts(featuredBox, feed.featuredProducts)
-                    } else {
-                        featuredTitle.visibility = View.GONE
-                        featuredBox.removeAllViews()
-                    }
-                    renderProducts(newestBox, feed.newestProducts)
-                    renderProducts(popularBox, feed.popularProducts)
-
-                    storesBox.removeAllViews()
-                    if (feed.stores.isEmpty()) {
-                        storesBox.addView(MarketplaceUi.empty(requireContext(), "لا توجد متاجر معتمدة حالياً"))
-                    } else feed.stores.forEach { store ->
-                        MarketplaceUi.addWithSpacing(
-                            storesBox,
-                            MarketplaceUi.storeCard(requireContext(), viewLifecycleOwner.lifecycleScope, store) {
-                                (activity as MainActivity).show(StoreDetailsFragment.newInstance(store.id))
-                            },
-                            requireContext()
-                        )
-                    }
+                    cache.saveHomeFeed(feed)
+                    renderFeed(feed)
                 }
                 .onFailure {
                     loading.text = "تعذر تحميل السوق الآن\n${it.message ?: "حاولي مرة أخرى"}"
                 }
         }
 
-        val cache = MarketplaceCache(requireContext())
         viewLifecycleOwner.lifecycleScope.launch {
             if (Supabase.userId.isNullOrBlank()) {
                 recommendedTitle.text = "منتجات مقترحة"

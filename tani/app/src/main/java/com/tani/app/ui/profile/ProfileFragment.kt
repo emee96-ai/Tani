@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
+import android.text.InputType
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -29,6 +30,7 @@ import com.tani.app.ui.growth.NotificationsFragment
 import com.tani.app.ui.growth.ReferralFragment
 import com.tani.app.ui.trust.SupportCenterFragment
 import com.tani.app.ui.legal.PoliciesFragment
+import com.tani.app.ui.legal.AboutFragment
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -86,6 +88,8 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
         view.findViewById<Button>(R.id.profile_referrals).setOnClickListener { (activity as? MainActivity)?.show(ReferralFragment()) }
         view.findViewById<Button>(R.id.profile_support).setOnClickListener { (activity as? MainActivity)?.show(SupportCenterFragment()) }
         view.findViewById<Button>(R.id.profile_policies).setOnClickListener { (activity as? MainActivity)?.show(PoliciesFragment()) }
+        view.findViewById<Button>(R.id.profile_change_password).setOnClickListener { showChangePasswordDialog() }
+        view.findViewById<Button>(R.id.profile_about).setOnClickListener { (activity as? MainActivity)?.show(AboutFragment()) }
         view.findViewById<Button>(R.id.profile_delete_account).setOnClickListener { confirmDeleteAccount() }
         saveButton.setOnClickListener { saveProfile() }
         logoutButton.setOnClickListener { confirmLogout() }
@@ -292,6 +296,50 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                 if (confirmation.text.toString().trim() != "حذف") {
                     Toast.makeText(requireContext(), "اكتبي كلمة حذف للتأكيد", Toast.LENGTH_LONG).show()
                 } else deleteAccount()
+            }
+            .setNegativeButton("إلغاء", null)
+            .show()
+    }
+
+    private fun showChangePasswordDialog() {
+        val container = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            val pad = (20 * resources.displayMetrics.density).toInt()
+            setPadding(pad, 0, pad, 0)
+        }
+        fun passwordField(hint: String) = EditText(requireContext()).apply {
+            this.hint = hint
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            isSingleLine = true
+            container.addView(this)
+        }
+        val current = passwordField("كلمة المرور الحالية")
+        val next = passwordField("كلمة المرور الجديدة")
+        val confirm = passwordField("تأكيد كلمة المرور الجديدة")
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("تغيير كلمة المرور")
+            .setMessage("استخدمي 8 أحرف على الأقل، وبها حرف ورقم.")
+            .setView(container)
+            .setPositiveButton("حفظ") { _, _ ->
+                setActionsEnabled(false)
+                viewLifecycleOwner.lifecycleScope.launch {
+                    runCatching {
+                        repository.changePassword(
+                            currentPassword = current.text.toString(),
+                            newPassword = next.text.toString(),
+                            confirmPassword = confirm.text.toString()
+                        )
+                    }.onSuccess {
+                        Toast.makeText(requireContext(), "تم تغيير كلمة المرور", Toast.LENGTH_LONG).show()
+                    }.onFailure {
+                        val message = if (it.message.orEmpty().contains("password", ignoreCase = true)) {
+                            "كلمة المرور الحالية غير صحيحة أو الجديدة لا تحقق شروط الأمان"
+                        } else it.message ?: "تعذر تغيير كلمة المرور"
+                        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
+                    }
+                    setActionsEnabled(true)
+                }
             }
             .setNegativeButton("إلغاء", null)
             .show()

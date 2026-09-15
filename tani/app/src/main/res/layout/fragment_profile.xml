@@ -263,6 +263,22 @@
                     android:layout_height="52dp"
                     android:layout_marginTop="8dp"
                     android:text="السياسات والخصوصية" />
+
+                <Button
+                    android:id="@+id/profile_change_password"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="8dp"
+                    android:text="تغيير كلمة المرور" />
+
+                <Button
+                    android:id="@+id/profile_about"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="8dp"
+                    android:text="من نحن" />
             </LinearLayout>
 
             <Button

@@ -46,4 +46,22 @@ class MarketplaceCachePolicyTest {
             )
         )
     }
+
+    @Test
+    fun homeFeedUsesShortRefreshWindow() {
+        assertTrue(
+            MarketplaceCachePolicy.isFresh(
+                version = MarketplaceCachePolicy.CURRENT_VERSION,
+                savedAtEpochMs = 1_000L,
+                nowEpochMs = 1_000L + MarketplaceCachePolicy.HOME_TTL_MS
+            )
+        )
+        assertFalse(
+            MarketplaceCachePolicy.isFresh(
+                version = MarketplaceCachePolicy.CURRENT_VERSION,
+                savedAtEpochMs = 1_000L,
+                nowEpochMs = 1_001L + MarketplaceCachePolicy.HOME_TTL_MS
+            )
+        )
+    }
 }

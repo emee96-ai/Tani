@@ -12,51 +12,14 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:paddingStart="18dp"
-        android:paddingTop="20dp"
+        android:paddingTop="14dp"
         android:paddingEnd="18dp"
         android:paddingBottom="30dp">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <ImageView
-                android:layout_width="46dp"
-                android:layout_height="46dp"
-                android:contentDescription="@string/app_name"
-                android:src="@drawable/ic_brand" />
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="أهلاً بيك"
-                    android:textColor="@color/text_muted"
-                    android:textSize="13sp" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="شنو دايرة تكتشفي اليوم؟"
-                    android:textColor="@color/text_dark"
-                    android:textSize="25sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="2dp"
             android:background="@drawable/bg_field"
             android:gravity="center_vertical"
             android:orientation="horizontal"

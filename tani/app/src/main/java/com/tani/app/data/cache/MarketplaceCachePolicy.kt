@@ -3,6 +3,7 @@ package com.tani.app.data.cache
 internal object MarketplaceCachePolicy {
     const val CURRENT_VERSION = 1
     const val DEFAULT_TTL_MS = 6 * 60 * 60 * 1000L
+    const val HOME_TTL_MS = 10 * 60 * 1000L
 
     fun isFresh(
         version: Int,

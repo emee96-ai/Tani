@@ -141,6 +141,16 @@ class DashboardRenderer(
                 addTitle(row.string("store_name") ?: row.string("business_name") ?: "تاجر")
                 addMeta(row.string("business_name") ?: "—")
                 addMeta("${row.string("phone") ?: "بلا رقم"} • ${row.string("city") ?: "—"}")
+                row.string("requested_category")?.takeIf { it.isNotBlank() }?.let {
+                    addNote("فئة جديدة مطلوبة: $it — تُراجع وتُفعّل من قسم الإعدادات")
+                }
+                (row["delivery_zones"] as? JsonArray)?.takeIf { it.isNotEmpty() }?.let { zones ->
+                    val summary = zones.joinToString(" • ") { element ->
+                        val zone = element.jsonObject
+                        "${zone.string("area") ?: "—"}: ${AdminUiText.money(zone.double("fee"))}"
+                    }
+                    addMeta("التوصيل: $summary")
+                }
                 addMeta("أُرسل: ${formatDate(row.string("submitted_at") ?: row.string("created_at"))}")
                 row.string("review_note")?.takeIf { it.isNotBlank() }?.let { addNote("ملاحظة: $it") }
                 addActions(Action("فتح مستند الهوية") { actions.openMerchantDocument(row.string("id").orEmpty()) })

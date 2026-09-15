@@ -323,8 +323,8 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
         val status = if (selected == "all") "" else "verification_status=eq.${AdminApi.enc(selected)}"
         val rows = AdminApi.rows(
             "merchant_profiles",
-            query("select=id,user_id,seller_id,business_name,store_name,phone,city,verification_status,review_note,submitted_at,created_at", status)
-        ).matching("business_name", "store_name", "phone", "city")
+            query("select=id,user_id,seller_id,business_name,store_name,phone,city,category_id,requested_category,delivery_zones,verification_status,review_note,submitted_at,created_at", status)
+        ).matching("business_name", "store_name", "phone", "city", "requested_category")
         renderer.renderMerchants(rows.pageItems(), selected, page, rows.size > PAGE_SIZE)
     }
 
