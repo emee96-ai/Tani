@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="single">
+        <item android:id="@+id/drawer_dashboard" android:icon="@drawable/ic_admin_dashboard" android:title="نظرة عامة" />
+        <item android:id="@+id/drawer_reports" android:icon="@drawable/ic_admin_reports" android:title="التقارير والتحليلات" />
+        <item android:id="@+id/drawer_customers" android:icon="@drawable/ic_admin_customers" android:title="إدارة العملاء" />
+        <item android:id="@+id/drawer_products" android:icon="@drawable/ic_admin_products" android:title="إدارة المنتجات" />
+        <item android:id="@+id/drawer_monetization" android:icon="@drawable/ic_admin_money" android:title="الاشتراكات والظهور" />
+        <item android:id="@+id/drawer_configuration" android:icon="@drawable/ic_admin_settings" android:title="إعدادات السوق" />
+        <item android:id="@+id/drawer_system" android:icon="@drawable/ic_admin_system" android:title="حالة النظام والسجل" />
+    </group>
+    <item android:id="@+id/drawer_logout" android:icon="@drawable/ic_admin_logout" android:title="تسجيل الخروج" />
+</menu>

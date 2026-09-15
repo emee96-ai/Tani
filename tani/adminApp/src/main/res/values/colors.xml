@@ -11,5 +11,9 @@
     <color name="success">#0F9D58</color>
     <color name="warning">#B36A00</color>
     <color name="error">#D64550</color>
+    <color name="error_soft">#FFF0F1</color>
     <color name="brand_soft">#EFEDFF</color>
+    <color name="success_soft">#EAF8F2</color>
+    <color name="warning_soft">#FFF6E5</color>
+    <color name="info_soft">#EEF3FF</color>
 </resources>
