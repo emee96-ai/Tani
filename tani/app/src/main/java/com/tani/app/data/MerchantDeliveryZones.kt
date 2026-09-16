@@ -44,6 +44,58 @@ suspend fun Repository.deliveryQuote(sellerId: String, area: String): MerchantDe
     )
 }
 
+suspend fun Repository.checkoutWithDeliveryZones(
+    addressId: String,
+    phone: String,
+    notes: String,
+    items: List<CartItem>,
+    idempotencyKey: String,
+    deliveryZones: Map<String, MerchantDeliveryZone>
+): String {
+    require(items.isNotEmpty()) { "السلة فارغة" }
+    require(phone.trim().length in 7..30) { "رقم الهاتف غير صحيح" }
+    require(idempotencyKey.length in 16..100) { "تعذر تجهيز الطلب. حاولي مرة أخرى" }
+
+    val payload = buildJsonArray {
+        items.forEach { item ->
+            add(buildJsonObject {
+                put("product_id", item.product.id)
+                put("quantity", item.quantity)
+            })
+        }
+    }
+    val selections = buildJsonObject {
+        deliveryZones.forEach { (sellerId, zone) ->
+            require(zone.seller_id == sellerId) { "اختيار منطقة التوصيل غير صالح" }
+            put(sellerId, zone.id)
+        }
+    }
+
+    val groupId: String = Supabase.post(
+        "rpc/checkout_create_order_group_v2",
+        buildJsonObject {
+            put("p_address_id", addressId)
+            put("p_phone", phone.trim())
+            put("p_notes", notes.trim())
+            put("p_items", payload)
+            put("p_idempotency_key", idempotencyKey)
+            put("p_delivery_zones", selections)
+        }.toString()
+    )
+    Analytics.track(
+        "order_group_created",
+        screen = "checkout",
+        entityType = "order_group",
+        entityId = groupId,
+        metadata = buildJsonObject {
+            put("merchant_count", items.map { it.product.seller_id }.distinct().size)
+            put("item_count", items.sumOf { it.quantity })
+            put("delivery_zone_count", deliveryZones.size)
+        }
+    )
+    return groupId
+}
+
 suspend fun Repository.replaceMerchantDeliveryZones(
     zones: List<MerchantDeliveryZoneInput>
 ): List<MerchantDeliveryZone> {
