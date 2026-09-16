@@ -13,6 +13,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.tani.app.MainActivity
 import com.tani.app.R
 import com.tani.app.data.Repository
+import com.tani.app.data.cache.AppContentStore
+import com.tani.app.data.cache.MarketplaceCache
 import kotlinx.coroutines.launch
 
 class StoresFragment : Fragment(R.layout.fragment_stores) {
@@ -34,8 +36,19 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
             loading.visibility = View.VISIBLE
             loading.text = "جاري تحميل المتاجر..."
             viewLifecycleOwner.lifecycleScope.launch {
+                if (AppContentStore.storesLoaded) {
+                    val stores = AppContentStore.filteredStores(search.text.toString())
+                    adapter.submitList(stores)
+                    loading.visibility = if (stores.isEmpty()) View.VISIBLE else View.GONE
+                    if (stores.isEmpty()) loading.text = "لا توجد متاجر مطابقة حالياً"
+                    return@launch
+                }
                 runCatching { repository.stores(search.text.toString(), limit = 100) }
                     .onSuccess { stores ->
+                        if (search.text.isBlank()) {
+                            AppContentStore.updateStores(stores)
+                            MarketplaceCache(requireContext()).saveStores(stores)
+                        }
                         adapter.submitList(stores)
                         if (stores.isEmpty()) {
                             loading.visibility = View.VISIBLE

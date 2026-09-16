@@ -18,6 +18,8 @@ import androidx.lifecycle.lifecycleScope
 import com.tani.app.MainActivity
 import com.tani.app.R
 import com.tani.app.data.Repository
+import com.tani.app.data.AccountProfile
+import com.tani.app.data.cache.AppContentStore
 import com.tani.app.ui.commerce.AddressesFragment
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -82,21 +84,17 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
     }
 
     private fun loadProfile() {
+        AppContentStore.account?.let {
+            renderAccount(it)
+            setLoading(false)
+            return
+        }
         setLoading(true)
         viewLifecycleOwner.lifecycleScope.launch {
             runCatching { repository.accountProfile() }
                 .onSuccess { account ->
-                    currentAvatarUrl = account.profile.avatar_url
-                    name.setText(account.profile.name)
-                    email.setText(account.email)
-                    phone.setText(account.profile.phone)
-                    role.text = when (account.profile.role) {
-                        "admin" -> "نوع الحساب: إدارة"
-                        "seller" -> "نوع الحساب: تاجر"
-                        else -> "نوع الحساب: عميل"
-                    }
-                    val avatarUrl = account.profile.avatar_url
-                    if (!avatarUrl.isNullOrBlank()) loadRemoteAvatar(avatarUrl) else renderDefaultAvatar()
+                    AppContentStore.updateAccount(account)
+                    renderAccount(account)
                 }
                 .onFailure {
                     Toast.makeText(
@@ -107,6 +105,20 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
                 }
             setLoading(false)
         }
+    }
+
+    private fun renderAccount(account: AccountProfile) {
+        currentAvatarUrl = account.profile.avatar_url
+        name.setText(account.profile.name)
+        email.setText(account.email)
+        phone.setText(account.profile.phone)
+        role.text = when (account.profile.role) {
+            "admin" -> "نوع الحساب: إدارة"
+            "seller" -> "نوع الحساب: تاجر"
+            else -> "نوع الحساب: عميل"
+        }
+        val avatarUrl = account.profile.avatar_url
+        if (!avatarUrl.isNullOrBlank()) loadRemoteAvatar(avatarUrl) else renderDefaultAvatar()
     }
 
     private fun saveProfile() {
@@ -120,6 +132,7 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
                     avatarUrl = uploadedAvatar
                 )
             }.onSuccess { updated ->
+                AppContentStore.updateAccount(AccountProfile(updated, email.text.toString()))
                 currentAvatarUrl = updated.avatar_url
                 selectedAvatarBytes = null
                 name.setText(updated.name)

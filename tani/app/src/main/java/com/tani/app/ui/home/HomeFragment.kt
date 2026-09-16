@@ -20,6 +20,7 @@ import com.tani.app.data.HomeFeed
 import com.tani.app.data.Repository
 import com.tani.app.data.Supabase
 import com.tani.app.data.cache.MarketplaceCache
+import com.tani.app.data.cache.AppContentStore
 import com.tani.app.data.repository.ScaleRepository
 import com.tani.app.ui.marketplace.MarketplaceUi
 import com.tani.app.ui.marketplace.ProductDetailsFragment
@@ -138,7 +139,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
 
         val cache = MarketplaceCache(requireContext())
-        val cachedFeed = cache.loadHomeFeed()
+        val cachedFeed = AppContentStore.homeFeed ?: cache.loadHomeFeed(allowExpired = true)
         if (cachedFeed != null) renderFeed(cachedFeed)
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -156,8 +157,17 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         viewLifecycleOwner.lifecycleScope.launch {
             if (Supabase.userId.isNullOrBlank()) {
                 recommendedTitle.text = "منتجات مقترحة"
-                val fallback = cache.load("home_recommendations")
+                val fallback = AppContentStore.recommendations.ifEmpty {
+                    cache.load("home_recommendations", allowExpired = true)
+                }
                 if (fallback.isNotEmpty()) renderProducts(recommendedBox, fallback)
+                return@launch
+            }
+            val preloaded = AppContentStore.recommendations.ifEmpty {
+                cache.load("home_recommendations", allowExpired = true)
+            }
+            if (preloaded.isNotEmpty()) {
+                renderProducts(recommendedBox, preloaded)
                 return@launch
             }
             runCatching { scaleRepository.recommendations(8) }

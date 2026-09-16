@@ -14,6 +14,7 @@ import com.tani.app.MainActivity
 import com.tani.app.R
 import com.tani.app.data.OrderGroup
 import com.tani.app.data.Repository
+import com.tani.app.data.cache.AppContentStore
 import com.tani.app.ui.commerce.CommerceUi
 import com.tani.app.ui.commerce.OrderDetailsFragment
 import com.tani.app.ui.marketplace.MarketplaceUi
@@ -46,18 +47,25 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
         activeButton.setOnClickListener { filter = Filter.ACTIVE; render() }
         completedButton.setOnClickListener { filter = Filter.COMPLETED; render() }
         cancelledButton.setOnClickListener { filter = Filter.CANCELLED; render() }
-        view.findViewById<Button>(R.id.orders_refresh).setOnClickListener { load() }
+        view.findViewById<Button>(R.id.orders_refresh).setOnClickListener { load(forceRefresh = true) }
 
         load()
     }
 
-    private fun load() {
+    private fun load(forceRefresh: Boolean = false) {
+        if (!forceRefresh && AppContentStore.ordersLoaded) {
+            groups = AppContentStore.orders
+            progress.visibility = View.GONE
+            render()
+            return
+        }
         progress.visibility = View.VISIBLE
         summary.text = "جاري تحميل طلباتك…"
         viewLifecycleOwner.lifecycleScope.launch {
             runCatching { repository.orderGroups() }
                 .onSuccess {
                     groups = it
+                    AppContentStore.updateOrders(it)
                     render()
                 }
                 .onFailure {

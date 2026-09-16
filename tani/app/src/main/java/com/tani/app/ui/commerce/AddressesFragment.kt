@@ -16,6 +16,7 @@ import androidx.lifecycle.lifecycleScope
 import com.tani.app.R
 import com.tani.app.data.Address
 import com.tani.app.data.Repository
+import com.tani.app.data.cache.AppContentStore
 import kotlinx.coroutines.launch
 
 class AddressesFragment : Fragment(R.layout.fragment_addresses) {
@@ -33,12 +34,19 @@ class AddressesFragment : Fragment(R.layout.fragment_addresses) {
         load()
     }
 
-    private fun load() {
+    private fun load(forceRefresh: Boolean = false) {
+        if (!forceRefresh && AppContentStore.addressesLoaded) {
+            addresses = AppContentStore.addresses
+            progress.visibility = View.GONE
+            render()
+            return
+        }
         progress.visibility = View.VISIBLE
         viewLifecycleOwner.lifecycleScope.launch {
             runCatching { repository.addresses() }
                 .onSuccess {
                     addresses = it
+                    AppContentStore.updateAddresses(it)
                     render()
                 }
                 .onFailure {
@@ -154,7 +162,7 @@ class AddressesFragment : Fragment(R.layout.fragment_addresses) {
                         }
                     }.onSuccess {
                         dialog.dismiss()
-                        load()
+                        load(forceRefresh = true)
                     }.onFailure {
                         Toast.makeText(requireContext(), it.message ?: "تعذر حفظ العنوان", Toast.LENGTH_LONG).show()
                     }
@@ -171,7 +179,7 @@ class AddressesFragment : Fragment(R.layout.fragment_addresses) {
             .setPositiveButton("حذف") { _, _ ->
                 viewLifecycleOwner.lifecycleScope.launch {
                     runCatching { repository.deleteAddress(address.id) }
-                        .onSuccess { load() }
+                        .onSuccess { load(forceRefresh = true) }
                         .onFailure { Toast.makeText(requireContext(), it.message ?: "تعذر الحذف", Toast.LENGTH_LONG).show() }
                 }
             }

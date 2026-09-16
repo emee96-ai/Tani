@@ -17,6 +17,7 @@ import com.tani.app.R
 import com.tani.app.data.growth.NotificationItem
 import com.tani.app.data.growth.NotificationPreferences
 import com.tani.app.data.notifications.NotificationGatewayProvider
+import com.tani.app.data.cache.AppContentStore
 import com.tani.app.ui.commerce.CommerceUi
 import com.tani.app.ui.common.ScreenUi
 import kotlinx.coroutines.launch
@@ -41,8 +42,14 @@ class NotificationsFragment : Fragment() {
         load()
     }
 
-    private fun load() {
+    private fun load(forceRefresh: Boolean = false) {
         val context = requireContext()
+        if (!forceRefresh && AppContentStore.notificationsLoaded) {
+            preferences = AppContentStore.notificationPreferences
+            items = AppContentStore.notifications
+            render()
+            return
+        }
         root.removeAllViews()
         root.addView(ScreenUi.title(context, "الإشعارات"))
         root.addView(ScreenUi.subtitle(context, "كل تحديثات طلباتك ورسائلك المهمة في مكان واحد."))
@@ -53,6 +60,7 @@ class NotificationsFragment : Fragment() {
                 .onSuccess { (prefs, loadedItems) ->
                     preferences = prefs
                     items = loadedItems
+                    AppContentStore.updateNotifications(loadedItems, prefs)
                     render()
                 }
                 .onFailure {
@@ -111,7 +119,7 @@ class NotificationsFragment : Fragment() {
         if (unread > 0) {
             summary.addView(ScreenUi.button(context, "تحديد الكل كمقروء") { markAllRead() })
         }
-        summary.addView(ScreenUi.button(context, "تحديث الإشعارات") { load() })
+        summary.addView(ScreenUi.button(context, "تحديث الإشعارات") { load(forceRefresh = true) })
         root.addView(summary)
 
         val shown = when (filter) {
@@ -236,6 +244,7 @@ class NotificationsFragment : Fragment() {
                 )
             }.onSuccess {
                 preferences = it
+                AppContentStore.updateNotifications(items, it)
                 Toast.makeText(context, "تم حفظ إعدادات الإشعارات", Toast.LENGTH_SHORT).show()
             }.onFailure {
                 Toast.makeText(context, it.message ?: "تعذر حفظ الإعدادات", Toast.LENGTH_LONG).show()
@@ -247,7 +256,7 @@ class NotificationsFragment : Fragment() {
         val context = requireContext()
         viewLifecycleOwner.lifecycleScope.launch {
             runCatching { gateway.markRead(id) }
-                .onSuccess { load() }
+                .onSuccess { load(forceRefresh = true) }
                 .onFailure {
                     Toast.makeText(context, it.message ?: "تعذر تحديث الإشعار", Toast.LENGTH_LONG).show()
                 }
@@ -260,7 +269,7 @@ class NotificationsFragment : Fragment() {
             runCatching { gateway.markAllRead() }
                 .onSuccess {
                     Toast.makeText(context, "تم تحديد كل الإشعارات كمقروءة", Toast.LENGTH_SHORT).show()
-                    load()
+                    load(forceRefresh = true)
                 }
                 .onFailure {
                     Toast.makeText(context, it.message ?: "تعذر تحديث الإشعارات", Toast.LENGTH_LONG).show()
