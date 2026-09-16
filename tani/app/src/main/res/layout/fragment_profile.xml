@@ -26,7 +26,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="حسابي"
+                android:text="الإعدادات"
                 android:textColor="@color/text_dark"
                 android:textSize="29sp"
                 android:textStyle="bold" />
@@ -35,7 +35,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="5dp"
-                android:text="بيانات حسابك على تاني"
+                android:text="إدارة بيانات الحساب والخصوصية والتفضيلات"
                 android:textColor="@color/text_muted" />
 
             <ImageView
@@ -70,6 +70,15 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:text="بيانات الحساب"
+                    android:textColor="@color/text_dark"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
                     android:text="الاسم"
                     android:textColor="@color/text_dark"
                     android:textStyle="bold" />
@@ -141,7 +150,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
                     android:layout_marginTop="18dp"
-                    android:text="حفظ التعديلات" />
+                    android:text="حفظ بيانات الحساب" />
             </LinearLayout>
 
             <LinearLayout
@@ -219,7 +228,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="أدوات حسابي"
+                    android:text="إعدادات وخدمات"
                     android:textColor="@color/text_dark"
                     android:textSize="18sp"
                     android:textStyle="bold" />
