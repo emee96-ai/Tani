@@ -30,6 +30,7 @@ import com.tani.app.ui.home.HomeFragment
 import com.tani.app.ui.legal.AboutFragment
 import com.tani.app.ui.marketplace.StoresFragment
 import com.tani.app.ui.orders.OrdersFragment
+import com.tani.app.ui.profile.AccountFragment
 import com.tani.app.ui.profile.ProfileFragment
 import java.net.URL
 import java.net.URLDecoder
@@ -172,7 +173,7 @@ class MainActivity : AppCompatActivity() {
         drawerAccountEmail = drawerAccountHeader.findViewById(R.id.drawer_account_email)
         drawerAccountHeader.setOnClickListener {
             drawer.closeDrawer(GravityCompat.START)
-            showProtected(ProfileFragment())
+            showProtectedSecondary(AccountFragment())
         }
         refreshDrawerAccount()
     }
@@ -446,6 +447,7 @@ class MainActivity : AppCompatActivity() {
         "CartFragment" -> "السلة"
         "OrdersFragment" -> "طلباتي"
         "ProfileFragment" -> "الإعدادات"
+        "AccountFragment" -> "حسابي"
         "ProductDetailsFragment" -> "تفاصيل المنتج"
         "SearchFragment" -> "البحث"
         "ProductsFragment" -> "المنتجات"
