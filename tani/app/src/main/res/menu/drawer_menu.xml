@@ -2,7 +2,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <group android:checkableBehavior="single">
         <item android:id="@+id/drawer_home" android:icon="@drawable/ic_nav_home" android:title="الرئيسية" />
-        <item android:id="@+id/drawer_categories" android:icon="@drawable/ic_nav_categories" android:title="التصنيفات" />
+        <item android:id="@+id/drawer_categories" android:icon="@drawable/ic_nav_categories" android:title="التصنيفات" android:visible="false" />
         <item android:id="@+id/drawer_stores" android:icon="@drawable/ic_store" android:title="المتاجر" />
         <item android:id="@+id/drawer_favorites" android:icon="@drawable/ic_favorite_outline" android:title="المفضلة" />
         <item android:id="@+id/drawer_cart" android:icon="@drawable/ic_nav_cart" android:title="السلة" />
