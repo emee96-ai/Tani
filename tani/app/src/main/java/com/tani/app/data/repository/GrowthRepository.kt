@@ -44,9 +44,19 @@ class GrowthRepository {
     }
 
     suspend fun markNotificationRead(id: String) {
+        val uid = Supabase.userId ?: error("تسجيل الدخول مطلوب")
         Supabase.patch<List<NotificationItem>>(
             "notifications",
-            "id=eq.$id",
+            "id=eq.$id&user_id=eq.$uid",
+            buildJsonObject { put("read_at", java.time.Instant.now().toString()) }.toString()
+        )
+    }
+
+    suspend fun markAllNotificationsRead() {
+        val uid = Supabase.userId ?: error("تسجيل الدخول مطلوب")
+        Supabase.patch<List<NotificationItem>>(
+            "notifications",
+            "user_id=eq.$uid&read_at=is.null",
             buildJsonObject { put("read_at", java.time.Instant.now().toString()) }.toString()
         )
     }
