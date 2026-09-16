@@ -1,6 +1,7 @@
 package com.tani.app.ui.home
 
 import android.os.Bundle
+import android.view.Gravity
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
@@ -8,6 +9,7 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.tani.app.MainActivity
@@ -56,13 +58,15 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             (activity as MainActivity).show(ProductsFragment())
         }
 
-        view.findViewById<Button>(R.id.home_search_button).setOnClickListener { openSearch() }
         search.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 openSearch(); true
             } else false
         }
-        view.findViewById<Button>(R.id.home_hero_cta).setOnClickListener { openProducts() }
+        view.findViewById<View>(R.id.home_hero_cta).setOnClickListener { openProducts() }
+        view.findViewById<View>(R.id.home_all_categories).setOnClickListener {
+            (activity as MainActivity).nav.selectedItemId = R.id.categories
+        }
         view.findViewById<Button>(R.id.home_all_products).setOnClickListener { openProducts() }
         view.findViewById<Button>(R.id.home_all_stores).setOnClickListener {
             (activity as MainActivity).show(StoresFragment())
@@ -76,13 +80,35 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     (activity as MainActivity).show(
                         ProductsFragment.newInstance(category.id, category.name)
                     )
+                }.apply {
+                    background = ContextCompat.getDrawable(requireContext(), R.drawable.bg_category_card)
+                    minWidth = 0
+                    minimumWidth = 0
+                    minHeight = 0
+                    minimumHeight = 0
+                    gravity = Gravity.CENTER
+                    textSize = 12.5f
+                    setTextColor(ContextCompat.getColor(requireContext(), R.color.text_dark))
+                    setPadding(
+                        MarketplaceUi.dp(requireContext(), 8),
+                        MarketplaceUi.dp(requireContext(), 10),
+                        MarketplaceUi.dp(requireContext(), 8),
+                        MarketplaceUi.dp(requireContext(), 8)
+                    )
+                    setCompoundDrawablesRelativeWithIntrinsicBounds(
+                        0,
+                        categoryIcon(category.name),
+                        0,
+                        0
+                    )
+                    compoundDrawablePadding = MarketplaceUi.dp(requireContext(), 7)
                 }
                 categoriesBox.addView(
                     button,
                     LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                    ).apply { marginEnd = MarketplaceUi.dp(requireContext(), 8) }
+                        MarketplaceUi.dp(requireContext(), 86),
+                        MarketplaceUi.dp(requireContext(), 84)
+                    ).apply { marginEnd = MarketplaceUi.dp(requireContext(), 10) }
                 )
             }
 
@@ -153,6 +179,15 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
     }
 
+    private fun categoryIcon(name: String): Int = when {
+        name.contains("نساء", ignoreCase = true) || name.contains("نسائي", ignoreCase = true) -> R.drawable.ic_cat_women
+        name.contains("طفل", ignoreCase = true) || name.contains("أطفال", ignoreCase = true) -> R.drawable.ic_cat_kids
+        name.contains("بيت", ignoreCase = true) || name.contains("منزل", ignoreCase = true) -> R.drawable.ic_cat_home
+        name.contains("إكسس", ignoreCase = true) || name.contains("اكسس", ignoreCase = true) -> R.drawable.ic_cat_accessories
+        name.contains("جمال", ignoreCase = true) || name.contains("عناية", ignoreCase = true) -> R.drawable.ic_cat_beauty
+        else -> R.drawable.ic_cat_generic
+    }
+
     private fun renderProducts(container: LinearLayout, products: List<com.tani.app.data.ProductCard>) {
         container.removeAllViews()
         if (products.isEmpty()) {
@@ -161,24 +196,24 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
         val cards = products.map { product ->
             MarketplaceUi.productCard(
-                    requireContext(),
-                    viewLifecycleOwner.lifecycleScope,
-                    product,
-                    onOpen = {
-                        (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id))
-                    },
-                    onAdd = {
-                        if (Cart.add(product.toProduct())) {
-                            (activity as? MainActivity)?.refreshCartBadge()
-                            viewLifecycleOwner.lifecycleScope.launch {
-                                Analytics.track("add_to_cart", screen = "home", entityType = "product", entityId = product.id)
-                            }
-                            Toast.makeText(requireContext(), "تمت إضافة ${product.name} للسلة", Toast.LENGTH_SHORT).show()
-                        } else {
-                            Toast.makeText(requireContext(), "تعذر إضافة كمية إضافية", Toast.LENGTH_SHORT).show()
+                requireContext(),
+                viewLifecycleOwner.lifecycleScope,
+                product,
+                onOpen = {
+                    (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id))
+                },
+                onAdd = {
+                    if (Cart.add(product.toProduct())) {
+                        (activity as? MainActivity)?.refreshCartBadge()
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            Analytics.track("add_to_cart", screen = "home", entityType = "product", entityId = product.id)
                         }
+                        Toast.makeText(requireContext(), "تمت إضافة ${product.name} للسلة", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(requireContext(), "تعذر إضافة كمية إضافية", Toast.LENGTH_SHORT).show()
                     }
-                )
+                }
+            )
         }
         MarketplaceUi.addTwoColumnGrid(container, cards, requireContext())
     }

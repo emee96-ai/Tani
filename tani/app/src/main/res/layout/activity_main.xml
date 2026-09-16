@@ -21,13 +21,16 @@
             <com.google.android.material.appbar.MaterialToolbar
                 android:id="@+id/top_app_bar"
                 android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
+                android:layout_height="56dp"
                 android:background="@color/tani_surface"
                 android:elevation="0dp"
                 android:layoutDirection="rtl"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
                 android:visibility="gone"
                 app:navigationIcon="@drawable/ic_menu"
                 app:navigationIconTint="@color/text_dark"
+                app:titleCentered="true"
                 app:titleTextColor="@color/text_dark" />
 
             <FrameLayout

@@ -11,85 +11,75 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingStart="18dp"
-        android:paddingTop="14dp"
-        android:paddingEnd="18dp"
+        android:paddingStart="16dp"
+        android:paddingTop="10dp"
+        android:paddingEnd="16dp"
         android:paddingBottom="30dp">
 
-        <LinearLayout
+        <EditText
+            android:id="@+id/home_search"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginTop="2dp"
+            android:layout_height="52dp"
             android:background="@drawable/bg_field"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="4dp"
-            android:paddingEnd="6dp">
-
-            <EditText
-                android:id="@+id/home_search"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="@android:color/transparent"
-                android:hint="ابحثي عن منتج، متجر أو فئة..."
-                android:imeOptions="actionSearch"
-                android:paddingHorizontal="14dp"
-                android:singleLine="true"
-                android:textColor="@color/text_dark"
-                android:textColorHint="@color/text_muted"
-                android:textSize="14sp" />
-
-            <Button
-                android:id="@+id/home_search_button"
-                android:layout_width="72dp"
-                android:layout_height="44dp"
-                android:minWidth="0dp"
-                android:text="بحث"
-                android:textSize="13sp" />
-        </LinearLayout>
+            android:drawableEnd="@drawable/ic_search"
+            android:drawablePadding="10dp"
+            android:hint="ابحثي عن منتج، متجر أو فئة..."
+            android:imeOptions="actionSearch"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:singleLine="true"
+            android:textColor="@color/text_dark"
+            android:textColorHint="@color/text_muted"
+            android:textSize="14sp" />
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="148dp"
-            android:layout_marginTop="16dp"
+            android:layout_height="124dp"
+            android:layout_marginTop="14dp"
             android:background="@drawable/bg_banner"
             android:gravity="center_vertical"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:paddingStart="18dp"
+            android:paddingTop="14dp"
+            android:paddingEnd="18dp"
+            android:paddingBottom="14dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="اكتشفي حاجات بتحبيها"
                 android:textColor="@color/white"
-                android:textSize="22sp"
+                android:textSize="20sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="4dp"
+                android:maxLines="2"
                 android:text="منتجات سودانية موثوقة—كلها في مكان واحد."
                 android:textColor="#EDEBFF"
-                android:textSize="13sp" />
+                android:textSize="12.5sp" />
 
-            <Button
+            <TextView
                 android:id="@+id/home_hero_cta"
-                android:layout_width="118dp"
-                android:layout_height="42dp"
-                android:layout_marginTop="12dp"
-                android:backgroundTint="@color/white"
-                android:minHeight="0dp"
-                android:text="اكتشفي الآن"
-                android:textColor="@color/tani_primary"
-                android:textSize="13sp" />
+                android:layout_width="112dp"
+                android:layout_height="34dp"
+                android:layout_marginTop="9dp"
+                android:background="@drawable/bg_hero_cta"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:text="اكتشفي الآن ←"
+                android:textColor="@color/tani_primary_dark"
+                android:textSize="12.5sp"
+                android:textStyle="bold" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="18dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
@@ -99,15 +89,19 @@
                 android:layout_weight="1"
                 android:text="تسوقي حسب الفئة"
                 android:textColor="@color/text_dark"
-                android:textSize="19sp"
+                android:textSize="18sp"
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/home_all_categories"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="4dp"
                 android:text="عرض الكل"
                 android:textColor="@color/tani_primary"
-                android:textSize="13sp"
+                android:textSize="12.5sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -115,12 +109,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
+            android:clipToPadding="false"
             android:scrollbars="none">
 
             <LinearLayout
                 android:id="@+id/home_categories_box"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:gravity="center_vertical"
                 android:orientation="horizontal" />
         </HorizontalScrollView>
 
