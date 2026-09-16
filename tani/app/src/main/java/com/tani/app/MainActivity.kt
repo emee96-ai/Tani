@@ -1,9 +1,12 @@
 package com.tani.app
 
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
@@ -17,10 +20,10 @@ import com.tani.app.data.Analytics
 import com.tani.app.data.AuthRedirect
 import com.tani.app.data.Cart
 import com.tani.app.data.ErrorMonitoring
+import com.tani.app.data.Repository
 import com.tani.app.data.Supabase
 import com.tani.app.ui.auth.AuthFragment
 import com.tani.app.ui.cart.CartFragment
-import com.tani.app.ui.categories.CategoriesFragment
 import com.tani.app.ui.growth.FavoritesFragment
 import com.tani.app.ui.growth.NotificationsFragment
 import com.tani.app.ui.home.HomeFragment
@@ -28,8 +31,11 @@ import com.tani.app.ui.legal.AboutFragment
 import com.tani.app.ui.marketplace.StoresFragment
 import com.tani.app.ui.orders.OrdersFragment
 import com.tani.app.ui.profile.ProfileFragment
+import java.net.URL
 import java.net.URLDecoder
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
 
@@ -37,6 +43,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var toolbar: MaterialToolbar
     private lateinit var drawer: DrawerLayout
     private lateinit var drawerNav: NavigationView
+    private lateinit var drawerAccountHeader: View
+    private lateinit var drawerAccountAvatar: ImageView
+    private lateinit var drawerAccountName: TextView
+    private lateinit var drawerAccountEmail: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(R.style.Theme_Tani)
@@ -83,6 +93,7 @@ class MainActivity : AppCompatActivity() {
             if (supportFragmentManager.backStackEntryCount > 0) {
                 onBackPressedDispatcher.onBackPressed()
             } else {
+                refreshDrawerAccount()
                 drawer.openDrawer(GravityCompat.START)
             }
         }
@@ -102,14 +113,16 @@ class MainActivity : AppCompatActivity() {
         nav.setOnItemSelectedListener {
             when (it.itemId) {
                 R.id.home -> showPrimary(HomeFragment())
-                R.id.categories -> showPrimary(CategoriesFragment())
+                R.id.categories -> showPrimary(StoresFragment())
                 R.id.cart -> showPrimary(CartFragment())
                 R.id.orders -> showProtected(OrdersFragment())
                 R.id.profile -> showProtected(ProfileFragment())
             }
             true
         }
+
         setupDrawerNavigation()
+        setupDrawerAccountHeader()
         supportFragmentManager.addOnBackStackChangedListener { updateChromeFromBackStack() }
         refreshCartBadge()
 
@@ -140,23 +153,79 @@ class MainActivity : AppCompatActivity() {
             drawer.closeDrawer(GravityCompat.START)
             when (item.itemId) {
                 R.id.drawer_home -> showPrimary(HomeFragment())
-                R.id.drawer_categories -> showPrimary(CategoriesFragment())
-                R.id.drawer_stores -> show(StoresFragment())
+                R.id.drawer_stores -> showPrimary(StoresFragment())
                 R.id.drawer_favorites -> showProtectedSecondary(FavoritesFragment())
                 R.id.drawer_cart -> showPrimary(CartFragment())
                 R.id.drawer_orders -> showProtected(OrdersFragment())
                 R.id.drawer_notifications -> showProtectedSecondary(NotificationsFragment())
                 R.id.drawer_about -> show(AboutFragment())
-                R.id.drawer_profile -> showProtected(ProfileFragment())
                 else -> return@setNavigationItemSelectedListener false
             }
             true
         }
     }
 
+    private fun setupDrawerAccountHeader() {
+        drawerAccountHeader = drawerNav.getHeaderView(0)
+        drawerAccountAvatar = drawerAccountHeader.findViewById(R.id.drawer_account_avatar)
+        drawerAccountName = drawerAccountHeader.findViewById(R.id.drawer_account_name)
+        drawerAccountEmail = drawerAccountHeader.findViewById(R.id.drawer_account_email)
+        drawerAccountHeader.setOnClickListener {
+            drawer.closeDrawer(GravityCompat.START)
+            showProtected(ProfileFragment())
+        }
+        refreshDrawerAccount()
+    }
+
+    private fun refreshDrawerAccount() {
+        if (!::drawerAccountHeader.isInitialized) return
+        if (!Supabase.hasStoredSession()) {
+            renderGuestDrawerAccount()
+            return
+        }
+
+        lifecycleScope.launch {
+            runCatching { Repository().accountProfile() }
+                .onSuccess { account ->
+                    drawerAccountName.text = account.profile.name.ifBlank { "حسابي" }
+                    drawerAccountEmail.text = account.email.ifBlank { "بيانات الحساب" }
+                    val avatarUrl = account.profile.avatar_url
+                    if (!avatarUrl.isNullOrBlank()) {
+                        val bitmap = withContext(Dispatchers.IO) {
+                            runCatching {
+                                URL(avatarUrl).openStream().use { BitmapFactory.decodeStream(it) }
+                            }.getOrNull()
+                        }
+                        if (bitmap != null) {
+                            drawerAccountAvatar.setPadding(0, 0, 0, 0)
+                            drawerAccountAvatar.setImageBitmap(bitmap)
+                        } else {
+                            renderDefaultDrawerAvatar()
+                        }
+                    } else {
+                        renderDefaultDrawerAvatar()
+                    }
+                }
+                .onFailure { renderGuestDrawerAccount() }
+        }
+    }
+
+    private fun renderGuestDrawerAccount() {
+        drawerAccountName.text = "حسابي"
+        drawerAccountEmail.text = "سجلي الدخول لعرض بيانات الحساب"
+        renderDefaultDrawerAvatar()
+    }
+
+    private fun renderDefaultDrawerAvatar() {
+        val pad = (12 * resources.displayMetrics.density).toInt()
+        drawerAccountAvatar.setPadding(pad, pad, pad, pad)
+        drawerAccountAvatar.setImageResource(android.R.drawable.ic_menu_myplaces)
+    }
+
     override fun onResume() {
         super.onResume()
         if (::nav.isInitialized) refreshCartBadge()
+        if (::drawerAccountHeader.isInitialized) refreshDrawerAccount()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -237,11 +306,13 @@ class MainActivity : AppCompatActivity() {
         setDrawerEnabled(false)
         nav.visibility = View.GONE
         toolbar.visibility = View.GONE
+        if (::drawerAccountHeader.isInitialized) renderGuestDrawerAccount()
         show(AuthFragment(), addToBackStack = false)
     }
 
     fun showApp() {
         showPrimary(HomeFragment())
+        refreshDrawerAccount()
     }
 
     fun show(fragment: Fragment, addToBackStack: Boolean = true) {
@@ -310,15 +381,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateDrawerSelection(fragment: Fragment) {
+        drawerNav.menu.setGroupCheckable(0, true, true)
         val item = when (fragment.javaClass.simpleName) {
             "HomeFragment" -> R.id.drawer_home
-            "CategoriesFragment" -> R.id.drawer_categories
+            "StoresFragment" -> R.id.drawer_stores
             "CartFragment" -> R.id.drawer_cart
             "OrdersFragment" -> R.id.drawer_orders
-            "ProfileFragment" -> R.id.drawer_profile
-            else -> return
+            "ProfileFragment" -> null
+            else -> null
         }
-        drawerNav.setCheckedItem(item)
+        if (item == null) {
+            for (index in 0 until drawerNav.menu.size()) {
+                drawerNav.menu.getItem(index).isChecked = false
+            }
+        } else {
+            drawerNav.setCheckedItem(item)
+        }
     }
 
     fun refreshCartBadge() {
@@ -367,7 +445,7 @@ class MainActivity : AppCompatActivity() {
         "CategoriesFragment" -> "التصنيفات"
         "CartFragment" -> "السلة"
         "OrdersFragment" -> "طلباتي"
-        "ProfileFragment" -> "حسابي"
+        "ProfileFragment" -> "الإعدادات"
         "ProductDetailsFragment" -> "تفاصيل المنتج"
         "SearchFragment" -> "البحث"
         "ProductsFragment" -> "المنتجات"
