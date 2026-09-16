@@ -7,6 +7,7 @@ import com.tani.app.data.repository.GrowthRepository
 interface NotificationGateway {
     suspend fun inbox(): List<NotificationItem>
     suspend fun markRead(id: String)
+    suspend fun markAllRead()
     suspend fun preferences(): NotificationPreferences
     suspend fun savePreferences(value: NotificationPreferences): NotificationPreferences
 }
@@ -16,6 +17,7 @@ class SupabaseNotificationGateway(
 ) : NotificationGateway {
     override suspend fun inbox() = repository.notifications()
     override suspend fun markRead(id: String) = repository.markNotificationRead(id)
+    override suspend fun markAllRead() = repository.markAllNotificationsRead()
     override suspend fun preferences() = repository.notificationPreferences()
     override suspend fun savePreferences(value: NotificationPreferences) = repository.saveNotificationPreferences(value)
 }
