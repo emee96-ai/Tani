@@ -16,10 +16,33 @@ data class MerchantDeliveryZone(
     val is_active: Boolean = true
 )
 
+@Serializable
+data class MerchantDeliveryQuote(
+    val seller_id: String,
+    val provider: String? = null,
+    val fee: Double = 0.0,
+    val estimated_minutes: Int? = null,
+    val delivery_area: String? = null,
+    val city: String? = null,
+    val area: String? = null,
+    val available: Boolean = false
+)
+
 suspend fun Repository.merchantDeliveryZones(sellerId: String): List<MerchantDeliveryZone> = Supabase.get(
     "delivery_zones",
     "select=id,seller_id,area_name,fee,estimated_minutes,sort_order,is_active&seller_id=eq.$sellerId&order=sort_order.asc,area_name.asc"
 )
+
+suspend fun Repository.deliveryQuote(sellerId: String, area: String): MerchantDeliveryQuote {
+    require(area.trim().isNotBlank()) { "اختاري منطقة التوصيل" }
+    return Supabase.post(
+        "rpc/delivery_quote",
+        buildJsonObject {
+            put("p_seller_id", sellerId)
+            put("p_area", area.trim())
+        }.toString()
+    )
+}
 
 suspend fun Repository.replaceMerchantDeliveryZones(
     zones: List<MerchantDeliveryZoneInput>
