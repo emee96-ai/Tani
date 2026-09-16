@@ -9,6 +9,5 @@
         <item android:id="@+id/drawer_orders" android:icon="@drawable/ic_nav_orders" android:title="طلباتي" />
         <item android:id="@+id/drawer_notifications" android:icon="@drawable/ic_notifications" android:title="الإشعارات" />
         <item android:id="@+id/drawer_about" android:icon="@drawable/ic_brand" android:title="من نحن" />
-        <item android:id="@+id/drawer_profile" android:icon="@drawable/ic_nav_profile" android:title="حسابي" />
     </group>
 </menu>
