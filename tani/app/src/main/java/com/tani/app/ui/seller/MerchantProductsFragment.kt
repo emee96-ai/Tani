@@ -1,17 +1,19 @@
 package com.tani.app.ui.seller
 
+import android.content.DialogInterface
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.text.InputType
 import android.view.View
+import android.widget.ArrayAdapter
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.Spinner
-import android.widget.ArrayAdapter
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
@@ -31,10 +33,20 @@ class MerchantProductsFragment : Fragment() {
     private val repository = Repository()
     private lateinit var root: LinearLayout
     private var pendingImageProductId: String? = null
+    private val pendingCreateImages = mutableListOf<Uri>()
+    private var pendingCreateImageStatus: TextView? = null
 
     private val pickImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         val id = pendingImageProductId
         if (uri != null && id != null) uploadProductImage(uri, id)
+    }
+
+    private val pickCreateImages = registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
+        if (uris.isNotEmpty()) {
+            pendingCreateImages.clear()
+            pendingCreateImages.addAll(uris.distinct())
+            updateCreateImageStatus()
+        }
     }
 
     override fun onCreateView(inflater: android.view.LayoutInflater, container: android.view.ViewGroup?, state: Bundle?): View {
@@ -126,7 +138,32 @@ class MerchantProductsFragment : Fragment() {
 
     private fun productDialog(product: Product?, sellerId: String, categories: List<Category>) {
         val context = requireContext()
-        val content = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; setPadding(MerchantUi.dp(context, 20), 0, MerchantUi.dp(context, 20), 0) }
+        val isCreating = product == null
+        if (isCreating) {
+            pendingCreateImages.clear()
+            pendingCreateImageStatus = null
+        }
+
+        val content = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(MerchantUi.dp(context, 20), 0, MerchantUi.dp(context, 20), 0)
+        }
+
+        if (isCreating) {
+            content.addView(MerchantUi.text(context, "صور المنتج *", 14f, true))
+            content.addView(MerchantUi.secondaryButton(context, "اختيار صور المنتج") {
+                pickCreateImages.launch("image/*")
+            }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                topMargin = MerchantUi.dp(context, 6)
+                bottomMargin = MerchantUi.dp(context, 6)
+            })
+            pendingCreateImageStatus = MerchantUi.muted(context, "اختاري صورة واحدة على الأقل قبل حفظ المنتج.", 12.5f).also {
+                content.addView(it, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                    bottomMargin = MerchantUi.dp(context, 12)
+                })
+            }
+        }
+
         val name = dialogField("اسم المنتج", product?.name)
         val description = dialogField("الوصف", product?.description, multiline = true)
         val category = Spinner(context).apply {
@@ -140,25 +177,100 @@ class MerchantProductsFragment : Fragment() {
         listOf(name, description, category, price, stock, visible).forEach {
             content.addView(it, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = MerchantUi.dp(context, 8) })
         }
-        MaterialAlertDialogBuilder(context)
-            .setTitle(if (product == null) "إضافة منتج" else "تعديل المنتج")
+
+        val dialog = MaterialAlertDialogBuilder(context)
+            .setTitle(if (isCreating) "إضافة منتج" else "تعديل المنتج")
             .setView(content)
-            .setPositiveButton("حفظ") { _, _ ->
+            .setPositiveButton("حفظ", null)
+            .setNegativeButton("إلغاء", null)
+            .create()
+
+        dialog.setOnDismissListener {
+            if (isCreating) {
+                pendingCreateImages.clear()
+                pendingCreateImageStatus = null
+            }
+        }
+
+        dialog.setOnShowListener {
+            val saveButton = dialog.getButton(DialogInterface.BUTTON_POSITIVE)
+            saveButton.setOnClickListener {
                 val p = price.text.toString().toDoubleOrNull()
                 val s = stock.text.toString().toIntOrNull()
-                if (name.text.toString().trim().length < 2) return@setPositiveButton toast("اكتبي اسم المنتج")
-                if (p == null || p < 0 || s == null || s < 0) return@setPositiveButton toast("راجعي السعر والمخزون")
+                if (name.text.toString().trim().length < 2) {
+                    toast("اكتبي اسم المنتج")
+                    return@setOnClickListener
+                }
+                if (p == null || p < 0 || s == null || s < 0) {
+                    toast("راجعي السعر والمخزون")
+                    return@setOnClickListener
+                }
+                val selectedImages = pendingCreateImages.toList()
+                if (isCreating && selectedImages.isEmpty()) {
+                    toast("اختاري صورة واحدة على الأقل للمنتج")
+                    return@setOnClickListener
+                }
+
                 val cat = categories.getOrNull(category.selectedItemPosition)
+                saveButton.isEnabled = false
+                toast(if (isCreating) "جاري حفظ المنتج ورفع الصور…" else "جاري حفظ التعديلات…")
+
                 viewLifecycleOwner.lifecycleScope.launch {
                     runCatching {
-                        if (product == null) repository.createMerchantProduct(sellerId, cat?.id, name.text.toString(), description.text.toString(), p, s, visible.isChecked)
-                        else repository.updateMerchantProduct(product.id, cat?.id, name.text.toString(), description.text.toString(), p, s, visible.isChecked)
-                    }.onSuccess { toast("تم حفظ المنتج ✓"); load() }
-                        .onFailure { toast(it.message ?: "تعذر حفظ المنتج") }
+                        if (isCreating) {
+                            val created = repository.createMerchantProduct(
+                                sellerId,
+                                cat?.id,
+                                name.text.toString(),
+                                description.text.toString(),
+                                p,
+                                s,
+                                active = false
+                            )
+                            try {
+                                selectedImages.forEachIndexed { index, uri ->
+                                    val bytes = withContext(Dispatchers.IO) { imageBytes(uri, 1600, 84) }
+                                    val path = repository.uploadProductImage(bytes, created.id)
+                                    repository.attachProductImage(created.id, path, primary = index == 0)
+                                }
+                                if (visible.isChecked) repository.deactivateMerchantProduct(created.id, true)
+                                created
+                            } catch (error: Throwable) {
+                                runCatching { repository.deleteMerchantProduct(created.id) }
+                                throw error
+                            }
+                        } else {
+                            repository.updateMerchantProduct(
+                                product.id,
+                                cat?.id,
+                                name.text.toString(),
+                                description.text.toString(),
+                                p,
+                                s,
+                                visible.isChecked
+                            )
+                        }
+                    }.onSuccess {
+                        toast(if (isCreating) "تمت إضافة المنتج وصوره ✓" else "تم حفظ المنتج ✓")
+                        dialog.dismiss()
+                        load()
+                    }.onFailure {
+                        saveButton.isEnabled = true
+                        toast(it.message ?: if (isCreating) "تعذر حفظ المنتج أو رفع الصور" else "تعذر حفظ المنتج")
+                    }
                 }
             }
-            .setNegativeButton("إلغاء", null)
-            .show()
+        }
+        dialog.show()
+    }
+
+    private fun updateCreateImageStatus() {
+        val count = pendingCreateImages.size
+        pendingCreateImageStatus?.text = if (count == 0) {
+            "اختاري صورة واحدة على الأقل قبل حفظ المنتج."
+        } else {
+            "تم اختيار $count ${if (count == 1) "صورة" else "صور"}. أول صورة ستكون الرئيسية."
+        }
     }
 
     private fun toggle(product: Product) {
@@ -318,6 +430,7 @@ class MerchantProductsFragment : Fragment() {
             addView(MerchantUi.secondaryButton(context, "إعادة المحاولة") { load() })
         })
     }
+
     private fun money(value: Double) = if (value % 1.0 == 0.0) value.toInt().toString() else String.format(java.util.Locale.US, "%.2f", value)
     private fun toast(value: String) = Toast.makeText(requireContext(), value, Toast.LENGTH_LONG).show()
 }
