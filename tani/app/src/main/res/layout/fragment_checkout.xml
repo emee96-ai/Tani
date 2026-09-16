@@ -23,7 +23,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="العنوان ← المراجعة ← التأكيد"
+            android:text="العنوان ← منطقة التوصيل ← المراجعة ← التأكيد"
             android:textColor="@color/tani_primary"
             android:textStyle="bold" />
 
@@ -31,7 +31,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="3dp"
-            android:text="راجعي البيانات بهدوء قبل إرسال الطلب"
+            android:text="اختاري منطقة التوصيل لكل متجر حتى نحسب الرسوم الصحيحة"
             android:textColor="@color/text_muted" />
 
         <ProgressBar
@@ -55,6 +55,7 @@
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/checkout_delivery_section"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
@@ -62,7 +63,39 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="2  بيانات الاستلام" android:textColor="@color/text_dark" android:textSize="18sp" android:textStyle="bold" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="2  منطقة التوصيل"
+                android:textColor="@color/text_dark"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/checkout_delivery_hint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:text="اختاري المنطقة المناسبة تحت كل متجر"
+                android:textColor="@color/text_muted" />
+
+            <LinearLayout
+                android:id="@+id/checkout_delivery_zones"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="vertical" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="3  بيانات الاستلام" android:textColor="@color/text_dark" android:textSize="18sp" android:textStyle="bold" />
             <EditText android:id="@+id/checkout_phone" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="10dp" android:background="@drawable/bg_field" android:hint="رقم الهاتف" android:inputType="phone" android:paddingHorizontal="14dp" android:singleLine="true" />
             <EditText android:id="@+id/checkout_notes" android:layout_width="match_parent" android:layout_height="96dp" android:layout_marginTop="10dp" android:background="@drawable/bg_field" android:gravity="top|start" android:hint="ملاحظات للتاجر أو المندوب" android:padding="14dp" />
         </LinearLayout>
@@ -75,7 +108,7 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="3  مراجعة الطلب" android:textColor="@color/text_dark" android:textSize="18sp" android:textStyle="bold" />
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="4  مراجعة الطلب" android:textColor="@color/text_dark" android:textSize="18sp" android:textStyle="bold" />
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:text="الدفع عند الاستلام (COD)" android:textColor="@color/text_muted" />
             <LinearLayout android:id="@+id/checkout_summary" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="vertical" />
             <TextView android:id="@+id/checkout_total" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:textColor="@color/tani_primary" android:textSize="21sp" android:textStyle="bold" />
