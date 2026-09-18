@@ -188,7 +188,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
 
             if (zones.isEmpty()) {
                 deliveryZonesBox.addView(TextView(requireContext()).apply {
-                    text = "رسوم التوصيل ثابتة: ${MarketplaceUi.formatPrice(first.product.delivery_fee)}"
+                    text = "رسوم التوصيل الحالية تُحسب من الخادم عند التأكيد"
                     textSize = 14f
                     setTextColor(requireContext().getColor(R.color.text_muted))
                     setPadding(0, 0, 0, dp(10))
@@ -228,7 +228,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
         }
 
         if (merchantsWithChoices == 0) {
-            deliveryHint.text = "رسوم التوصيل ثابتة للمتاجر الموجودة في السلة."
+            deliveryHint.text = "سيتم جلب رسوم التوصيل الحالية من الخادم قبل التأكيد."
         } else {
             updateDeliveryHint()
         }
@@ -256,7 +256,6 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
 
     private fun renderSummary() {
         summary.removeAllViews()
-        var deliveryTotal = 0.0
         var missingZone = false
 
         Cart.groupedBySeller().forEach { (sellerId, group) ->
@@ -265,19 +264,21 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
             val subtotal = group.sumOf { it.product.price * it.quantity }
             val zones = zonesBySeller[sellerId].orEmpty()
             val chosen = selectedZones[sellerId]
-            val delivery = if (zones.isEmpty()) first.product.delivery_fee else chosen?.fee
+            val delivery = if (zones.isEmpty()) null else chosen?.fee
 
-            if (delivery == null) missingZone = true else deliveryTotal += delivery
+            if (zones.isNotEmpty() && delivery == null) missingZone = true
 
             summary.addView(TextView(requireContext()).apply {
                 text = buildString {
                     append(storeName)
                     append("\n${group.sumOf { it.quantity }} منتج • ${MarketplaceUi.formatPrice(subtotal)}")
                     append("\n")
-                    if (delivery == null) {
+                    if (zones.isEmpty()) {
+                        append("التوصيل: يُحسب من الخادم عند التأكيد")
+                    } else if (delivery == null) {
                         append("التوصيل: اختاري المنطقة")
                     } else {
-                        append("التوصيل: ${MarketplaceUi.formatPrice(delivery)}")
+                        append("التوصيل التقديري: ${MarketplaceUi.formatPrice(delivery)}")
                         chosen?.let { append(" • ${it.area_name}") }
                     }
                 }
@@ -290,7 +291,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
         total.text = if (missingZone) {
             "الإجمالي يظهر بعد اختيار مناطق التوصيل"
         } else {
-            "الإجمالي المتوقع: ${MarketplaceUi.formatPrice(Cart.subtotal() + deliveryTotal)}"
+            "الإجمالي النهائي يُحسب من الخادم عند التأكيد"
         }
     }
 
@@ -373,26 +374,9 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
         progress.visibility = View.VISIBLE
         viewLifecycleOwner.lifecycleScope.launch {
             runCatching {
-                coroutineScope {
-                    val productQuote = async { repository.quoteCart(Cart.all()) }
-                    val deliveryQuotes = selectedZones.mapValues { (sellerId, zone) ->
-                        async { repository.deliveryQuote(sellerId, zone.area_name) }
-                    }
-                    productQuote.await() to deliveryQuotes.mapValues { (_, deferred) -> deferred.await() }
-                }
-            }.onSuccess { (quote, deliveryQuotes) ->
-                val unavailableDelivery = deliveryQuotes.entries.firstOrNull { !it.value.available }
-                if (unavailableDelivery != null) {
-                    val store = Cart.groupedBySeller()[unavailableDelivery.key]
-                        ?.firstOrNull()?.product?.store_name ?: "المتجر"
-                    Toast.makeText(
-                        requireContext(),
-                        "$store لا يوصل إلى المنطقة المختارة حالياً. اختاري منطقة أخرى.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                } else {
-                    showQuoteConfirmation(addressId, quote, deliveryQuotes)
-                }
+                repository.quoteCart(Cart.all(), selectedZones.toMap())
+            }.onSuccess { quote ->
+                showQuoteConfirmation(addressId, quote)
             }.onFailure {
                 Toast.makeText(
                     requireContext(),
@@ -407,8 +391,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
 
     private fun showQuoteConfirmation(
         addressId: String,
-        quote: CartQuote,
-        deliveryQuotes: Map<String, MerchantDeliveryQuote>
+        quote: CartQuote
     ) {
         val unavailable = quote.items.filterNot { it.available }
         val warnings = buildList {
@@ -425,32 +408,30 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
             return
         }
 
-        val legacyDelivery = Cart.groupedBySeller()
-            .filterKeys { zonesBySeller[it].orEmpty().isEmpty() }
-            .values
-            .sumOf { it.first().product.delivery_fee }
-        val deliveryTotal = legacyDelivery + deliveryQuotes.values.sumOf { it.fee }
-        val grandTotal = quote.subtotal + deliveryTotal - quote.discount_total
-        total.text = "الإجمالي من الخادم: ${MarketplaceUi.formatPrice(grandTotal)}"
+        total.text = "الإجمالي من الخادم: ${MarketplaceUi.formatPrice(quote.grand_total)}"
 
         val message = buildString {
             append("قيمة المنتجات: ${MarketplaceUi.formatPrice(quote.subtotal)}\n")
-            append("التوصيل: ${MarketplaceUi.formatPrice(deliveryTotal)}\n")
+            quote.deliveries.forEach { delivery ->
+                append("توصيل ${delivery.store_name}: ${MarketplaceUi.formatPrice(delivery.fee)}")
+                delivery.area?.takeIf { it.isNotBlank() }?.let { append(" • $it") }
+                append("\n")
+            }
             if (quote.discount_total > 0) {
                 append("الخصم: ${MarketplaceUi.formatPrice(quote.discount_total)}\n")
             }
-            append("\nالإجمالي النهائي: ${MarketplaceUi.formatPrice(grandTotal)}")
+            append("\nالإجمالي النهائي: ${MarketplaceUi.formatPrice(quote.grand_total)}")
         }
 
         AlertDialog.Builder(requireContext())
             .setTitle("تأكيد الطلب")
             .setMessage(message)
             .setNegativeButton("رجوع", null)
-            .setPositiveButton("تأكيد الطلب") { _, _ -> placeOrder(addressId) }
+            .setPositiveButton("تأكيد الطلب") { _, _ -> placeOrder(addressId, quote) }
             .show()
     }
 
-    private fun placeOrder(addressId: String) {
+    private fun placeOrder(addressId: String, quote: CartQuote) {
         confirm.isEnabled = false
         progress.visibility = View.VISIBLE
         viewLifecycleOwner.lifecycleScope.launch {
@@ -461,7 +442,9 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
                     notes = notes.text.toString(),
                     items = Cart.all(),
                     idempotencyKey = checkoutKey,
-                    deliveryZones = selectedZones.toMap()
+                    deliveryZones = selectedZones.toMap(),
+                    expectedGrandTotal = quote.grand_total,
+                    quoteToken = quote.quote_token
                 )
             }.onSuccess { groupId ->
                 Cart.clear()

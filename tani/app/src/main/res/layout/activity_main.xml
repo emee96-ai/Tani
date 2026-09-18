@@ -53,17 +53,45 @@
                 app:labelVisibilityMode="labeled" />
         </LinearLayout>
 
-        <ImageView
+        <FrameLayout
             android:id="@+id/launch_splash"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@color/white"
             android:clickable="true"
-            android:contentDescription="@null"
-            android:focusable="true"
-            android:importantForAccessibility="no"
-            android:scaleType="fitCenter"
-            android:src="@drawable/tani_splash_screen" />
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@null"
+                android:importantForAccessibility="no"
+                android:scaleType="fitCenter"
+                android:src="@drawable/tani_splash_screen" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|center_horizontal"
+                android:layout_marginBottom="54dp"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ProgressBar
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:indeterminateTint="@color/tani_primary" />
+
+                <TextView
+                    android:id="@+id/launch_loading_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="جاري تجهيز التطبيق…"
+                    android:textColor="@color/text_muted"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </FrameLayout>
     </FrameLayout>
 
     <com.google.android.material.navigation.NavigationView

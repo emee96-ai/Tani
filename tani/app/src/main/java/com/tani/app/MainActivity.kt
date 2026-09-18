@@ -22,6 +22,7 @@ import com.tani.app.data.Cart
 import com.tani.app.data.ErrorMonitoring
 import com.tani.app.data.Repository
 import com.tani.app.data.Supabase
+import com.tani.app.data.cache.AppContentStore
 import com.tani.app.ui.auth.AuthFragment
 import com.tani.app.ui.cart.CartFragment
 import com.tani.app.ui.growth.FavoritesFragment
@@ -36,6 +37,7 @@ import java.net.URL
 import java.net.URLDecoder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
@@ -65,6 +67,7 @@ class MainActivity : AppCompatActivity() {
         drawer = findViewById(R.id.drawer_layout)
         drawerNav = findViewById(R.id.drawer_nav)
         setDrawerEnabled(false)
+        AppContentStore.hydrateFromDisk(this)
 
         val launchSplash = findViewById<View>(R.id.launch_splash)
         launchSplash.alpha = 0f
@@ -75,17 +78,6 @@ class MainActivity : AppCompatActivity() {
             .scaleX(1f)
             .scaleY(1f)
             .setDuration(480L)
-            .withEndAction {
-                launchSplash.postDelayed({
-                    launchSplash.animate()
-                        .alpha(0f)
-                        .scaleX(1.03f)
-                        .scaleY(1.03f)
-                        .setDuration(260L)
-                        .withEndAction { launchSplash.visibility = View.GONE }
-                        .start()
-                }, 620L)
-            }
             .start()
 
         toolbar = findViewById(R.id.top_app_bar)
@@ -140,13 +132,32 @@ class MainActivity : AppCompatActivity() {
         })
 
         if (!handleAuthDeepLink(intent)) {
-            if (Supabase.hasStoredSession()) {
-                showApp()
-            } else {
-                Supabase.clearSession()
-                showApp()
-            }
+            if (!Supabase.hasStoredSession()) Supabase.clearSession()
+            startAppWithPreload()
         }
+    }
+
+    private fun startAppWithPreload() {
+        findViewById<TextView>(R.id.launch_loading_text)?.text =
+            if (AppContentStore.hasCoreContent()) "تحديث البيانات…" else "جاري تجهيز التطبيق…"
+        lifecycleScope.launch {
+            val warmUp = launch { AppContentStore.warmUp(this@MainActivity) }
+            val waitMs = if (AppContentStore.hasCoreContent()) 2_500L else 12_000L
+            withTimeoutOrNull(waitMs) { warmUp.join() }
+            showApp()
+        }
+    }
+
+    private fun hideLaunchSplash() {
+        val launchSplash = findViewById<View>(R.id.launch_splash)
+        if (launchSplash.visibility != View.VISIBLE) return
+        launchSplash.animate()
+            .alpha(0f)
+            .scaleX(1.03f)
+            .scaleY(1.03f)
+            .setDuration(260L)
+            .withEndAction { launchSplash.visibility = View.GONE }
+            .start()
     }
 
     private fun setupDrawerNavigation() {
@@ -185,29 +196,41 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
+        AppContentStore.account?.let {
+            renderDrawerAccount(it)
+            return
+        }
+
         lifecycleScope.launch {
             runCatching { Repository().accountProfile() }
                 .onSuccess { account ->
-                    drawerAccountName.text = account.profile.name.ifBlank { "حسابي" }
-                    drawerAccountEmail.text = account.email.ifBlank { "بيانات الحساب" }
-                    val avatarUrl = account.profile.avatar_url
-                    if (!avatarUrl.isNullOrBlank()) {
-                        val bitmap = withContext(Dispatchers.IO) {
-                            runCatching {
-                                URL(avatarUrl).openStream().use { BitmapFactory.decodeStream(it) }
-                            }.getOrNull()
-                        }
-                        if (bitmap != null) {
-                            drawerAccountAvatar.setPadding(0, 0, 0, 0)
-                            drawerAccountAvatar.setImageBitmap(bitmap)
-                        } else {
-                            renderDefaultDrawerAvatar()
-                        }
-                    } else {
-                        renderDefaultDrawerAvatar()
-                    }
+                    AppContentStore.updateAccount(account)
+                    renderDrawerAccount(account)
                 }
                 .onFailure { renderGuestDrawerAccount() }
+        }
+    }
+
+    private fun renderDrawerAccount(account: com.tani.app.data.AccountProfile) {
+        drawerAccountName.text = account.profile.name.ifBlank { "حسابي" }
+        drawerAccountEmail.text = account.email.ifBlank { "بيانات الحساب" }
+        val avatarUrl = account.profile.avatar_url
+        if (avatarUrl.isNullOrBlank()) {
+            renderDefaultDrawerAvatar()
+            return
+        }
+        lifecycleScope.launch {
+            val bitmap = withContext(Dispatchers.IO) {
+                runCatching {
+                    URL(avatarUrl).openStream().use { BitmapFactory.decodeStream(it) }
+                }.getOrNull()
+            }
+            if (bitmap != null) {
+                drawerAccountAvatar.setPadding(0, 0, 0, 0)
+                drawerAccountAvatar.setImageBitmap(bitmap)
+            } else {
+                renderDefaultDrawerAvatar()
+            }
         }
     }
 
@@ -303,6 +326,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun showAuth() {
+        AppContentStore.clearPrivateData()
         drawer.closeDrawer(GravityCompat.START)
         setDrawerEnabled(false)
         nav.visibility = View.GONE
@@ -314,6 +338,7 @@ class MainActivity : AppCompatActivity() {
     fun showApp() {
         showPrimary(HomeFragment())
         refreshDrawerAccount()
+        hideLaunchSplash()
     }
 
     fun show(fragment: Fragment, addToBackStack: Boolean = true) {

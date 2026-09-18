@@ -21,6 +21,8 @@ import com.tani.app.data.Analytics
 import com.tani.app.data.Cart
 import com.tani.app.data.ProductSort
 import com.tani.app.data.Repository
+import com.tani.app.data.cache.AppContentStore
+import com.tani.app.data.cache.MarketplaceCache
 import com.tani.app.ui.marketplace.ProductDetailsFragment
 import com.tani.app.ui.marketplace.ProductListAdapter
 import kotlinx.coroutines.launch
@@ -87,6 +89,23 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
                     3 -> ProductSort.RATING
                     else -> ProductSort.NEWEST
                 }
+                if (AppContentStore.productsLoaded) {
+                    val products = AppContentStore.filteredProducts(
+                        search = search.text.toString(),
+                        categoryId = categoryId,
+                        minPrice = minPrice.text.toString().toDoubleOrNull(),
+                        maxPrice = maxPrice.text.toString().toDoubleOrNull(),
+                        inStockOnly = inStock.isChecked,
+                        sort = sortValue
+                    )
+                    adapter.submitList(products)
+                    updateSummary()
+                    loading.visibility = if (products.isEmpty()) View.VISIBLE else View.GONE
+                    if (products.isEmpty()) {
+                        loading.text = "ما لقينا نتائج مطابقة. جرّبي تغيير البحث أو الفلاتر."
+                    }
+                    return@launch
+                }
                 runCatching {
                     repository.marketplaceProducts(
                         search = search.text.toString(),
@@ -98,6 +117,13 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
                         limit = 100
                     )
                 }.onSuccess { products ->
+                    val isUnfilteredList = search.text.isBlank() && categoryId.isNullOrBlank() &&
+                        minPrice.text.isBlank() && maxPrice.text.isBlank() && !inStock.isChecked &&
+                        sortValue == ProductSort.NEWEST
+                    if (isUnfilteredList) {
+                        AppContentStore.updateProducts(products)
+                        MarketplaceCache(requireContext()).save(AppContentStore.ALL_PRODUCTS_KEY, products)
+                    }
                     adapter.submitList(products)
                     updateSummary()
                     if (products.isEmpty()) {

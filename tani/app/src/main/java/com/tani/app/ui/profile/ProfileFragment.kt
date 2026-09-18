@@ -13,6 +13,8 @@ import androidx.lifecycle.lifecycleScope
 import com.tani.app.MainActivity
 import com.tani.app.R
 import com.tani.app.data.Repository
+import com.tani.app.data.MerchantProfile
+import com.tani.app.data.cache.AppContentStore
 import com.tani.app.ui.growth.FavoritesFragment
 import com.tani.app.ui.growth.NotificationsFragment
 import com.tani.app.ui.growth.ReferralFragment
@@ -67,17 +69,17 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
     }
 
     private fun openStoreDashboard() {
+        if (AppContentStore.merchantLoaded) {
+            openMerchantDestination(AppContentStore.merchant)
+            return
+        }
         dashboardButton.isEnabled = false
         viewLifecycleOwner.lifecycleScope.launch {
             runCatching { repository.merchantProfile() }
                 .onSuccess { merchant ->
                     if (!isAdded) return@onSuccess
-                    val destination = if (merchant?.verification_status == "approved") {
-                        SellerFragment()
-                    } else {
-                        MerchantOnboardingFragment()
-                    }
-                    (activity as? MainActivity)?.show(destination)
+                    AppContentStore.updateMerchant(merchant)
+                    openMerchantDestination(merchant)
                 }
                 .onFailure {
                     if (isAdded) {
@@ -90,6 +92,15 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                 }
             if (isAdded) dashboardButton.isEnabled = true
         }
+    }
+
+    private fun openMerchantDestination(merchant: MerchantProfile?) {
+        val destination = if (merchant?.verification_status == "approved") {
+            SellerFragment()
+        } else {
+            MerchantOnboardingFragment()
+        }
+        (activity as? MainActivity)?.show(destination)
     }
 
     private fun showChangePasswordDialog() {

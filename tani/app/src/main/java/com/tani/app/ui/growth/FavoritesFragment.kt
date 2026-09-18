@@ -12,6 +12,8 @@ import androidx.lifecycle.lifecycleScope
 import com.tani.app.MainActivity
 import com.tani.app.R
 import com.tani.app.data.Cart
+import com.tani.app.data.ProductCard
+import com.tani.app.data.cache.AppContentStore
 import com.tani.app.data.repository.GrowthRepository
 import com.tani.app.ui.common.ScreenUi
 import com.tani.app.ui.marketplace.MarketplaceUi
@@ -28,16 +30,26 @@ class FavoritesFragment : Fragment() {
     override fun onViewCreated(view: View, state: Bundle?) { load() }
     private fun load() {
         val c=requireContext(); root.removeAllViews(); root.addView(ScreenUi.title(c,"المفضلة")); root.addView(ScreenUi.subtitle(c,"المنتجات التي حفظتيها للرجوع إليها بسهولة."))
+        if (AppContentStore.favoritesLoaded) {
+            renderProducts(AppContentStore.favorites)
+            return
+        }
         viewLifecycleOwner.lifecycleScope.launch {
             runCatching { repository.favoriteProducts() }.onSuccess { products ->
-                if(products.isEmpty()) root.addView(ScreenUi.muted(c,"لم تحفظي أي منتج بعد."))
-                else MarketplaceUi.addTwoColumnGrid(root, products.map { p ->
-                    MarketplaceUi.productCard(c,viewLifecycleOwner.lifecycleScope,p,
-                        onOpen={ (activity as MainActivity).show(ProductDetailsFragment.newInstance(p.id)) },
-                        onAdd={ Cart.add(p.toProduct()); Toast.makeText(c,"تمت الإضافة للسلة",Toast.LENGTH_SHORT).show() }
-                    )
-                },c)
+                AppContentStore.updateFavorites(products)
+                renderProducts(products)
             }.onFailure { root.addView(ScreenUi.muted(c,it.message?:"تعذر تحميل المفضلة")) }
         }
+    }
+
+    private fun renderProducts(products: List<ProductCard>) {
+        val c = requireContext()
+        if(products.isEmpty()) root.addView(ScreenUi.muted(c,"لم تحفظي أي منتج بعد."))
+        else MarketplaceUi.addTwoColumnGrid(root, products.map { p ->
+            MarketplaceUi.productCard(c,viewLifecycleOwner.lifecycleScope,p,
+                onOpen={ (activity as MainActivity).show(ProductDetailsFragment.newInstance(p.id)) },
+                onAdd={ Cart.add(p.toProduct()); Toast.makeText(c,"تمت الإضافة للسلة",Toast.LENGTH_SHORT).show() }
+            )
+        },c)
     }
 }
