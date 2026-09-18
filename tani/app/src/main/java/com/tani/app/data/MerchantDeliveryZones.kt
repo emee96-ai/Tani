@@ -1,5 +1,6 @@
 package com.tani.app.data
 
+import com.tani.app.data.commerce.CheckoutQuantityPolicy
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
@@ -50,17 +51,22 @@ suspend fun Repository.checkoutWithDeliveryZones(
     notes: String,
     items: List<CartItem>,
     idempotencyKey: String,
-    deliveryZones: Map<String, MerchantDeliveryZone>
+    deliveryZones: Map<String, MerchantDeliveryZone>,
+    expectedGrandTotal: Double,
+    quoteToken: String
 ): String {
     require(items.isNotEmpty()) { "السلة فارغة" }
     require(phone.trim().length in 7..30) { "رقم الهاتف غير صحيح" }
     require(idempotencyKey.length in 16..100) { "تعذر تجهيز الطلب. حاولي مرة أخرى" }
+    require(expectedGrandTotal >= 0) { "إجمالي الطلب غير صحيح" }
+    require(quoteToken.length == 32) { "انتهت صلاحية التسعير. أعيدي المحاولة" }
 
+    val quantities = CheckoutQuantityPolicy.aggregate(items.map { it.product.id to it.quantity })
     val payload = buildJsonArray {
-        items.forEach { item ->
+        quantities.forEach { (productId, quantity) ->
             add(buildJsonObject {
-                put("product_id", item.product.id)
-                put("quantity", item.quantity)
+                put("product_id", productId)
+                put("quantity", quantity)
             })
         }
     }
@@ -72,7 +78,7 @@ suspend fun Repository.checkoutWithDeliveryZones(
     }
 
     val groupId: String = Supabase.post(
-        "rpc/checkout_create_order_group_v2",
+        "rpc/checkout_create_order_group_v3",
         buildJsonObject {
             put("p_address_id", addressId)
             put("p_phone", phone.trim())
@@ -80,6 +86,8 @@ suspend fun Repository.checkoutWithDeliveryZones(
             put("p_items", payload)
             put("p_idempotency_key", idempotencyKey)
             put("p_delivery_zones", selections)
+            put("p_expected_grand_total", expectedGrandTotal)
+            put("p_quote_token", quoteToken)
         }.toString()
     )
     Analytics.track(

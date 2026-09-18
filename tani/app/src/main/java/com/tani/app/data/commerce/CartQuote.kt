@@ -9,7 +9,9 @@ data class CartQuote(
     val discount_total: Double = 0.0,
     val grand_total: Double,
     val items: List<CartQuoteItem> = emptyList(),
-    val warnings: List<String> = emptyList()
+    val deliveries: List<CartQuoteDelivery> = emptyList(),
+    val warnings: List<String> = emptyList(),
+    val quote_token: String
 )
 
 @Serializable
@@ -22,4 +24,13 @@ data class CartQuoteItem(
     val stock: Int,
     val available: Boolean,
     val line_total: Double
+)
+
+@Serializable
+data class CartQuoteDelivery(
+    val seller_id: String,
+    val store_name: String,
+    val subtotal: Double,
+    val fee: Double,
+    val area: String? = null
 )

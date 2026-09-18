@@ -1,6 +1,7 @@
 package com.tani.app.data
 
 import com.tani.app.data.commerce.CartQuote
+import com.tani.app.data.commerce.CheckoutQuantityPolicy
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
@@ -537,11 +538,12 @@ class Repository {
     )
 
     suspend fun syncCart(items: List<CartItem>): String {
+        val quantities = CheckoutQuantityPolicy.aggregate(items.map { it.product.id to it.quantity })
         val payload = buildJsonArray {
-            items.forEach { item ->
+            quantities.forEach { (productId, quantity) ->
                 add(buildJsonObject {
-                    put("product_id", item.product.id)
-                    put("quantity", item.quantity)
+                    put("product_id", productId)
+                    put("quantity", quantity)
                 })
             }
         }
@@ -551,20 +553,32 @@ class Repository {
         )
     }
 
-    suspend fun quoteCart(items: List<CartItem>): CartQuote {
-        require(items.isNotEmpty()) { "السلة فارغة" }
+    suspend fun quoteCart(
+        items: List<CartItem>,
+        deliveryZones: Map<String, MerchantDeliveryZone>
+    ): CartQuote {
+        val quantities = CheckoutQuantityPolicy.aggregate(items.map { it.product.id to it.quantity })
         val payload = buildJsonArray {
-            items.forEach { item ->
+            quantities.forEach { (productId, quantity) ->
                 add(buildJsonObject {
-                    put("product_id", item.product.id)
-                    put("quantity", item.quantity.coerceIn(1, 99))
+                    put("product_id", productId)
+                    put("quantity", quantity)
                 })
+            }
+        }
+        val selections = buildJsonObject {
+            deliveryZones.forEach { (sellerId, zone) ->
+                require(zone.seller_id == sellerId) { "اختيار منطقة التوصيل غير صالح" }
+                put(sellerId, zone.id)
             }
         }
 
         return Supabase.post(
-            "rpc/quote_cart",
-            buildJsonObject { put("p_items", payload) }.toString()
+            "rpc/quote_cart_v2",
+            buildJsonObject {
+                put("p_items", payload)
+                put("p_delivery_zones", selections)
+            }.toString()
         )
     }
 
