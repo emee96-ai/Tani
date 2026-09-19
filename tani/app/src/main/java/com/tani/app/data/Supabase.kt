@@ -3,16 +3,18 @@ package com.tani.app.data
 import android.content.Context
 import android.util.Base64
 import com.tani.app.BuildConfig
+import com.tani.app.data.network.ReadRetryPolicy
 import com.tani.app.security.SecureTokenStorage
 import io.ktor.client.HttpClient
-import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.engine.android.Android
+import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.request.HttpRequestBuilder
-import io.ktor.client.request.get
 import io.ktor.client.request.delete
+import io.ktor.client.request.get
 import io.ktor.client.request.headers
-import io.ktor.client.request.post
 import io.ktor.client.request.patch
+import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
@@ -20,14 +22,15 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.client.call.body
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
-import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
 object Supabase {
@@ -54,6 +57,21 @@ object Supabase {
 
     val client = HttpClient(Android) {
         expectSuccess = false
+
+        install(HttpRequestRetry) {
+            retryIf(maxRetries = ReadRetryPolicy.MAX_ATTEMPTS - 1) { request, response ->
+                request.method == HttpMethod.Get &&
+                    ReadRetryPolicy.isRetryableStatus(response.status.value)
+            }
+            retryOnExceptionIf(maxRetries = ReadRetryPolicy.MAX_ATTEMPTS - 1) { request, _ ->
+                request.method == HttpMethod.Get
+            }
+            delayMillis(respectRetryAfterHeader = true) { retry ->
+                ReadRetryPolicy.delayMillis(retry)
+            }
+        }
+
+        // Install timeout after retry so request/connection timeout exceptions can be retried.
         install(HttpTimeout) {
             connectTimeoutMillis = 10_000
             requestTimeoutMillis = 20_000
@@ -300,7 +318,6 @@ object Supabase {
         return parse(response)
     }
 
-
     suspend fun delete(
         path: String,
         query: String
@@ -370,7 +387,6 @@ object Supabase {
 
         return "$URL/storage/v1/object/public/avatars/$objectPath?v=${System.currentTimeMillis()}"
     }
-
 
     /**
      * إرسال Analytics/Error telemetry بدون رمي خطأ للمستخدم.
@@ -462,8 +478,6 @@ object Supabase {
         }
         return parse(response)
     }
-
-
 
     suspend inline fun <reified T> authPostAuthorized(
         path: String,
