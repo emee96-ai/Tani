@@ -233,7 +233,9 @@ declare
   v_cart_id uuid;
   v_item jsonb;
   v_product record;
-  v_variant record;
+  -- A typed row remains safe to inspect for base products where no variant
+  -- SELECT runs; an unassigned generic record raises at v_variant.name.
+  v_variant public.product_variants%rowtype;
   v_product_id uuid;
   v_variant_id uuid;
   v_qty int;
@@ -309,7 +311,9 @@ declare
   v_uid uuid := auth.uid();
   v_item jsonb;
   v_product record;
-  v_variant record;
+  -- Base-product quotes never assign a variant row. Keep a known tuple shape
+  -- so the conditional variant-name expression can safely resolve the field.
+  v_variant public.product_variants%rowtype;
   v_seller record;
   v_product_id uuid;
   v_variant_id uuid;
