@@ -72,7 +72,7 @@ object AppContentStore {
     private var privateDataUserId: String? = null
     @Volatile private var recommendationsUserId: String? = null
 
-    fun hydrateFromDisk(context: Context): Boolean {
+    suspend fun hydrateFromDisk(context: Context): Boolean {
         val cache = MarketplaceCache(context)
         homeFeed = cache.loadHomeFeed(allowExpired = true)
         products = cache.load(CATALOG_PREVIEW_KEY, allowExpired = true)
