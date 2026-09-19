@@ -1,5 +1,6 @@
 package com.tani.app.ui.marketplace
 
+import android.content.res.ColorStateList
 import android.net.Uri
 import android.os.Bundle
 import android.view.Gravity
@@ -435,12 +436,19 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
             details.variants.forEach { variant ->
                 val price = variant.price?.let { " • ${MarketplaceUi.formatPrice(it)}" }.orEmpty()
                 val availability = if (variant.stock > 0) "متوفر ${variant.stock}" else "غير متوفر"
-                val button = MaterialButton(requireContext(), null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+                val selected = selectedVariant?.id == variant.id
+                val button = MaterialButton(requireContext()).apply {
                     text = "${variant.name}$price • $availability"
                     isCheckable = true
-                    isChecked = selectedVariant?.id == variant.id
+                    isChecked = selected
                     isEnabled = variant.stock > 0
                     alpha = if (variant.stock > 0) 1f else 0.5f
+                    strokeWidth = MarketplaceUi.dp(requireContext(), 1)
+                    strokeColor = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.tani_primary))
+                    backgroundTintList = ColorStateList.valueOf(
+                        ContextCompat.getColor(requireContext(), if (selected) R.color.brand_soft else android.R.color.transparent)
+                    )
+                    setTextColor(ContextCompat.getColor(requireContext(), R.color.tani_primary))
                     setOnClickListener {
                         selectedVariant = variant
                         refreshPurchaseUi?.invoke()
