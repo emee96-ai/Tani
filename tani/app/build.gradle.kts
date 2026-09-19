@@ -11,11 +11,49 @@ val taniResetRedirect = providers.gradleProperty("TANI_RESET_REDIRECT")
 val taniAppLinkHost = providers.gradleProperty("TANI_APP_LINK_HOST")
     .orElse("tani.invalid")
     .get()
+val taniVersionCode = providers.gradleProperty("TANI_VERSION_CODE")
+    .orNull?.toIntOrNull() ?: 4
+val taniVersionName = providers.gradleProperty("TANI_VERSION_NAME")
+    .orElse("3.1.0")
+    .get()
+val taniReleaseStoreFile = providers.gradleProperty("TANI_RELEASE_STORE_FILE").orNull
+val taniReleaseStorePassword = providers.gradleProperty("TANI_RELEASE_STORE_PASSWORD").orNull
+val taniReleaseKeyAlias = providers.gradleProperty("TANI_RELEASE_KEY_ALIAS").orNull
+val taniReleaseKeyPassword = providers.gradleProperty("TANI_RELEASE_KEY_PASSWORD").orNull
+val hasReleaseSigning = listOf(
+    taniReleaseStoreFile,
+    taniReleaseStorePassword,
+    taniReleaseKeyAlias,
+    taniReleaseKeyPassword
+).all { !it.isNullOrBlank() }
 
 android {
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(requireNotNull(taniReleaseStoreFile))
+                storePassword = requireNotNull(taniReleaseStorePassword)
+                keyAlias = requireNotNull(taniReleaseKeyAlias)
+                keyPassword = requireNotNull(taniReleaseKeyPassword)
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
+            }
+        }
+    }
+
     buildTypes {
         getByName("debug") {
             buildConfigField("String", "PASSWORD_RESET_REDIRECT", "\"tani://auth/reset\"")
+        }
+        getByName("release") {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            signingConfigs.findByName("release")?.let { signingConfig = it }
         }
     }
 
@@ -30,8 +68,8 @@ android {
         applicationId = "com.tani.app"
         minSdk = 24
         targetSdk = 35
-        versionCode = 4
-        versionName = "3.1.0"
+        versionCode = taniVersionCode
+        versionName = taniVersionName
 
         buildConfigField("String", "PASSWORD_RESET_REDIRECT", "\"$taniResetRedirect\"")
         buildConfigField("String", "APP_LINK_HOST", "\"$taniAppLinkHost\"")

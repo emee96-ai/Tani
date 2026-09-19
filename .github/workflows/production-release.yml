@@ -1,0 +1,149 @@
+name: Tani Production Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: Customer/Admin version name, for example 3.2.0
+        required: true
+        type: string
+      version_code:
+        description: Monotonic Android version code
+        required: true
+        type: string
+      app_link_host:
+        description: Verified HTTPS App Link host, without scheme
+        required: true
+        type: string
+      reset_redirect:
+        description: Must be https://HOST/auth/reset
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  production-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: tani
+    env:
+      TANI_APP_LINK_HOST: ${{ inputs.app_link_host }}
+      TANI_RESET_REDIRECT: ${{ inputs.reset_redirect }}
+      TANI_VERSION_NAME: ${{ inputs.version_name }}
+      TANI_VERSION_CODE: ${{ inputs.version_code }}
+      TANI_ADMIN_VERSION_NAME: ${{ inputs.version_name }}
+      TANI_ADMIN_VERSION_CODE: ${{ inputs.version_code }}
+      TANI_RELEASE_STORE_PASSWORD: ${{ secrets.TANI_RELEASE_STORE_PASSWORD }}
+      TANI_RELEASE_KEY_ALIAS: ${{ secrets.TANI_RELEASE_KEY_ALIAS }}
+      TANI_RELEASE_KEY_PASSWORD: ${{ secrets.TANI_RELEASE_KEY_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Set up Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Materialize release keystore
+        env:
+          TANI_RELEASE_KEYSTORE_B64: ${{ secrets.TANI_RELEASE_KEYSTORE_B64 }}
+        run: |
+          test -n "$TANI_RELEASE_KEYSTORE_B64" || { echo "Missing TANI_RELEASE_KEYSTORE_B64" >&2; exit 1; }
+          export TANI_RELEASE_STORE_FILE="$RUNNER_TEMP/tani-release.jks"
+          printf '%s' "$TANI_RELEASE_KEYSTORE_B64" | base64 --decode > "$TANI_RELEASE_STORE_FILE"
+          test -s "$TANI_RELEASE_STORE_FILE"
+          echo "TANI_RELEASE_STORE_FILE=$TANI_RELEASE_STORE_FILE" >> "$GITHUB_ENV"
+
+      - name: Validate production release gate
+        run: |
+          [[ "$TANI_VERSION_CODE" =~ ^[1-9][0-9]*$ ]] || { echo "version_code must be a positive integer" >&2; exit 1; }
+          bash qa/run_release_gate.sh
+          bash qa/run_static_checks.sh
+
+      - name: Run database regression suite
+        env:
+          TANI_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
+        run: bash qa/run_database_tests.sh
+
+      - name: Build signed minified AABs and tests
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon \
+            :app:testReleaseUnitTest \
+            :adminApp:testReleaseUnitTest \
+            :app:lintRelease \
+            :adminApp:lintRelease \
+            :app:bundleRelease \
+            :adminApp:bundleRelease \
+            -PTANI_APP_LINK_HOST="$TANI_APP_LINK_HOST" \
+            -PTANI_RESET_REDIRECT="$TANI_RESET_REDIRECT" \
+            -PTANI_VERSION_NAME="$TANI_VERSION_NAME" \
+            -PTANI_VERSION_CODE="$TANI_VERSION_CODE" \
+            -PTANI_ADMIN_VERSION_NAME="$TANI_ADMIN_VERSION_NAME" \
+            -PTANI_ADMIN_VERSION_CODE="$TANI_ADMIN_VERSION_CODE" \
+            -PTANI_RELEASE_STORE_FILE="$TANI_RELEASE_STORE_FILE" \
+            -PTANI_RELEASE_STORE_PASSWORD="$TANI_RELEASE_STORE_PASSWORD" \
+            -PTANI_RELEASE_KEY_ALIAS="$TANI_RELEASE_KEY_ALIAS" \
+            -PTANI_RELEASE_KEY_PASSWORD="$TANI_RELEASE_KEY_PASSWORD" \
+            --stacktrace
+
+      - name: Verify signed release outputs
+        run: |
+          CUSTOMER_AAB="app/build/outputs/bundle/release/app-release.aab"
+          ADMIN_AAB="adminApp/build/outputs/bundle/release/adminApp-release.aab"
+          test -s "$CUSTOMER_AAB"
+          test -s "$ADMIN_AAB"
+          test -s app/build/outputs/mapping/release/mapping.txt
+          test -s adminApp/build/outputs/mapping/release/mapping.txt
+          jarsigner -verify "$CUSTOMER_AAB" >/dev/null
+          jarsigner -verify "$ADMIN_AAB" >/dev/null
+
+      - name: Upload signed customer AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: tani-production-signed-aab-${{ inputs.version_name }}
+          path: tani/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+
+      - name: Upload signed admin AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: tani-admin-production-signed-aab-${{ inputs.version_name }}
+          path: tani/adminApp/build/outputs/bundle/release/adminApp-release.aab
+          if-no-files-found: error
+
+      - name: Upload R8 mappings
+        uses: actions/upload-artifact@v4
+        with:
+          name: tani-r8-mappings-${{ inputs.version_name }}
+          path: |
+            tani/app/build/outputs/mapping/release/mapping.txt
+            tani/adminApp/build/outputs/mapping/release/mapping.txt
+          if-no-files-found: error

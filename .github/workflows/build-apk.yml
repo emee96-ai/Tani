@@ -107,3 +107,93 @@ jobs:
             tani/app/build/reports/lint-results-debug.*
             tani/adminApp/build/reports/lint-results-debug.*
           if-no-files-found: ignore
+
+  release-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: tani
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+      - name: Set up Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+      - name: Create throwaway CI signing key
+        run: |
+          KEYSTORE="$RUNNER_TEMP/tani-ci-release.jks"
+          keytool -genkeypair \
+            -keystore "$KEYSTORE" \
+            -storepass changeit \
+            -keypass changeit \
+            -alias tani-ci \
+            -dname "CN=Tani CI,O=Tani,C=SD" \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 2 \
+            -noprompt
+          echo "TANI_RELEASE_STORE_FILE=$KEYSTORE" >> "$GITHUB_ENV"
+          echo "TANI_RELEASE_STORE_PASSWORD=changeit" >> "$GITHUB_ENV"
+          echo "TANI_RELEASE_KEY_ALIAS=tani-ci" >> "$GITHUB_ENV"
+          echo "TANI_RELEASE_KEY_PASSWORD=changeit" >> "$GITHUB_ENV"
+          echo "TANI_APP_LINK_HOST=ci.example.com" >> "$GITHUB_ENV"
+          echo "TANI_RESET_REDIRECT=https://ci.example.com/auth/reset" >> "$GITHUB_ENV"
+      - name: Verify release gate with CI credentials
+        run: bash qa/run_release_gate.sh
+      - name: Build signed minified release candidates
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon \
+            :app:testReleaseUnitTest \
+            :adminApp:testReleaseUnitTest \
+            :app:lintRelease \
+            :adminApp:lintRelease \
+            :app:bundleRelease \
+            :adminApp:bundleRelease \
+            -PTANI_APP_LINK_HOST="$TANI_APP_LINK_HOST" \
+            -PTANI_RESET_REDIRECT="$TANI_RESET_REDIRECT" \
+            -PTANI_RELEASE_STORE_FILE="$TANI_RELEASE_STORE_FILE" \
+            -PTANI_RELEASE_STORE_PASSWORD="$TANI_RELEASE_STORE_PASSWORD" \
+            -PTANI_RELEASE_KEY_ALIAS="$TANI_RELEASE_KEY_ALIAS" \
+            -PTANI_RELEASE_KEY_PASSWORD="$TANI_RELEASE_KEY_PASSWORD" \
+            --stacktrace
+      - name: Verify R8, signatures and release outputs
+        run: |
+          CUSTOMER_AAB="app/build/outputs/bundle/release/app-release.aab"
+          ADMIN_AAB="adminApp/build/outputs/bundle/release/adminApp-release.aab"
+          test -s "$CUSTOMER_AAB"
+          test -s "$ADMIN_AAB"
+          test -s app/build/outputs/mapping/release/mapping.txt
+          test -s adminApp/build/outputs/mapping/release/mapping.txt
+          jarsigner -verify "$CUSTOMER_AAB" >/dev/null
+          jarsigner -verify "$ADMIN_AAB" >/dev/null
+      - name: Upload CI-signed customer release candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: tani-release-candidate-ci-signed-not-production
+          path: tani/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+      - name: Upload CI-signed admin release candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: tani-admin-release-candidate-ci-signed-not-production
+          path: tani/adminApp/build/outputs/bundle/release/adminApp-release.aab
+          if-no-files-found: error
+      - name: Upload release lint and mapping reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tani-release-check-reports
+          path: |
+            tani/app/build/reports/lint-results-release.*
+            tani/adminApp/build/reports/lint-results-release.*
+            tani/app/build/outputs/mapping/release/mapping.txt
+            tani/adminApp/build/outputs/mapping/release/mapping.txt
+          if-no-files-found: ignore
