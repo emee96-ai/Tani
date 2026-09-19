@@ -16,18 +16,32 @@ import com.tani.app.data.growth.NotificationItem
 import com.tani.app.data.growth.NotificationPreferences
 import com.tani.app.data.repository.GrowthRepository
 import com.tani.app.data.repository.ScaleRepository
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
- * A session-wide, stale-while-revalidate store for screens that users open often.
- * Public catalogue data is also persisted by [MarketplaceCache], while private
- * account data deliberately stays in memory only.
+ * Session-wide stale-while-revalidate store for high-frequency screens.
+ *
+ * Startup work is deliberately budgeted: disk hydration is bounded and only
+ * public catalogue requests participate in the splash critical path. Private
+ * account data and personalized recommendations refresh in the background so
+ * a slow connection cannot keep the launch screen visible for many seconds.
  */
 object AppContentStore {
     const val CATALOG_PREVIEW_KEY = "catalog_preview"
+
+    private const val STARTUP_DISK_BUDGET_MS = 450L
+    private const val STARTUP_PUBLIC_REQUEST_BUDGET_MS = 2_400L
+
+    private val backgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     @Volatile var homeFeed: HomeFeed? = null
         private set
@@ -71,140 +85,89 @@ object AppContentStore {
     @Volatile var addressesLoaded = false
         private set
 
-    private var privateDataUserId: String? = null
+    @Volatile private var privateDataUserId: String? = null
     @Volatile private var recommendationsUserId: String? = null
 
-    fun hydrateFromDisk(context: Context): Boolean = runBlocking(Dispatchers.IO) {
-        val cache = MarketplaceCache(context)
-        homeFeed = cache.loadHomeFeed(allowExpired = true)
-        products = cache.load(CATALOG_PREVIEW_KEY, allowExpired = true)
-        stores = cache.loadStores(allowExpired = true)
+    fun hydrateFromDisk(context: Context): Boolean = runBlocking {
+        withTimeoutOrNull(STARTUP_DISK_BUDGET_MS) {
+            withContext(Dispatchers.IO) {
+                val cache = MarketplaceCache(context.applicationContext)
+                val cachedFeed = cache.loadHomeFeed(allowExpired = true)
+                val cachedProducts = cache.load(CATALOG_PREVIEW_KEY, allowExpired = true)
+                val cachedStores = cache.loadStores(allowExpired = true)
+                val sessionUserId = Supabase.userId?.takeIf { Supabase.hasStoredSession() }
+                val cachedRecommendations = sessionUserId?.let {
+                    cache.loadRecommendations(it, allowExpired = true)
+                }.orEmpty()
 
-        val sessionUserId = Supabase.userId?.takeIf { Supabase.hasStoredSession() }
-        recommendations = sessionUserId?.let {
-            cache.loadRecommendations(it, allowExpired = true)
-        }.orEmpty()
-        recommendationsUserId = sessionUserId
-
-        productsLoaded = products.isNotEmpty()
-        storesLoaded = stores.isNotEmpty()
+                homeFeed = cachedFeed
+                products = cachedProducts.ifEmpty {
+                    cachedFeed?.let { feed ->
+                        (feed.featuredProducts + feed.newestProducts + feed.popularProducts)
+                            .distinctBy { it.id }
+                    }.orEmpty()
+                }
+                stores = cachedStores.ifEmpty { cachedFeed?.stores.orEmpty() }
+                recommendations = cachedRecommendations
+                recommendationsUserId = sessionUserId
+                productsLoaded = products.isNotEmpty()
+                storesLoaded = stores.isNotEmpty()
+            }
+        }
         hasCoreContent()
     }
 
     fun hasCoreContent(): Boolean = homeFeed != null && productsLoaded && storesLoaded
 
     suspend fun warmUp(context: Context) = supervisorScope {
+        val appContext = context.applicationContext
         val repository = Repository()
-        val growthRepository = GrowthRepository()
-        val scaleRepository = ScaleRepository()
-        val cache = MarketplaceCache(context)
+        val cache = MarketplaceCache(appContext)
         val sessionUserId = Supabase.userId?.takeIf { Supabase.hasStoredSession() }
 
-        if (sessionUserId != null) {
-            if (privateDataUserId != sessionUserId) clearPrivateData()
-            privateDataUserId = sessionUserId
-            if (recommendationsUserId != sessionUserId) {
-                recommendations = emptyList()
-                recommendationsUserId = sessionUserId
-            }
-            if (recommendations.isEmpty()) {
-                recommendations = cache.loadRecommendations(sessionUserId, allowExpired = true)
-            }
-        } else {
-            clearPrivateData()
-        }
+        prepareSessionState(sessionUserId)
+        refreshPersonalizedDataInBackground(appContext, sessionUserId)
 
         val productsRequest = async {
-            runCatching { repository.marketplaceProducts(limit = 24) }
-                .onSuccess {
-                    products = it
-                    productsLoaded = true
-                    cache.save(CATALOG_PREVIEW_KEY, it)
-                }
+            boundedPublicRequest {
+                repository.marketplaceProducts(limit = 24)
+            }?.onSuccess { items ->
+                products = items
+                productsLoaded = true
+                runCatching { cache.save(CATALOG_PREVIEW_KEY, items) }
+            }
         }
         val storesRequest = async {
-            runCatching { repository.stores(limit = 100) }
-                .onSuccess {
-                    stores = it
-                    storesLoaded = true
-                    cache.saveStores(it)
-                }
+            boundedPublicRequest {
+                repository.stores(limit = 100)
+            }?.onSuccess { items ->
+                stores = items
+                storesLoaded = true
+                runCatching { cache.saveStores(items) }
+            }
         }
-        val categoriesRequest = async { runCatching { repository.categories() } }
-        val featuredRequest = async { runCatching { repository.featuredProducts(limit = 6) } }
+        val categoriesRequest = async {
+            boundedPublicRequest { repository.categories() }
+        }
+        val featuredRequest = async {
+            boundedPublicRequest { repository.featuredProducts(limit = 6) }
+        }
         val popularRequest = async {
-            runCatching { repository.marketplaceProducts(sort = ProductSort.RATING, limit = 6) }
-        }
-        val recommendationsRequest = async {
-            val uid = sessionUserId ?: return@async
-            runCatching { scaleRepository.recommendations(8) }
-                .onSuccess { items ->
-                    cache.saveRecommendations(uid, items)
-                    if (Supabase.userId == uid && Supabase.hasStoredSession()) {
-                        recommendations = items
-                        recommendationsUserId = uid
-                    }
-                }
-        }
-
-        if (sessionUserId != null) {
-            val ordersRequest = async {
-                runCatching { repository.orderGroups() }.onSuccess {
-                    orders = it
-                    ordersLoaded = true
-                }
+            boundedPublicRequest {
+                repository.marketplaceProducts(sort = ProductSort.RATING, limit = 6)
             }
-            val accountRequest = async {
-                runCatching { repository.accountProfile() }.onSuccess {
-                    account = it
-                    accountLoaded = true
-                }
-            }
-            val merchantRequest = async {
-                runCatching { repository.merchantProfile() }.onSuccess {
-                    merchant = it
-                    merchantLoaded = true
-                }
-            }
-            val favoritesRequest = async {
-                runCatching { growthRepository.favoriteProducts() }.onSuccess {
-                    favorites = it
-                    favoritesLoaded = true
-                }
-            }
-            val notificationsRequest = async {
-                runCatching {
-                    growthRepository.notifications() to growthRepository.notificationPreferences()
-                }.onSuccess { (items, preferences) ->
-                    notifications = items
-                    notificationPreferences = preferences
-                    notificationsLoaded = true
-                }
-            }
-            val addressesRequest = async {
-                runCatching { repository.addresses() }.onSuccess {
-                    addresses = it
-                    addressesLoaded = true
-                }
-            }
-            ordersRequest.await()
-            accountRequest.await()
-            merchantRequest.await()
-            favoritesRequest.await()
-            notificationsRequest.await()
-            addressesRequest.await()
         }
 
         productsRequest.await()
         storesRequest.await()
-        recommendationsRequest.await()
-        val categories = categoriesRequest.await().getOrNull()
+        val categories = categoriesRequest.await()?.getOrNull()
             ?: homeFeed?.categories
             ?: emptyList<Category>()
-        val featured = featuredRequest.await().getOrNull()
+        val featured = featuredRequest.await()?.getOrNull()
             ?: homeFeed?.featuredProducts
             ?: emptyList()
-        val popular = popularRequest.await().getOrNull()
+        val popular = popularRequest.await()?.getOrNull()
+            ?: homeFeed?.popularProducts
             ?: products.sortedWith(
                 compareByDescending<ProductCard> { it.average_rating }
                     .thenByDescending { it.review_count }
@@ -220,9 +183,123 @@ object AppContentStore {
                 stores = stores.take(5)
             )
             homeFeed = feed
-            cache.saveHomeFeed(feed)
+            backgroundScope.launch {
+                runCatching { cache.saveHomeFeed(feed) }
+            }
         }
     }
+
+    private suspend fun <T> boundedPublicRequest(block: suspend () -> T): Result<T>? = try {
+        withTimeoutOrNull(STARTUP_PUBLIC_REQUEST_BUDGET_MS) {
+            Result.success(block())
+        }
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (error: Throwable) {
+        Result.failure(error)
+    }
+
+    private fun prepareSessionState(sessionUserId: String?) {
+        if (sessionUserId == null) {
+            clearPrivateData()
+            return
+        }
+
+        if (privateDataUserId != sessionUserId) clearPrivateData()
+        privateDataUserId = sessionUserId
+        if (recommendationsUserId != sessionUserId) {
+            recommendations = emptyList()
+            recommendationsUserId = sessionUserId
+        }
+    }
+
+    private fun refreshPersonalizedDataInBackground(context: Context, sessionUserId: String?) {
+        if (sessionUserId == null) return
+
+        val uid = sessionUserId
+        backgroundScope.launch {
+            val cache = MarketplaceCache(context)
+            if (recommendations.isEmpty()) {
+                val cached = runCatching {
+                    cache.loadRecommendations(uid, allowExpired = true)
+                }.getOrDefault(emptyList())
+                if (sessionMatches(uid) && cached.isNotEmpty()) {
+                    recommendations = cached
+                    recommendationsUserId = uid
+                }
+            }
+
+            runCatching { ScaleRepository().recommendations(8) }
+                .onSuccess { items ->
+                    runCatching { cache.saveRecommendations(uid, items) }
+                    if (sessionMatches(uid)) {
+                        recommendations = items
+                        recommendationsUserId = uid
+                    }
+                }
+        }
+
+        backgroundScope.launch {
+            refreshPrivateData(uid)
+        }
+    }
+
+    private suspend fun refreshPrivateData(uid: String) = supervisorScope {
+        val repository = Repository()
+        val growthRepository = GrowthRepository()
+
+        val ordersRequest = async { runCatching { repository.orderGroups() } }
+        val accountRequest = async { runCatching { repository.accountProfile() } }
+        val merchantRequest = async { runCatching { repository.merchantProfile() } }
+        val favoritesRequest = async { runCatching { growthRepository.favoriteProducts() } }
+        val notificationsRequest = async {
+            runCatching {
+                growthRepository.notifications() to growthRepository.notificationPreferences()
+            }
+        }
+        val addressesRequest = async { runCatching { repository.addresses() } }
+
+        ordersRequest.await().onSuccess {
+            if (sessionMatches(uid)) {
+                orders = it
+                ordersLoaded = true
+            }
+        }
+        accountRequest.await().onSuccess {
+            if (sessionMatches(uid)) {
+                account = it
+                accountLoaded = true
+            }
+        }
+        merchantRequest.await().onSuccess {
+            if (sessionMatches(uid)) {
+                merchant = it
+                merchantLoaded = true
+            }
+        }
+        favoritesRequest.await().onSuccess {
+            if (sessionMatches(uid)) {
+                favorites = it
+                favoritesLoaded = true
+            }
+        }
+        notificationsRequest.await().onSuccess { (items, preferences) ->
+            if (sessionMatches(uid)) {
+                notifications = items
+                notificationPreferences = preferences
+                notificationsLoaded = true
+            }
+        }
+        addressesRequest.await().onSuccess {
+            if (sessionMatches(uid)) {
+                addresses = it
+                addressesLoaded = true
+            }
+        }
+    }
+
+    private fun sessionMatches(uid: String): Boolean =
+        Supabase.hasStoredSession() && Supabase.userId == uid && privateDataUserId == uid
 
     fun filteredProducts(
         search: String?,
