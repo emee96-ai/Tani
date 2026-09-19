@@ -16,6 +16,7 @@ import com.tani.app.data.growth.NotificationItem
 import com.tani.app.data.growth.NotificationPreferences
 import com.tani.app.data.repository.GrowthRepository
 import com.tani.app.data.repository.ScaleRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -84,7 +85,7 @@ object AppContentStore {
     @Volatile var addressesLoaded = false
         private set
 
-    private var privateDataUserId: String? = null
+    @Volatile private var privateDataUserId: String? = null
     @Volatile private var recommendationsUserId: String? = null
 
     fun hydrateFromDisk(context: Context): Boolean = runBlocking {
@@ -188,10 +189,15 @@ object AppContentStore {
         }
     }
 
-    private suspend fun <T> boundedPublicRequest(block: suspend () -> T): Result<T>? =
+    private suspend fun <T> boundedPublicRequest(block: suspend () -> T): Result<T>? = try {
         withTimeoutOrNull(STARTUP_PUBLIC_REQUEST_BUDGET_MS) {
-            runCatching { block() }
+            Result.success(block())
         }
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (error: Throwable) {
+        Result.failure(error)
+    }
 
     private fun prepareSessionState(sessionUserId: String?) {
         if (sessionUserId == null) {
