@@ -1,5 +1,6 @@
 package com.tani.app.ui.marketplace
 
+import android.content.res.ColorStateList
 import android.net.Uri
 import android.os.Bundle
 import android.view.Gravity
@@ -23,6 +24,7 @@ import com.tani.app.R
 import com.tani.app.data.Analytics
 import com.tani.app.data.Cart
 import com.tani.app.data.ProductDetails
+import com.tani.app.data.ProductVariant
 import com.tani.app.data.Repository
 import com.tani.app.data.Supabase
 import com.tani.app.data.repository.GrowthRepository
@@ -39,6 +41,8 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
     private var activeVideo: VideoView? = null
     private var mediaItems: List<MediaItem> = emptyList()
     private var selectedMediaIndex = 0
+    private var selectedVariant: ProductVariant? = null
+    private var refreshPurchaseUi: (() -> Unit)? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val productId = requireArguments().getString(ARG_PRODUCT_ID) ?: return
@@ -60,11 +64,14 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
         runCatching { activeVideo?.stopPlayback() }
         activeVideo = null
         mediaItems = emptyList()
+        selectedVariant = null
+        refreshPurchaseUi = null
         super.onDestroyView()
     }
 
     private fun bind(view: View, details: ProductDetails) {
         val product = details.product
+        selectedVariant = null
         val formattedPrice = MarketplaceUi.formatPrice(product.price)
 
         view.findViewById<TextView>(R.id.product_details_name).text = product.name
@@ -286,25 +293,50 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
         val quantityText = view.findViewById<TextView>(R.id.product_details_quantity_value)
         val quantityBox = view.findViewById<View>(R.id.product_details_quantity_box)
         val addButton = view.findViewById<MaterialButton>(R.id.product_details_add)
+        val mainPrice = view.findViewById<TextView>(R.id.product_details_price)
+        val stickyPrice = view.findViewById<TextView>(R.id.product_details_sticky_price)
+        val stockText = view.findViewById<TextView>(R.id.product_details_stock)
         var quantity = 1
 
+        fun chosenVariant(): ProductVariant? = selectedVariant
+
+        fun choiceReady(): Boolean = !product.has_variants || chosenVariant() != null
+
+        fun availableStock(): Int = when {
+            product.has_variants -> chosenVariant()?.stock ?: 0
+            else -> product.stock
+        }
+
+        fun unitPrice(): Double = chosenVariant()?.price ?: product.price
+
         fun availableToAdd(): Int {
-            val current = Cart.all().firstOrNull { it.product.id == product.id }?.quantity ?: 0
-            return (product.stock - current).coerceAtLeast(0).coerceAtMost(99)
+            if (!choiceReady()) return 0
+            val current = Cart.quantityFor(product.id, chosenVariant()?.id)
+            return (availableStock() - current).coerceAtLeast(0).coerceAtMost(99)
         }
 
         fun refreshQuantityUi() {
             val available = availableToAdd()
             quantity = quantity.coerceIn(1, available.coerceAtLeast(1))
             quantityText.text = quantity.toString()
-            quantityBox.visibility = if (product.stock > 0) View.VISIBLE else View.GONE
+            val price = unitPrice()
+            mainPrice.text = MarketplaceUi.formatPrice(price)
+            stickyPrice.text = MarketplaceUi.formatPrice(price)
+            stockText.text = when {
+                product.has_variants && chosenVariant() == null -> "اختاري الخيار"
+                availableStock() > 0 -> "متوفر (${availableStock()})"
+                else -> "غير متوفر حالياً"
+            }
+            stockText.setTextColor(requireContext().getColor(if (availableStock() > 0) R.color.success else R.color.error))
+            quantityBox.visibility = if (choiceReady() && availableStock() > 0) View.VISIBLE else View.GONE
             minus.isEnabled = available > 0 && quantity > 1
             plus.isEnabled = available > 0 && quantity < available
-            addButton.isEnabled = available > 0
+            addButton.isEnabled = choiceReady() && available > 0
             addButton.text = when {
-                product.stock <= 0 -> "غير متوفر حالياً"
+                product.has_variants && chosenVariant() == null -> "اختاري المقاس أو اللون أولاً"
+                availableStock() <= 0 -> "غير متوفر حالياً"
                 available <= 0 -> "الكمية المتاحة موجودة في السلة"
-                else -> "إضافة للسلة • ${MarketplaceUi.formatPrice(product.price * quantity)}"
+                else -> "إضافة للسلة • ${MarketplaceUi.formatPrice(price * quantity)}"
             }
         }
 
@@ -317,10 +349,14 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
             refreshQuantityUi()
         }
         addButton.setOnClickListener {
+            if (!choiceReady()) {
+                Toast.makeText(requireContext(), "اختاري المقاس أو اللون أولاً", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
             val wanted = quantity.coerceAtMost(availableToAdd())
             var added = 0
             repeat(wanted) {
-                if (Cart.add(product.toProduct())) added++
+                if (Cart.add(product.toProduct(), chosenVariant())) added++
             }
             if (added > 0) {
                 (activity as? MainActivity)?.refreshCartBadge()
@@ -332,6 +368,10 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
             } else {
                 Toast.makeText(requireContext(), "تعذر إضافة كمية إضافية", Toast.LENGTH_SHORT).show()
             }
+            refreshQuantityUi()
+        }
+        refreshPurchaseUi = {
+            quantity = 1
             refreshQuantityUi()
         }
         refreshQuantityUi()
@@ -382,17 +422,41 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
         val variantNote = view.findViewById<TextView>(R.id.product_details_variant_note)
         val variantsBox = view.findViewById<LinearLayout>(R.id.product_details_variants)
         variantsBox.removeAllViews()
-        section.visibility = if (details.variants.isEmpty()) View.GONE else View.VISIBLE
-        if (details.variants.isNotEmpty()) {
-            variantNote.text = "اختاري من الخيارات المتاحة، ويؤكد المتجر تفاصيل الخيار مع الطلب."
+        section.visibility = if (details.product.has_variants) View.VISIBLE else View.GONE
+        if (!details.product.has_variants) return
+        if (details.variants.isEmpty()) {
+            variantNote.text = "لا يوجد خيار متاح حالياً."
+            refreshPurchaseUi?.invoke()
+            return
+        }
+
+        variantNote.text = "اختاري المقاس أو اللون المطلوب قبل الإضافة للسلة."
+        fun renderChoices() {
+            variantsBox.removeAllViews()
             details.variants.forEach { variant ->
                 val price = variant.price?.let { " • ${MarketplaceUi.formatPrice(it)}" }.orEmpty()
-                val availability = if (variant.stock > 0) "متوفر" else "غير متوفر"
-                val chip = MarketplaceUi.chipLabel(requireContext(), "${variant.name}$price • $availability").apply {
+                val availability = if (variant.stock > 0) "متوفر ${variant.stock}" else "غير متوفر"
+                val selected = selectedVariant?.id == variant.id
+                val button = MaterialButton(requireContext()).apply {
+                    text = "${variant.name}$price • $availability"
+                    isCheckable = true
+                    isChecked = selected
+                    isEnabled = variant.stock > 0
                     alpha = if (variant.stock > 0) 1f else 0.5f
+                    strokeWidth = MarketplaceUi.dp(requireContext(), 1)
+                    strokeColor = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.tani_primary))
+                    backgroundTintList = ColorStateList.valueOf(
+                        ContextCompat.getColor(requireContext(), if (selected) R.color.brand_soft else android.R.color.transparent)
+                    )
+                    setTextColor(ContextCompat.getColor(requireContext(), R.color.tani_primary))
+                    setOnClickListener {
+                        selectedVariant = variant
+                        refreshPurchaseUi?.invoke()
+                        renderChoices()
+                    }
                 }
                 variantsBox.addView(
-                    chip,
+                    button,
                     LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.WRAP_CONTENT,
                         LinearLayout.LayoutParams.WRAP_CONTENT
@@ -400,6 +464,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
                 )
             }
         }
+        renderChoices()
     }
 
     private fun bindReviews(view: View, details: ProductDetails) {
@@ -440,7 +505,10 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
                 requireContext(), viewLifecycleOwner.lifecycleScope, related,
                 onOpen = { (activity as MainActivity).show(newInstance(related.id)) },
                 onAdd = {
-                    if (Cart.add(related.toProduct())) {
+                    if (related.has_variants) {
+                        Toast.makeText(requireContext(), "اختاري المقاس أو اللون أولاً", Toast.LENGTH_SHORT).show()
+                        (activity as MainActivity).show(newInstance(related.id))
+                    } else if (Cart.add(related.toProduct())) {
                         (activity as? MainActivity)?.refreshCartBadge()
                         Toast.makeText(requireContext(), "تمت إضافة ${related.name} للسلة", Toast.LENGTH_SHORT).show()
                     } else {

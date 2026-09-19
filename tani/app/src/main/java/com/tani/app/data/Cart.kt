@@ -26,37 +26,41 @@ object Cart {
     fun all(): List<CartItem> = map.values.toList()
 
     @Synchronized
-    fun add(product: Product): Boolean {
-        if (!product.is_active || product.stock <= 0) return false
-        val current = map[product.id]
-        val next = ((current?.quantity ?: 0) + 1).coerceAtMost(product.stock.coerceAtMost(99))
+    fun add(product: Product, variant: ProductVariant? = null): Boolean {
+        if (!product.is_active || (product.has_variants && variant == null)) return false
+        if (variant != null && (variant.product_id != product.id || !variant.is_active)) return false
+        val stock = variant?.stock ?: product.stock
+        if (stock <= 0) return false
+        val key = key(product.id, variant?.id)
+        val current = map[key]
+        val next = ((current?.quantity ?: 0) + 1).coerceAtMost(stock.coerceAtMost(99))
         if (current?.quantity == next) return false
-        map[product.id] = CartItem(product, next)
+        map[key] = CartItem(product, next, variant)
         persist()
         return true
     }
 
     @Synchronized
-    fun increase(productId: String): Boolean {
-        val current = map[productId] ?: return false
-        val max = current.product.stock.coerceAtMost(99)
+    fun increase(itemKey: String): Boolean {
+        val current = map[itemKey] ?: return false
+        val max = current.availableStock.coerceAtMost(99)
         if (current.quantity >= max) return false
-        map[productId] = current.copy(quantity = current.quantity + 1)
+        map[itemKey] = current.copy(quantity = current.quantity + 1)
         persist()
         return true
     }
 
     @Synchronized
-    fun decrease(productId: String) {
-        val current = map[productId] ?: return
-        if (current.quantity <= 1) map.remove(productId)
-        else map[productId] = current.copy(quantity = current.quantity - 1)
+    fun decrease(itemKey: String) {
+        val current = map[itemKey] ?: return
+        if (current.quantity <= 1) map.remove(itemKey)
+        else map[itemKey] = current.copy(quantity = current.quantity - 1)
         persist()
     }
 
     @Synchronized
-    fun remove(productId: String) {
-        map.remove(productId)
+    fun remove(itemKey: String) {
+        map.remove(itemKey)
         persist()
     }
 
@@ -64,9 +68,9 @@ object Cart {
     fun replace(items: List<CartItem>) {
         map.clear()
         items.forEach { item ->
-            if (item.product.is_active && item.product.stock > 0 && item.quantity > 0) {
-                map[item.product.id] = item.copy(
-                    quantity = item.quantity.coerceAtMost(item.product.stock.coerceAtMost(99))
+            if (item.product.is_active && item.availableStock > 0 && item.quantity > 0) {
+                map[item.key] = item.copy(
+                    quantity = item.quantity.coerceAtMost(item.availableStock.coerceAtMost(99))
                 )
             }
         }
@@ -89,7 +93,7 @@ object Cart {
     }
 
     @Synchronized
-    fun subtotal(): Double = map.values.sumOf { it.product.price * it.quantity }
+    fun subtotal(): Double = map.values.sumOf { it.unitPrice * it.quantity }
 
     @Synchronized
     fun deliveryTotal(): Double = map.values
@@ -103,13 +107,17 @@ object Cart {
     @Synchronized
     fun itemCount(): Int = map.values.sumOf { it.quantity }
 
+    @Synchronized
+    fun quantityFor(productId: String, variantId: String?): Int =
+        map[key(productId, variantId)]?.quantity ?: 0
+
     private fun restore() {
         val raw = prefs?.getString(ITEMS_KEY, null) ?: return
         runCatching {
             Supabase.json.decodeFromString<List<CartItem>>(raw)
         }.onSuccess { items ->
             map.clear()
-            items.forEach { item -> map[item.product.id] = item }
+            items.forEach { item -> map[item.key] = item }
         }.onFailure {
             prefs?.edit()?.remove(ITEMS_KEY)?.apply()
         }
@@ -120,4 +128,7 @@ object Cart {
         runCatching { Supabase.json.encodeToString(map.values.toList()) }
             .onSuccess { storage.edit().putString(ITEMS_KEY, it).apply() }
     }
+
+    private fun key(productId: String, variantId: String?): String =
+        "$productId:${variantId ?: "base"}"
 }

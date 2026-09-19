@@ -61,11 +61,14 @@ suspend fun Repository.checkoutWithDeliveryZones(
     require(expectedGrandTotal >= 0) { "إجمالي الطلب غير صحيح" }
     require(quoteToken.length == 32) { "انتهت صلاحية التسعير. أعيدي المحاولة" }
 
-    val quantities = CheckoutQuantityPolicy.aggregate(items.map { it.product.id to it.quantity })
+    val quantities = CheckoutQuantityPolicy.aggregate(items.map {
+        CheckoutQuantityPolicy.LineKey(it.product.id, it.variant?.id) to it.quantity
+    })
     val payload = buildJsonArray {
-        quantities.forEach { (productId, quantity) ->
+        quantities.forEach { (key, quantity) ->
             add(buildJsonObject {
-                put("product_id", productId)
+                put("product_id", key.productId)
+                key.variantId?.let { put("variant_id", it) }
                 put("quantity", quantity)
             })
         }
@@ -78,7 +81,7 @@ suspend fun Repository.checkoutWithDeliveryZones(
     }
 
     val groupId: String = Supabase.post(
-        "rpc/checkout_create_order_group_v3",
+        "rpc/checkout_create_order_group_v4",
         buildJsonObject {
             put("p_address_id", addressId)
             put("p_phone", phone.trim())

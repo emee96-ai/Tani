@@ -12,6 +12,8 @@ import com.tani.app.R
 import com.tani.app.data.Order
 import com.tani.app.data.Repository
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonPrimitive
 
 class MerchantOrdersFragment : Fragment() {
     private val repository = Repository()
@@ -121,7 +123,11 @@ class MerchantOrdersFragment : Fragment() {
                 if (items.isEmpty()) box.addView(MerchantUi.muted(context, "لا توجد منتجات في الطلب"))
                 items.forEach { item ->
                     box.addView(MerchantUi.card(context).apply {
-                        addView(MerchantUi.text(context, item.product_name_snapshot ?: "منتج", 14.5f, true))
+                        val variant = item.variant_snapshot?.get("name")?.jsonPrimitive?.contentOrNull
+                        addView(MerchantUi.text(context, buildString {
+                            append(item.product_name_snapshot ?: "منتج")
+                            variant?.let { append(" • الخيار: $it") }
+                        }, 14.5f, true))
                         addView(MerchantUi.muted(context, "الكمية: ${item.quantity} • ${money(item.line_total ?: item.unit_price * item.quantity)} جنيه", 12f).apply {
                             setPadding(0, MerchantUi.dp(context, 4), 0, 0)
                         })

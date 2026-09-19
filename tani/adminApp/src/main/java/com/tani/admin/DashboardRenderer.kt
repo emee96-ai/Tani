@@ -364,6 +364,15 @@ class DashboardRenderer(
         addMeta("${AdminUiText.money(row.double("total"))} • ${formatDate(row.string("created_at"))}")
         if (!compact) {
             addMeta("الدفع: ${if (row.string("payment_method") == "cod") "عند الاستلام" else row.string("payment_method") ?: "—"} • ${paymentStatus(row.string("payment_status"))}")
+            (row["order_items"] as? JsonArray)?.forEach { element ->
+                val item = element.jsonObject
+                val variant = (item["variant_snapshot"] as? JsonObject)?.string("name")
+                addMeta(buildString {
+                    append("• ${item.string("product_name_snapshot") ?: "منتج"}")
+                    variant?.let { append(" • الخيار: $it") }
+                    append(" • ${item.numberText("quantity")} قطعة")
+                })
+            }
             if (role() == "admin") {
                 val next = when (status) {
                     "pending" -> listOf("accepted", "rejected", "cancelled")

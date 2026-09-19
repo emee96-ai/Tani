@@ -48,7 +48,15 @@ class FavoritesFragment : Fragment() {
         else MarketplaceUi.addTwoColumnGrid(root, products.map { p ->
             MarketplaceUi.productCard(c,viewLifecycleOwner.lifecycleScope,p,
                 onOpen={ (activity as MainActivity).show(ProductDetailsFragment.newInstance(p.id)) },
-                onAdd={ Cart.add(p.toProduct()); Toast.makeText(c,"تمت الإضافة للسلة",Toast.LENGTH_SHORT).show() }
+                onAdd={
+                    if (p.has_variants) {
+                        Toast.makeText(c,"اختاري المقاس أو اللون أولاً",Toast.LENGTH_SHORT).show()
+                        (activity as MainActivity).show(ProductDetailsFragment.newInstance(p.id))
+                    } else if (Cart.add(p.toProduct())) {
+                        (activity as? MainActivity)?.refreshCartBadge()
+                        Toast.makeText(c,"تمت الإضافة للسلة",Toast.LENGTH_SHORT).show()
+                    }
+                }
             )
         },c)
     }

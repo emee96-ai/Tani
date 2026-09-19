@@ -313,7 +313,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
         }
         val rows = AdminApi.rows(
             "orders",
-            query("select=id,status,total,subtotal,delivery_fee,payment_method,payment_status,phone,customer_name_snapshot,store_name_snapshot,created_at,updated_at", status)
+            query("select=id,status,total,subtotal,delivery_fee,payment_method,payment_status,phone,customer_name_snapshot,store_name_snapshot,created_at,updated_at,order_items(product_name_snapshot,variant_snapshot,quantity,unit_price,line_total)", status)
         ).matching("id", "phone", "customer_name_snapshot", "store_name_snapshot")
         renderer.renderOrders(rows.pageItems(), selected, page, rows.size > PAGE_SIZE)
     }

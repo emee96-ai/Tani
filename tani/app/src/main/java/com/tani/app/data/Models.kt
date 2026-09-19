@@ -72,7 +72,8 @@ data class Product(
     val store_name: String? = null,
     val delivery_fee: Double = 0.0,
     val delivery_area: String? = null,
-    val estimated_minutes: Int? = null
+    val estimated_minutes: Int? = null,
+    val has_variants: Boolean = false
 )
 
 @Serializable
@@ -93,7 +94,8 @@ data class ProductCard(
     val review_count: Int = 0,
     val delivery_fee: Double = 0.0,
     val delivery_area: String? = null,
-    val estimated_minutes: Int? = null
+    val estimated_minutes: Int? = null,
+    val has_variants: Boolean = false
 ) {
     fun toProduct() = Product(
         id = id,
@@ -109,7 +111,8 @@ data class ProductCard(
         store_name = store_name,
         delivery_fee = delivery_fee,
         delivery_area = delivery_area,
-        estimated_minutes = estimated_minutes
+        estimated_minutes = estimated_minutes,
+        has_variants = has_variants
     )
 }
 
@@ -130,6 +133,7 @@ data class ProductVariant(
     val sku: String? = null,
     val price: Double? = null,
     val stock: Int = 0,
+    val attributes: JsonObject = JsonObject(emptyMap()),
     val is_active: Boolean = true
 )
 
@@ -195,6 +199,11 @@ data class RemoteCartItem(
     val cart_id: String,
     val product_id: String,
     val variant_id: String? = null,
+    val variant_name: String? = null,
+    val variant_sku: String? = null,
+    val variant_price: Double? = null,
+    val variant_stock: Int? = null,
+    val variant_attributes: JsonObject? = null,
     val quantity: Int,
     val seller_id: String,
     val category_id: String? = null,
@@ -223,9 +232,21 @@ data class RemoteCartItem(
             store_name = store_name,
             delivery_fee = delivery_fee,
             delivery_area = delivery_area,
-            estimated_minutes = estimated_minutes
+            estimated_minutes = estimated_minutes,
+            has_variants = variant_id != null
         ),
-        quantity = quantity
+        quantity = quantity,
+        variant = variant_id?.let {
+            ProductVariant(
+                id = it,
+                product_id = product_id,
+                name = variant_name ?: "الخيار",
+                sku = variant_sku,
+                price = variant_price,
+                stock = variant_stock ?: 0,
+                attributes = variant_attributes ?: JsonObject(emptyMap())
+            )
+        }
     )
 }
 
@@ -278,6 +299,7 @@ data class OrderItem(
     val quantity: Int,
     val unit_price: Double,
     val product_name_snapshot: String? = null,
+    val variant_snapshot: JsonObject? = null,
     val discount_snapshot: Double = 0.0,
     val line_total: Double? = null,
     val created_at: String? = null
@@ -295,7 +317,16 @@ data class OrderStatusHistory(
 )
 
 @Serializable
-data class CartItem(val product: Product, val quantity: Int)
+data class CartItem(
+    val product: Product,
+    val quantity: Int,
+    val variant: ProductVariant? = null
+) {
+    val key: String get() = "${product.id}:${variant?.id ?: "base"}"
+    val unitPrice: Double get() = variant?.price ?: product.price
+    val availableStock: Int get() = variant?.stock ?: product.stock
+    val variantName: String? get() = variant?.name
+}
 
 data class OrderGroupDetails(
     val group: OrderGroup,
