@@ -14,7 +14,9 @@ import com.tani.app.MainActivity
 import com.tani.app.R
 import com.tani.app.data.Repository
 import com.tani.app.data.MerchantProfile
+import com.tani.app.data.Supabase
 import com.tani.app.data.cache.AppContentStore
+import com.tani.app.data.cache.MarketplaceCache
 import com.tani.app.ui.growth.FavoritesFragment
 import com.tani.app.ui.growth.NotificationsFragment
 import com.tani.app.ui.growth.ReferralFragment
@@ -167,10 +169,16 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
     }
 
     private fun deleteAccount() {
+        val appContext = requireContext().applicationContext
+        val userId = Supabase.userId
         setActionsEnabled(false)
         viewLifecycleOwner.lifecycleScope.launch {
             runCatching { repository.softDeleteAccount() }
                 .onSuccess { deleted ->
+                    if (deleted) {
+                        AppContentStore.clearPrivateData()
+                        MarketplaceCache(appContext).clearRecommendations(userId)
+                    }
                     if (deleted && isAdded) {
                         Toast.makeText(requireContext(), "تم تعطيل الحساب", Toast.LENGTH_SHORT).show()
                         (activity as? MainActivity)?.showAuth()
@@ -198,9 +206,13 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
     }
 
     private fun logout() {
+        val appContext = requireContext().applicationContext
+        val userId = Supabase.userId
         setActionsEnabled(false)
         viewLifecycleOwner.lifecycleScope.launch {
             repository.logout()
+            AppContentStore.clearPrivateData()
+            MarketplaceCache(appContext).clearRecommendations(userId)
             if (isAdded) (activity as? MainActivity)?.showAuth()
         }
     }
