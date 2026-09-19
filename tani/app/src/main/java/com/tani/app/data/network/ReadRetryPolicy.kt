@@ -14,8 +14,10 @@ object ReadRetryPolicy {
 
     private val retryableStatusCodes = setOf(408, 429, 500, 502, 503, 504)
 
+    fun isRetryableStatus(statusCode: Int): Boolean = statusCode in retryableStatusCodes
+
     fun shouldRetryStatus(statusCode: Int, attempt: Int): Boolean =
-        attempt < MAX_ATTEMPTS && statusCode in retryableStatusCodes
+        attempt < MAX_ATTEMPTS && isRetryableStatus(statusCode)
 
     fun shouldRetryFailure(attempt: Int): Boolean = attempt < MAX_ATTEMPTS
 
