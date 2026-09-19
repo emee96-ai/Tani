@@ -155,34 +155,40 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
-            if (Supabase.userId.isNullOrBlank()) {
+            val userId = Supabase.userId?.takeIf { Supabase.hasStoredSession() }
+            if (userId == null) {
                 recommendedTitle.text = "منتجات مقترحة"
-                val fallback = AppContentStore.recommendations.ifEmpty {
-                    cache.load("home_recommendations", allowExpired = true)
-                }
-                if (fallback.isNotEmpty()) renderProducts(recommendedBox, fallback)
+                val fallback = AppContentStore.products.ifEmpty {
+                    cache.load(AppContentStore.CATALOG_PREVIEW_KEY, allowExpired = true)
+                }.take(8)
+                renderProducts(recommendedBox, fallback)
                 return@launch
             }
-            val preloaded = AppContentStore.recommendations.ifEmpty {
-                cache.load("home_recommendations", allowExpired = true)
+
+            val preloaded = AppContentStore.recommendationsFor(userId).ifEmpty {
+                cache.loadRecommendations(userId, allowExpired = true)
             }
             if (preloaded.isNotEmpty()) {
                 renderProducts(recommendedBox, preloaded)
                 return@launch
             }
+
             runCatching { scaleRepository.recommendations(8) }
                 .onSuccess { products ->
+                    if (Supabase.userId != userId || !Supabase.hasStoredSession()) return@onSuccess
+                    AppContentStore.updateRecommendations(userId, products)
+                    cache.saveRecommendations(userId, products)
                     if (products.isEmpty()) {
                         recommendedTitle.text = "مقترحة لك"
                         recommendedBox.removeAllViews()
                         recommendedBox.addView(MarketplaceUi.empty(requireContext(), "ستتحسن الاقتراحات مع استخدامك لتاني"))
                     } else {
-                        cache.save("home_recommendations", products)
                         renderProducts(recommendedBox, products)
                     }
                 }
                 .onFailure {
-                    val cached = cache.load("home_recommendations")
+                    if (Supabase.userId != userId || !Supabase.hasStoredSession()) return@onFailure
+                    val cached = cache.loadRecommendations(userId)
                     recommendedTitle.text = if (cached.isNotEmpty()) "مقترحة لك • محفوظة بدون اتصال" else "مقترحة لك"
                     if (cached.isNotEmpty()) renderProducts(recommendedBox, cached)
                 }

@@ -69,6 +69,44 @@ class MarketplaceCache(context: Context) {
         return envelope.products
     }
 
+    fun saveRecommendations(
+        userId: String,
+        products: List<ProductCard>,
+        nowEpochMs: Long = System.currentTimeMillis()
+    ) {
+        save(RecommendationCacheKey.forUser(userId), products, nowEpochMs)
+        // Remove the old global key as soon as a safe user-scoped value is written.
+        prefs.edit().remove(RecommendationCacheKey.LEGACY_KEY).apply()
+    }
+
+    fun loadRecommendations(
+        userId: String,
+        maxAgeMs: Long = MarketplaceCachePolicy.DEFAULT_TTL_MS,
+        nowEpochMs: Long = System.currentTimeMillis(),
+        allowExpired: Boolean = false
+    ): List<ProductCard> = load(
+        key = RecommendationCacheKey.forUser(userId),
+        maxAgeMs = maxAgeMs,
+        nowEpochMs = nowEpochMs,
+        allowExpired = allowExpired
+    )
+
+    /**
+     * Clears personalized recommendation cache. Supplying a user id removes only
+     * that account plus the unsafe legacy key; null removes every recommendation entry.
+     */
+    fun clearRecommendations(userId: String? = null) {
+        val keys = if (userId.isNullOrBlank()) {
+            prefs.all.keys.filter(RecommendationCacheKey::belongsToRecommendations)
+        } else {
+            listOf(RecommendationCacheKey.forUser(userId), RecommendationCacheKey.LEGACY_KEY)
+        }
+        if (keys.isEmpty()) return
+        val editor = prefs.edit()
+        keys.forEach(editor::remove)
+        editor.apply()
+    }
+
     fun saveHomeFeed(feed: HomeFeed, nowEpochMs: Long = System.currentTimeMillis()) {
         val envelope = HomeFeedCacheEnvelope(
             version = MarketplaceCachePolicy.CURRENT_VERSION,

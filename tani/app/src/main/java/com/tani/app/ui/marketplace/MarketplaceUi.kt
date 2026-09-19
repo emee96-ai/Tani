@@ -1,8 +1,6 @@
 package com.tani.app.ui.marketplace
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.text.TextUtils
@@ -24,11 +22,9 @@ import com.tani.app.data.Repository
 import com.tani.app.data.StoreCard
 import com.tani.app.data.Supabase
 import com.tani.app.data.repository.GrowthRepository
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import java.util.Locale
 
 object MarketplaceUi {
@@ -38,10 +34,6 @@ object MarketplaceUi {
     private val favoriteIdsCache = mutableSetOf<String>()
     private var favoriteCacheUser: String? = null
     private var favoriteCacheReady = false
-
-    private val imageCache = object : android.util.LruCache<String, Bitmap>(16 * 1024) {
-        override fun sizeOf(key: String, value: Bitmap): Int = (value.byteCount / 1024).coerceAtLeast(1)
-    }
 
     fun productCard(
         context: Context,
@@ -385,29 +377,7 @@ object MarketplaceUi {
     }
 
     fun loadImage(scope: LifecycleCoroutineScope, imageView: ImageView, url: String) {
-        imageCache.get(url)?.let {
-            imageView.setImageBitmap(it)
-            return
-        }
-        scope.launch {
-            val bytes = Supabase.downloadPublicBytes(url) ?: return@launch
-            val bitmap = withContext(Dispatchers.Default) {
-                decodeSampledBitmap(bytes, 900)
-            } ?: return@launch
-            imageCache.put(url, bitmap)
-            imageView.setImageBitmap(bitmap)
-        }
-    }
-
-    private fun decodeSampledBitmap(bytes: ByteArray, maxDimension: Int): Bitmap? {
-        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
-        var sample = 1
-        while (bounds.outWidth / sample > maxDimension || bounds.outHeight / sample > maxDimension) {
-            sample *= 2
-        }
-        val options = BitmapFactory.Options().apply { inSampleSize = sample.coerceAtLeast(1) }
-        return BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
+        MarketplaceImageLoader.load(scope, imageView, url)
     }
 
     private fun marginTop(context: Context, topDp: Int) = LinearLayout.LayoutParams(

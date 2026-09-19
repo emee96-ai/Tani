@@ -70,13 +70,20 @@ object AppContentStore {
         private set
 
     private var privateDataUserId: String? = null
+    @Volatile private var recommendationsUserId: String? = null
 
     fun hydrateFromDisk(context: Context): Boolean {
         val cache = MarketplaceCache(context)
         homeFeed = cache.loadHomeFeed(allowExpired = true)
         products = cache.load(CATALOG_PREVIEW_KEY, allowExpired = true)
         stores = cache.loadStores(allowExpired = true)
-        recommendations = cache.load("home_recommendations", allowExpired = true)
+
+        val sessionUserId = Supabase.userId?.takeIf { Supabase.hasStoredSession() }
+        recommendations = sessionUserId?.let {
+            cache.loadRecommendations(it, allowExpired = true)
+        }.orEmpty()
+        recommendationsUserId = sessionUserId
+
         productsLoaded = products.isNotEmpty()
         storesLoaded = stores.isNotEmpty()
         return hasCoreContent()
@@ -89,6 +96,21 @@ object AppContentStore {
         val growthRepository = GrowthRepository()
         val scaleRepository = ScaleRepository()
         val cache = MarketplaceCache(context)
+        val sessionUserId = Supabase.userId?.takeIf { Supabase.hasStoredSession() }
+
+        if (sessionUserId != null) {
+            if (privateDataUserId != sessionUserId) clearPrivateData()
+            privateDataUserId = sessionUserId
+            if (recommendationsUserId != sessionUserId) {
+                recommendations = emptyList()
+                recommendationsUserId = sessionUserId
+            }
+            if (recommendations.isEmpty()) {
+                recommendations = cache.loadRecommendations(sessionUserId, allowExpired = true)
+            }
+        } else {
+            clearPrivateData()
+        }
 
         val productsRequest = async {
             runCatching { repository.marketplaceProducts(limit = 24) }
@@ -112,19 +134,18 @@ object AppContentStore {
             runCatching { repository.marketplaceProducts(sort = ProductSort.RATING, limit = 6) }
         }
         val recommendationsRequest = async {
-            if (!Supabase.hasStoredSession()) return@async
+            val uid = sessionUserId ?: return@async
             runCatching { scaleRepository.recommendations(8) }
-                .onSuccess {
-                    recommendations = it
-                    cache.save("home_recommendations", it)
+                .onSuccess { items ->
+                    cache.saveRecommendations(uid, items)
+                    if (Supabase.userId == uid && Supabase.hasStoredSession()) {
+                        recommendations = items
+                        recommendationsUserId = uid
+                    }
                 }
         }
 
-        val userId = Supabase.userId
-        if (Supabase.hasStoredSession() && !userId.isNullOrBlank()) {
-            if (privateDataUserId != userId) clearPrivateData()
-            privateDataUserId = userId
-
+        if (sessionUserId != null) {
             val ordersRequest = async {
                 runCatching { repository.orderGroups() }.onSuccess {
                     orders = it
@@ -170,8 +191,6 @@ object AppContentStore {
             favoritesRequest.await()
             notificationsRequest.await()
             addressesRequest.await()
-        } else {
-            clearPrivateData()
         }
 
         productsRequest.await()
@@ -243,6 +262,15 @@ object AppContentStore {
         }
     }
 
+    fun recommendationsFor(userId: String?): List<ProductCard> =
+        if (!userId.isNullOrBlank() && recommendationsUserId == userId) recommendations else emptyList()
+
+    fun updateRecommendations(userId: String, value: List<ProductCard>) {
+        require(userId.isNotBlank()) { "userId is required" }
+        recommendationsUserId = userId
+        recommendations = value
+    }
+
     fun updateOrders(value: List<OrderGroup>) {
         orders = value
         ordersLoaded = true
@@ -286,6 +314,8 @@ object AppContentStore {
 
     fun clearPrivateData() {
         privateDataUserId = null
+        recommendationsUserId = null
+        recommendations = emptyList()
         orders = emptyList()
         account = null
         merchant = null
