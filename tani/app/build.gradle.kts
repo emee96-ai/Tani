@@ -70,6 +70,8 @@ android {
         targetSdk = 35
         versionCode = taniVersionCode
         versionName = taniVersionName
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunnerArguments["disableAnalytics"] = "true"
 
         buildConfigField("String", "PASSWORD_RESET_REDIRECT", "\"$taniResetRedirect\"")
         buildConfigField("String", "APP_LINK_HOST", "\"$taniAppLinkHost\"")
@@ -104,4 +106,9 @@ dependencies {
     ksp("androidx.room:room-compiler:2.7.1")
 
     testImplementation("junit:junit:4.13.2")
+
+    androidTestImplementation("androidx.test:runner:1.7.0")
+    androidTestImplementation("androidx.test:rules:1.7.0")
+    androidTestImplementation("androidx.test.ext:junit:1.3.0")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
 }
