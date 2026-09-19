@@ -27,10 +27,11 @@ class MainActivitySmokeTest {
     @Test
     fun guestLaunchShowsPrimaryNavigation() {
         waitForDisplayed(R.id.bottom_nav)
-        onView(withText("الرئيسية")).check(matches(isDisplayed()))
-        onView(withText("المتاجر")).check(matches(isDisplayed()))
-        onView(withText("السلة")).check(matches(isDisplayed()))
-        onView(withText("طلباتي")).check(matches(isDisplayed()))
+        onView(withId(R.id.home)).check(matches(isDisplayed()))
+        onView(withId(R.id.categories)).check(matches(isDisplayed()))
+        onView(withId(R.id.cart)).check(matches(isDisplayed()))
+        onView(withId(R.id.orders)).check(matches(isDisplayed()))
+        onView(withId(R.id.profile)).check(matches(isDisplayed()))
     }
 
     @Test
@@ -57,7 +58,7 @@ class MainActivitySmokeTest {
         onView(withId(R.id.browse_as_guest)).check(matches(isDisplayed())).perform(click())
 
         waitForDisplayed(R.id.bottom_nav)
-        onView(withText("الرئيسية")).check(matches(isDisplayed()))
+        onView(withId(R.id.home)).check(matches(isDisplayed()))
     }
 
     private fun ensureGuestHome() {
