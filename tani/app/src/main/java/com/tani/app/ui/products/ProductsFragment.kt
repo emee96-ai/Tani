@@ -56,7 +56,10 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
             viewLifecycleOwner.lifecycleScope,
             onOpen = { product -> (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id)) },
             onAdd = { product ->
-                if (Cart.add(product.toProduct())) {
+                if (product.has_variants) {
+                    Toast.makeText(requireContext(), "اختاري المقاس أو اللون أولاً", Toast.LENGTH_SHORT).show()
+                    (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id))
+                } else if (Cart.add(product.toProduct())) {
                     (activity as? MainActivity)?.refreshCartBadge()
                     viewLifecycleOwner.lifecycleScope.launch {
                         Analytics.track("add_to_cart", screen = "products", entityType = "product", entityId = product.id)

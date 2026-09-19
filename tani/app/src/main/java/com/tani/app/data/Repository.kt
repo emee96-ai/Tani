@@ -256,7 +256,7 @@ class Repository {
 
     suspend fun productVariants(productId: String): List<ProductVariant> = Supabase.get(
         "product_variants",
-        "select=id,product_id,name,sku,price,stock,is_active&product_id=eq.$productId&is_active=eq.true&order=created_at.asc"
+        "select=id,product_id,name,sku,price,stock,attributes,is_active&product_id=eq.$productId&is_active=eq.true&order=created_at.asc"
     )
 
     suspend fun productReviews(productId: String, limit: Int = 20): List<Review> = Supabase.get(
@@ -538,17 +538,20 @@ class Repository {
     )
 
     suspend fun syncCart(items: List<CartItem>): String {
-        val quantities = CheckoutQuantityPolicy.aggregate(items.map { it.product.id to it.quantity })
+        val quantities = CheckoutQuantityPolicy.aggregate(items.map {
+            CheckoutQuantityPolicy.LineKey(it.product.id, it.variant?.id) to it.quantity
+        })
         val payload = buildJsonArray {
-            quantities.forEach { (productId, quantity) ->
+            quantities.forEach { (key, quantity) ->
                 add(buildJsonObject {
-                    put("product_id", productId)
+                    put("product_id", key.productId)
+                    key.variantId?.let { put("variant_id", it) }
                     put("quantity", quantity)
                 })
             }
         }
         return Supabase.post(
-            "rpc/sync_my_cart",
+            "rpc/sync_my_cart_v2",
             buildJsonObject { put("p_items", payload) }.toString()
         )
     }
@@ -557,11 +560,14 @@ class Repository {
         items: List<CartItem>,
         deliveryZones: Map<String, MerchantDeliveryZone>
     ): CartQuote {
-        val quantities = CheckoutQuantityPolicy.aggregate(items.map { it.product.id to it.quantity })
+        val quantities = CheckoutQuantityPolicy.aggregate(items.map {
+            CheckoutQuantityPolicy.LineKey(it.product.id, it.variant?.id) to it.quantity
+        })
         val payload = buildJsonArray {
-            quantities.forEach { (productId, quantity) ->
+            quantities.forEach { (key, quantity) ->
                 add(buildJsonObject {
-                    put("product_id", productId)
+                    put("product_id", key.productId)
+                    key.variantId?.let { put("variant_id", it) }
                     put("quantity", quantity)
                 })
             }
@@ -574,7 +580,7 @@ class Repository {
         }
 
         return Supabase.post(
-            "rpc/quote_cart_v2",
+            "rpc/quote_cart_v3",
             buildJsonObject {
                 put("p_items", payload)
                 put("p_delivery_zones", selections)

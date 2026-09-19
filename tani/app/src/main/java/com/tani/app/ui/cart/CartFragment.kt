@@ -128,7 +128,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
     private fun merchantGroup(items: List<CartItem>): LinearLayout {
         val first = items.first()
         val storeName = first.product.store_name ?: "المتجر"
-        val subtotal = items.sumOf { it.product.price * it.quantity }
+        val subtotal = items.sumOf { it.unitPrice * it.quantity }
         val delivery = first.product.delivery_fee
 
         return LinearLayout(requireContext()).apply {
@@ -190,14 +190,22 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
             setTextColor(requireContext().getColor(R.color.text_dark))
             setTypeface(typeface, android.graphics.Typeface.BOLD)
         })
+        item.variantName?.let { variantName ->
+            info.addView(TextView(requireContext()).apply {
+                text = "الخيار: $variantName"
+                textSize = 14f
+                setPadding(0, MarketplaceUi.dp(requireContext(), 4), 0, 0)
+                setTextColor(requireContext().getColor(R.color.tani_primary))
+            })
+        }
         info.addView(TextView(requireContext()).apply {
-            text = "${MarketplaceUi.formatPrice(item.product.price)} × ${item.quantity}"
+            text = "${MarketplaceUi.formatPrice(item.unitPrice)} × ${item.quantity}"
             textSize = 14f
             setPadding(0, MarketplaceUi.dp(requireContext(), 5), 0, 0)
             setTextColor(requireContext().getColor(R.color.text_muted))
         })
         info.addView(TextView(requireContext()).apply {
-            text = "المجموع ${MarketplaceUi.formatPrice(item.product.price * item.quantity)}"
+            text = "المجموع ${MarketplaceUi.formatPrice(item.unitPrice * item.quantity)}"
             textSize = 14f
             setPadding(0, MarketplaceUi.dp(requireContext(), 4), 0, 0)
             setTextColor(requireContext().getColor(R.color.tani_primary))
@@ -215,7 +223,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
             text = "+"
             minWidth = 0
             setOnClickListener {
-                if (!Cart.increase(item.product.id)) {
+                if (!Cart.increase(item.key)) {
                     Toast.makeText(requireContext(), "وصلتِ للكمية المتاحة", Toast.LENGTH_SHORT).show()
                 }
                 render(); syncSilent()
@@ -230,7 +238,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
         actions.addView(Button(requireContext()).apply {
             text = "−"
             minWidth = 0
-            setOnClickListener { Cart.decrease(item.product.id); render(); syncSilent() }
+            setOnClickListener { Cart.decrease(item.key); render(); syncSilent() }
         }, LinearLayout.LayoutParams(MarketplaceUi.dp(requireContext(), 52), MarketplaceUi.dp(requireContext(), 48)))
         actions.addView(TextView(requireContext()).apply {
             text = "حذف"
@@ -240,7 +248,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
             setTextColor(requireContext().getColor(R.color.error))
             isClickable = true
             isFocusable = true
-            setOnClickListener { Cart.remove(item.product.id); render(); syncSilent() }
+            setOnClickListener { Cart.remove(item.key); render(); syncSilent() }
         }, LinearLayout.LayoutParams(0, MarketplaceUi.dp(requireContext(), 48), 1f))
         row.addView(actions)
         return row

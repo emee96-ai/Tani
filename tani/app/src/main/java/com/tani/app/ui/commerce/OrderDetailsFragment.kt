@@ -21,6 +21,8 @@ import com.tani.app.data.OrderItem
 import com.tani.app.data.Repository
 import com.tani.app.data.repository.TrustRepository
 import com.tani.app.ui.marketplace.MarketplaceUi
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.coroutines.launch
 
 class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
@@ -110,8 +112,13 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
         items.forEach { item ->
             addView(TextView(requireContext()).apply {
                 val name = item.product_name_snapshot ?: "منتج"
+                val variant = item.variant_snapshot?.get("name")?.jsonPrimitive?.contentOrNull
                 val line = item.line_total ?: item.unit_price * item.quantity
-                text = "• $name — ${item.quantity} × ${MarketplaceUi.formatPrice(item.unit_price)} = ${MarketplaceUi.formatPrice(line)}"
+                text = buildString {
+                    append("• $name")
+                    variant?.let { append(" • الخيار: $it") }
+                    append(" — ${item.quantity} × ${MarketplaceUi.formatPrice(item.unit_price)} = ${MarketplaceUi.formatPrice(line)}")
+                }
                 textSize = 14f
                 setPadding(0, 3, 0, 3)
             })

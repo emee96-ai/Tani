@@ -17,6 +17,8 @@ data class CartQuote(
 @Serializable
 data class CartQuoteItem(
     val product_id: String,
+    val variant_id: String? = null,
+    val variant_name: String? = null,
     val seller_id: String,
     val name: String,
     val unit_price: Double,

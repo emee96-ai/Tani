@@ -261,7 +261,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
         Cart.groupedBySeller().forEach { (sellerId, group) ->
             val first = group.first()
             val storeName = first.product.store_name ?: "المتجر"
-            val subtotal = group.sumOf { it.product.price * it.quantity }
+            val subtotal = group.sumOf { it.unitPrice * it.quantity }
             val zones = zonesBySeller[sellerId].orEmpty()
             val chosen = selectedZones[sellerId]
             val delivery = if (zones.isEmpty()) null else chosen?.fee
