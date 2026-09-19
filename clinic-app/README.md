@@ -1,12 +1,18 @@
-# Clinic App v1.0
+# Clinic App 1.1
 
-Android front-end prototype for the Sudan clinic workflow.
+تطبيق إدارة داخلية للعيادات مبني لتدفق العمل المحلي في السودان.
 
-Implemented in this APK:
-- Reception queue and four visit types
-- Doctor clinical record screen
-- Patient history
-- Daily billing flow
-- Offline local demo workflow
+## المنفذ في Android
+- أدوار المسجلة والطبيب والإدارة على نفس APK مع حفظ دور الجهاز.
+- تسجيل المريض برقم كرت دائم.
+- الحالات الأربع: جديد، مقابلة قريبة مجانية، مقابلة بعيدة، نتيجة فحوصات.
+- طابور: مسجل → بانتظار الطبيب → داخل الكشف → مكتمل.
+- شاشة طبيب وحفظ مسودة وكشف كامل.
+- سجل دائم للمرضى والزيارات داخل SQLite.
+- تحصيل كامل/جزئي ووسيلة دفع.
+- ملخص حسابات اليوم وإغلاق اليوم Snapshot.
+- إعداد رسوم الكشف ومدة المقابلة المجانية.
+- Offline-first: التشغيل الأساسي لا يحتاج إنترنت.
 
-The production backend from phases 7–10 is packaged separately and requires Supabase deployment/configuration before cloud sync is enabled.
+## ملاحظة
+النسخة 1.1 تحفظ البيانات محلياً. طبقة المزامنة مع Supabase والأجهزة الأخرى ليست مفعلة داخل APK حتى الآن.
