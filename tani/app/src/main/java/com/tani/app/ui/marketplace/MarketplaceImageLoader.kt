@@ -75,7 +75,9 @@ object MarketplaceImageLoader {
                 if (it.size <= MAX_SINGLE_IMAGE_BYTES) writeDisk(context, url, it)
             }
 
-            if (bytes.isNullOrEmpty() || bytes.size > MAX_SINGLE_IMAGE_BYTES) return@async null
+            if (bytes == null || bytes.isEmpty() || bytes.size > MAX_SINGLE_IMAGE_BYTES) {
+                return@async null
+            }
 
             val bitmap = withContext(Dispatchers.Default) {
                 decodeSampledBitmap(bytes, MAX_DECODE_DIMENSION)
