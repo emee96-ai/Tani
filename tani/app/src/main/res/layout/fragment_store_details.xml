@@ -168,6 +168,15 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:orientation="vertical" />
+
+            <Button
+                android:id="@+id/store_details_all_products"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="10dp"
+                android:text="عرض كل منتجات المتجر"
+                android:visibility="gone" />
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

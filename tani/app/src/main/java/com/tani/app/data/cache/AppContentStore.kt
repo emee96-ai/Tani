@@ -25,7 +25,7 @@ import kotlinx.coroutines.supervisorScope
  * account data deliberately stays in memory only.
  */
 object AppContentStore {
-    const val ALL_PRODUCTS_KEY = "all_products"
+    const val CATALOG_PREVIEW_KEY = "catalog_preview"
 
     @Volatile var homeFeed: HomeFeed? = null
         private set
@@ -74,7 +74,7 @@ object AppContentStore {
     fun hydrateFromDisk(context: Context): Boolean {
         val cache = MarketplaceCache(context)
         homeFeed = cache.loadHomeFeed(allowExpired = true)
-        products = cache.load(ALL_PRODUCTS_KEY, allowExpired = true)
+        products = cache.load(CATALOG_PREVIEW_KEY, allowExpired = true)
         stores = cache.loadStores(allowExpired = true)
         recommendations = cache.load("home_recommendations", allowExpired = true)
         productsLoaded = products.isNotEmpty()
@@ -91,11 +91,11 @@ object AppContentStore {
         val cache = MarketplaceCache(context)
 
         val productsRequest = async {
-            runCatching { repository.marketplaceProducts(limit = 100) }
+            runCatching { repository.marketplaceProducts(limit = 24) }
                 .onSuccess {
                     products = it
                     productsLoaded = true
-                    cache.save(ALL_PRODUCTS_KEY, it)
+                    cache.save(CATALOG_PREVIEW_KEY, it)
                 }
         }
         val storesRequest = async {
@@ -108,6 +108,9 @@ object AppContentStore {
         }
         val categoriesRequest = async { runCatching { repository.categories() } }
         val featuredRequest = async { runCatching { repository.featuredProducts(limit = 6) } }
+        val popularRequest = async {
+            runCatching { repository.marketplaceProducts(sort = ProductSort.RATING, limit = 6) }
+        }
         val recommendationsRequest = async {
             if (!Supabase.hasStoredSession()) return@async
             runCatching { scaleRepository.recommendations(8) }
@@ -180,17 +183,19 @@ object AppContentStore {
         val featured = featuredRequest.await().getOrNull()
             ?: homeFeed?.featuredProducts
             ?: emptyList()
+        val popular = popularRequest.await().getOrNull()
+            ?: products.sortedWith(
+                compareByDescending<ProductCard> { it.average_rating }
+                    .thenByDescending { it.review_count }
+                    .thenByDescending { it.created_at.orEmpty() }
+            ).take(6)
 
         if (categories.isNotEmpty() || productsLoaded || storesLoaded) {
             val feed = HomeFeed(
                 categories = categories,
                 featuredProducts = featured,
                 newestProducts = products.sortedByDescending { it.created_at.orEmpty() }.take(6),
-                popularProducts = products.sortedWith(
-                    compareByDescending<ProductCard> { it.average_rating }
-                        .thenByDescending { it.review_count }
-                        .thenByDescending { it.created_at.orEmpty() }
-                ).take(6),
+                popularProducts = popular,
                 stores = stores.take(5)
             )
             homeFeed = feed

@@ -1,5 +1,7 @@
 package com.tani.app.data
 
+import com.tani.app.data.catalog.CatalogPage
+import com.tani.app.data.catalog.CatalogPagination
 import com.tani.app.data.commerce.CartQuote
 import com.tani.app.data.commerce.CheckoutQuantityPolicy
 import kotlinx.serialization.json.JsonElement
@@ -219,15 +221,42 @@ class Repository {
         maxPrice: Double? = null,
         inStockOnly: Boolean = false,
         sort: ProductSort = ProductSort.NEWEST,
-        limit: Int = 50
-    ): List<ProductCard> {
+        limit: Int = 50,
+        sellerId: String? = null
+    ): List<ProductCard> = marketplaceProductPage(
+        search = search,
+        categoryId = categoryId,
+        minPrice = minPrice,
+        maxPrice = maxPrice,
+        inStockOnly = inStockOnly,
+        sort = sort,
+        pageSize = limit,
+        offset = 0,
+        sellerId = sellerId
+    ).items
+
+    suspend fun marketplaceProductPage(
+        search: String? = null,
+        categoryId: String? = null,
+        minPrice: Double? = null,
+        maxPrice: Double? = null,
+        inStockOnly: Boolean = false,
+        sort: ProductSort = ProductSort.NEWEST,
+        pageSize: Int = CatalogPagination.DEFAULT_PAGE_SIZE,
+        offset: Int = 0,
+        sellerId: String? = null
+    ): CatalogPage<ProductCard> {
+        require(offset >= 0) { "إزاحة الصفحة غير صحيحة" }
+        val size = CatalogPagination.normalizedPageSize(pageSize)
         val query = mutableListOf(
             "select=*",
             "order=${sort.query}",
-            "limit=${limit.coerceIn(1, 100)}"
+            "limit=${CatalogPagination.requestLimit(size)}",
+            "offset=$offset"
         )
 
         categoryId?.takeIf { it.isNotBlank() }?.let { query += "category_id=eq.$it" }
+        sellerId?.takeIf { it.isNotBlank() }?.let { query += "seller_id=eq.$it" }
         minPrice?.let { query += "price=gte.$it" }
         maxPrice?.let { query += "price=lte.$it" }
         if (inStockOnly) query += "stock=gt.0"
@@ -241,7 +270,7 @@ class Repository {
             "marketplace_product_cards",
             query.joinToString("&")
         )
-        return result
+        return CatalogPagination.page(result, offset, size)
     }
 
     suspend fun productCard(productId: String): ProductCard = Supabase.get<List<ProductCard>>(
@@ -287,9 +316,17 @@ class Repository {
         "select=*&seller_id=eq.$sellerId&limit=1"
     ).firstOrNull()
 
-    suspend fun storeProducts(sellerId: String, limit: Int = 50): List<ProductCard> = Supabase.get(
-        "marketplace_product_cards",
-        "select=*&seller_id=eq.$sellerId&order=created_at.desc&limit=${limit.coerceIn(1,100)}"
+    suspend fun storeProducts(sellerId: String, limit: Int = 50): List<ProductCard> =
+        marketplaceProducts(sellerId = sellerId, limit = limit)
+
+    suspend fun storeProductPage(
+        sellerId: String,
+        pageSize: Int = CatalogPagination.DEFAULT_PAGE_SIZE,
+        offset: Int = 0
+    ): CatalogPage<ProductCard> = marketplaceProductPage(
+        sellerId = sellerId,
+        pageSize = pageSize,
+        offset = offset
     )
 
     suspend fun productDetails(productId: String): ProductDetails = coroutineScope {

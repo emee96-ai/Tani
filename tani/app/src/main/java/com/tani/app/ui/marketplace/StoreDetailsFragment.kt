@@ -14,6 +14,7 @@ import com.tani.app.R
 import com.tani.app.data.Analytics
 import com.tani.app.data.Cart
 import com.tani.app.data.Repository
+import com.tani.app.ui.products.ProductsFragment
 import com.tani.app.ui.share.ShareHelper
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -29,9 +30,10 @@ class StoreDetailsFragment : Fragment(R.layout.fragment_store_details) {
         viewLifecycleOwner.lifecycleScope.launch {
             runCatching {
                 val store = repository.store(storeId)
-                val products = repository.storeProducts(store.seller_id)
+                val products = repository.storeProductPage(store.seller_id, pageSize = STORE_PREVIEW_SIZE)
                 store to products
-            }.onSuccess { (store, products) ->
+            }.onSuccess { (store, productPage) ->
+                val products = productPage.items
                 loading.visibility = View.GONE
                 content.visibility = View.VISIBLE
                 view.findViewById<TextView>(R.id.store_details_name).text = store.name
@@ -57,6 +59,14 @@ class StoreDetailsFragment : Fragment(R.layout.fragment_store_details) {
                 }
                 view.findViewById<Button>(R.id.store_details_share).setOnClickListener {
                     ShareHelper.store(requireContext(), store.id, store.name)
+                }
+                view.findViewById<Button>(R.id.store_details_all_products).apply {
+                    visibility = if (productPage.hasMore) View.VISIBLE else View.GONE
+                    setOnClickListener {
+                        (activity as MainActivity).show(
+                            ProductsFragment.newStoreInstance(store.seller_id, store.name)
+                        )
+                    }
                 }
 
                 val logo = view.findViewById<ImageView>(R.id.store_details_logo)
@@ -102,6 +112,7 @@ class StoreDetailsFragment : Fragment(R.layout.fragment_store_details) {
 
     companion object {
         private const val ARG_STORE_ID = "store_id"
+        private const val STORE_PREVIEW_SIZE = 8
         fun newInstance(storeId: String): StoreDetailsFragment = StoreDetailsFragment().apply {
             arguments = Bundle().apply { putString(ARG_STORE_ID, storeId) }
         }

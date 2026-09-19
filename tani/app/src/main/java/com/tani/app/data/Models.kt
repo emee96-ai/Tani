@@ -354,10 +354,10 @@ data class ProductDetails(
 )
 
 enum class ProductSort(val query: String) {
-    NEWEST("created_at.desc"),
-    PRICE_LOW("price.asc"),
-    PRICE_HIGH("price.desc"),
-    RATING("average_rating.desc,review_count.desc,created_at.desc")
+    NEWEST("created_at.desc,id.asc"),
+    PRICE_LOW("price.asc,id.asc"),
+    PRICE_HIGH("price.desc,id.asc"),
+    RATING("average_rating.desc,review_count.desc,created_at.desc,id.asc")
 }
 
 @Serializable
