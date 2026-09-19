@@ -48,6 +48,28 @@ class MarketplaceCachePolicyTest {
     }
 
     @Test
+    fun expiredEntryCanBeUsedOfflineButWrongVersionCannot() {
+        assertTrue(
+            MarketplaceCachePolicy.isUsable(
+                version = MarketplaceCachePolicy.CURRENT_VERSION,
+                savedAtEpochMs = 1_000L,
+                nowEpochMs = 100_000L,
+                maxAgeMs = 1_000L,
+                allowExpired = true
+            )
+        )
+        assertFalse(
+            MarketplaceCachePolicy.isUsable(
+                version = MarketplaceCachePolicy.CURRENT_VERSION - 1,
+                savedAtEpochMs = 1_000L,
+                nowEpochMs = 100_000L,
+                maxAgeMs = 1_000L,
+                allowExpired = true
+            )
+        )
+    }
+
+    @Test
     fun homeFeedUsesShortRefreshWindow() {
         assertTrue(
             MarketplaceCachePolicy.isFresh(
