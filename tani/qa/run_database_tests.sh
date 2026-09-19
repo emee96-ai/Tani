@@ -7,6 +7,7 @@ PSQL=(psql "$DB_URL" -X -v ON_ERROR_STOP=1)
 
 "${PSQL[@]}" -f "$ROOT/qa/database/bootstrap.sql"
 "${PSQL[@]}" -f "$ROOT/supabase/20260918_product_variants_checkout_v4.sql"
+"${PSQL[@]}" -f "$ROOT/supabase/20260919_fix_variant_rowtype_assignment.sql"
 "${PSQL[@]}" -f "$ROOT/supabase/fix_recursive_order_rls.sql"
 "${PSQL[@]}" -f "$ROOT/qa/database/checkout_regression.sql"
 "${PSQL[@]}" -f "$ROOT/qa/database/release_regression.sql"
