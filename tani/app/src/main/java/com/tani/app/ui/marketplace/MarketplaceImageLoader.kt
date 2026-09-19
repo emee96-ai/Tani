@@ -8,6 +8,7 @@ import androidx.lifecycle.LifecycleCoroutineScope
 import com.tani.app.R
 import com.tani.app.data.Supabase
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -64,7 +65,9 @@ object MarketplaceImageLoader {
     private fun requestBitmap(context: Context, url: String): Deferred<Bitmap?> {
         inFlight[url]?.let { return it }
 
-        val created = loaderScope.async {
+        // LAZY is important: a racing duplicate never starts network/disk work before
+        // putIfAbsent decides which single request owns this URL.
+        val created = loaderScope.async(start = CoroutineStart.LAZY) {
             memoryCache.get(url)?.let { return@async it }
 
             val diskBytes = readDisk(context, url)
@@ -89,6 +92,7 @@ object MarketplaceImageLoader {
         }
 
         created.invokeOnCompletion { inFlight.remove(url, created) }
+        created.start()
         return created
     }
 
