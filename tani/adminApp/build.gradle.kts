@@ -4,6 +4,22 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization")
 }
 
+val taniAdminVersionCode = providers.gradleProperty("TANI_ADMIN_VERSION_CODE")
+    .orNull?.toIntOrNull() ?: 5
+val taniAdminVersionName = providers.gradleProperty("TANI_ADMIN_VERSION_NAME")
+    .orElse("2.1.0")
+    .get()
+val taniReleaseStoreFile = providers.gradleProperty("TANI_RELEASE_STORE_FILE").orNull
+val taniReleaseStorePassword = providers.gradleProperty("TANI_RELEASE_STORE_PASSWORD").orNull
+val taniReleaseKeyAlias = providers.gradleProperty("TANI_RELEASE_KEY_ALIAS").orNull
+val taniReleaseKeyPassword = providers.gradleProperty("TANI_RELEASE_KEY_PASSWORD").orNull
+val hasReleaseSigning = listOf(
+    taniReleaseStoreFile,
+    taniReleaseStorePassword,
+    taniReleaseKeyAlias,
+    taniReleaseKeyPassword
+).all { !it.isNullOrBlank() }
+
 android {
     namespace = "com.tani.admin"
     compileSdk = 35
@@ -12,8 +28,8 @@ android {
         applicationId = "com.tani.admin"
         minSdk = 24
         targetSdk = 35
-        versionCode = 5
-        versionName = "2.1.0"
+        versionCode = taniAdminVersionCode
+        versionName = taniAdminVersionName
     }
 
     signingConfigs {
@@ -22,11 +38,31 @@ android {
             enableV2Signing = true
             enableV3Signing = true
         }
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(requireNotNull(taniReleaseStoreFile))
+                storePassword = requireNotNull(taniReleaseStorePassword)
+                keyAlias = requireNotNull(taniReleaseKeyAlias)
+                keyPassword = requireNotNull(taniReleaseKeyPassword)
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
+            }
+        }
     }
 
     buildTypes {
         getByName("debug") {
             signingConfig = signingConfigs.getByName("debug")
+        }
+        getByName("release") {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            signingConfigs.findByName("release")?.let { signingConfig = it }
         }
     }
 
