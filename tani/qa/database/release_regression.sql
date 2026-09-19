@@ -99,7 +99,7 @@ begin
 
   begin
     perform public.quote_cart_v3(
-      '[{"product_id":"eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2","variant_id":"ffffffff-ffff-4fff-8fff-fffffffffff1","quantity":2}]'::jsonb,
+      '[{"product_id":"eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2","variant_id":"ffffffff-ffff-4fff-8fff-fffffffffff1","quantity":1}]'::jsonb,
       jsonb_build_object(
         'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2',
         'cccccccc-cccc-4ccc-8ccc-ccccccccccc1'
