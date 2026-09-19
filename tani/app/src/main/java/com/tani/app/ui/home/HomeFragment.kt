@@ -19,8 +19,9 @@ import com.tani.app.data.Cart
 import com.tani.app.data.HomeFeed
 import com.tani.app.data.Repository
 import com.tani.app.data.Supabase
-import com.tani.app.data.cache.MarketplaceCache
 import com.tani.app.data.cache.AppContentStore
+import com.tani.app.data.cache.MarketplaceCache
+import com.tani.app.data.network.NetworkStatus
 import com.tani.app.data.repository.ScaleRepository
 import com.tani.app.ui.marketplace.MarketplaceUi
 import com.tani.app.ui.marketplace.ProductDetailsFragment
@@ -139,25 +140,43 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
 
         val cache = MarketplaceCache(requireContext())
-        val cachedFeed = AppContentStore.homeFeed ?: cache.loadHomeFeed(allowExpired = true)
-        if (cachedFeed != null) renderFeed(cachedFeed)
-
         viewLifecycleOwner.lifecycleScope.launch {
-            if (cachedFeed != null) return@launch
-            runCatching { repository.homeFeed() }
-                .onSuccess { feed ->
-                    cache.saveHomeFeed(feed)
-                    renderFeed(feed)
+            val online = NetworkStatus.isOnline(requireContext())
+            val cachedFeed = AppContentStore.homeFeed ?: cache.loadHomeFeed(allowExpired = true)
+            if (cachedFeed != null) {
+                renderFeed(cachedFeed)
+                if (!online) {
+                    loading.visibility = View.VISIBLE
+                    loading.text = "بدون اتصال — نعرض آخر بيانات محفوظة"
                 }
-                .onFailure {
-                    loading.text = "تعذر تحميل السوق الآن\n${it.message ?: "حاولي مرة أخرى"}"
+            }
+
+            if (!online) {
+                if (cachedFeed == null) {
+                    loading.visibility = View.VISIBLE
+                    loading.text = "لا يوجد اتصال بالإنترنت ولا توجد بيانات محفوظة بعد"
                 }
+                return@launch
+            }
+
+            if (cachedFeed == null) {
+                runCatching { repository.homeFeed() }
+                    .onSuccess { feed ->
+                        cache.saveHomeFeed(feed)
+                        renderFeed(feed)
+                    }
+                    .onFailure {
+                        loading.visibility = View.VISIBLE
+                        loading.text = "تعذر تحديث السوق الآن\n${it.message ?: "حاولي مرة أخرى"}"
+                    }
+            }
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
+            val online = NetworkStatus.isOnline(requireContext())
             val userId = Supabase.userId?.takeIf { Supabase.hasStoredSession() }
             if (userId == null) {
-                recommendedTitle.text = "منتجات مقترحة"
+                recommendedTitle.text = if (online) "منتجات مقترحة" else "منتجات مقترحة • محفوظة"
                 val fallback = AppContentStore.products.ifEmpty {
                     cache.load(AppContentStore.CATALOG_PREVIEW_KEY, allowExpired = true)
                 }.take(8)
@@ -169,7 +188,15 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 cache.loadRecommendations(userId, allowExpired = true)
             }
             if (preloaded.isNotEmpty()) {
+                if (!online) recommendedTitle.text = "مقترحة لك • محفوظة"
                 renderProducts(recommendedBox, preloaded)
+                return@launch
+            }
+
+            if (!online) {
+                recommendedTitle.text = "مقترحة لك • بدون اتصال"
+                recommendedBox.removeAllViews()
+                recommendedBox.addView(MarketplaceUi.empty(requireContext(), "لا توجد اقتراحات محفوظة لهذا الحساب بعد"))
                 return@launch
             }
 
@@ -188,8 +215,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 }
                 .onFailure {
                     if (Supabase.userId != userId || !Supabase.hasStoredSession()) return@onFailure
-                    val cached = cache.loadRecommendations(userId)
-                    recommendedTitle.text = if (cached.isNotEmpty()) "مقترحة لك • محفوظة بدون اتصال" else "مقترحة لك"
+                    val cached = cache.loadRecommendations(userId, allowExpired = true)
+                    recommendedTitle.text = if (cached.isNotEmpty()) "مقترحة لك • محفوظة" else "مقترحة لك"
                     if (cached.isNotEmpty()) renderProducts(recommendedBox, cached)
                 }
         }

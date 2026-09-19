@@ -5,81 +5,86 @@ import com.tani.app.data.HomeFeed
 import com.tani.app.data.ProductCard
 import com.tani.app.data.StoreCard
 import com.tani.app.data.Supabase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 
 @Serializable
-private data class MarketplaceCacheEnvelope(
+private data class LegacyMarketplaceCacheEnvelope(
     val version: Int,
     val savedAtEpochMs: Long,
     val products: List<ProductCard>
 )
 
 @Serializable
-private data class HomeFeedCacheEnvelope(
+private data class LegacyHomeFeedCacheEnvelope(
     val version: Int,
     val savedAtEpochMs: Long,
     val feed: HomeFeed
 )
 
 @Serializable
-private data class StoresCacheEnvelope(
+private data class LegacyStoresCacheEnvelope(
     val version: Int,
     val savedAtEpochMs: Long,
     val stores: List<StoreCard>
 )
 
+/**
+ * Persistent marketplace cache backed by Room.
+ *
+ * The old SharedPreferences JSON cache is read only as a one-time migration source,
+ * then removed key-by-key after a successful Room write.
+ */
 class MarketplaceCache(context: Context) {
-    private val prefs = context.applicationContext.getSharedPreferences("tani_market_cache", Context.MODE_PRIVATE)
+    private val appContext = context.applicationContext
+    private val dao = MarketplaceCacheDatabase.get(appContext).cacheDao()
+    private val legacyPrefs = appContext.getSharedPreferences(LEGACY_PREFS, Context.MODE_PRIVATE)
 
-    fun save(key: String, products: List<ProductCard>, nowEpochMs: Long = System.currentTimeMillis()) {
-        val envelope = MarketplaceCacheEnvelope(
-            version = MarketplaceCachePolicy.CURRENT_VERSION,
-            savedAtEpochMs = nowEpochMs,
-            products = products
+    suspend fun save(
+        key: String,
+        products: List<ProductCard>,
+        nowEpochMs: Long = System.currentTimeMillis()
+    ) = withContext(Dispatchers.IO) {
+        dao.upsert(
+            MarketplaceCacheEntry(
+                key = key,
+                version = MarketplaceCachePolicy.CURRENT_VERSION,
+                savedAtEpochMs = nowEpochMs,
+                payload = Supabase.json.encodeToString(products)
+            )
         )
-        prefs.edit().putString(key, Supabase.json.encodeToString(envelope)).apply()
+        legacyPrefs.edit().remove(key).apply()
     }
 
-    fun load(
+    suspend fun load(
         key: String,
         maxAgeMs: Long = MarketplaceCachePolicy.DEFAULT_TTL_MS,
         nowEpochMs: Long = System.currentTimeMillis(),
         allowExpired: Boolean = false
-    ): List<ProductCard> {
-        val raw = prefs.getString(key, null) ?: return emptyList()
-        val envelope = runCatching {
-            Supabase.json.decodeFromString<MarketplaceCacheEnvelope>(raw)
-        }.getOrNull()
+    ): List<ProductCard> = withContext(Dispatchers.IO) {
+        val entry = dao.get(key) ?: migrateLegacyProducts(key) ?: return@withContext emptyList()
+        if (!isUsable(entry, nowEpochMs, maxAgeMs, allowExpired)) return@withContext emptyList()
 
-        if (envelope == null) {
-            prefs.edit().remove(key).apply()
-            return emptyList()
-        }
-        if (!allowExpired && !MarketplaceCachePolicy.isFresh(
-                version = envelope.version,
-                savedAtEpochMs = envelope.savedAtEpochMs,
-                nowEpochMs = nowEpochMs,
-                maxAgeMs = maxAgeMs
-            )
-        ) {
-            return emptyList()
-        }
-        return envelope.products
+        decodeOrDelete<List<ProductCard>>(entry)
+            ?: emptyList()
     }
 
-    fun saveRecommendations(
+    suspend fun saveRecommendations(
         userId: String,
         products: List<ProductCard>,
         nowEpochMs: Long = System.currentTimeMillis()
     ) {
         save(RecommendationCacheKey.forUser(userId), products, nowEpochMs)
-        // Remove the old global key as soon as a safe user-scoped value is written.
-        prefs.edit().remove(RecommendationCacheKey.LEGACY_KEY).apply()
+        withContext(Dispatchers.IO) {
+            dao.delete(RecommendationCacheKey.LEGACY_KEY)
+            legacyPrefs.edit().remove(RecommendationCacheKey.LEGACY_KEY).apply()
+        }
     }
 
-    fun loadRecommendations(
+    suspend fun loadRecommendations(
         userId: String,
         maxAgeMs: Long = MarketplaceCachePolicy.DEFAULT_TTL_MS,
         nowEpochMs: Long = System.currentTimeMillis(),
@@ -91,88 +96,170 @@ class MarketplaceCache(context: Context) {
         allowExpired = allowExpired
     )
 
-    /**
-     * Clears personalized recommendation cache. Supplying a user id removes only
-     * that account plus the unsafe legacy key; null removes every recommendation entry.
-     */
-    fun clearRecommendations(userId: String? = null) {
-        val keys = if (userId.isNullOrBlank()) {
-            prefs.all.keys.filter(RecommendationCacheKey::belongsToRecommendations)
+    suspend fun clearRecommendations(userId: String? = null) = withContext(Dispatchers.IO) {
+        if (userId.isNullOrBlank()) {
+            dao.deleteByPrefix(RecommendationCacheKey.USER_PREFIX)
+        } else {
+            dao.delete(RecommendationCacheKey.forUser(userId))
+        }
+        dao.delete(RecommendationCacheKey.LEGACY_KEY)
+
+        val legacyKeys = if (userId.isNullOrBlank()) {
+            legacyPrefs.all.keys.filter(RecommendationCacheKey::belongsToRecommendations)
         } else {
             listOf(RecommendationCacheKey.forUser(userId), RecommendationCacheKey.LEGACY_KEY)
         }
-        if (keys.isEmpty()) return
-        val editor = prefs.edit()
-        keys.forEach(editor::remove)
-        editor.apply()
+        if (legacyKeys.isNotEmpty()) {
+            val editor = legacyPrefs.edit()
+            legacyKeys.forEach(editor::remove)
+            editor.apply()
+        }
     }
 
-    fun saveHomeFeed(feed: HomeFeed, nowEpochMs: Long = System.currentTimeMillis()) {
-        val envelope = HomeFeedCacheEnvelope(
-            version = MarketplaceCachePolicy.CURRENT_VERSION,
-            savedAtEpochMs = nowEpochMs,
-            feed = feed
+    suspend fun saveHomeFeed(
+        feed: HomeFeed,
+        nowEpochMs: Long = System.currentTimeMillis()
+    ) = withContext(Dispatchers.IO) {
+        dao.upsert(
+            MarketplaceCacheEntry(
+                key = HOME_FEED_KEY,
+                version = MarketplaceCachePolicy.CURRENT_VERSION,
+                savedAtEpochMs = nowEpochMs,
+                payload = Supabase.json.encodeToString(feed)
+            )
         )
-        prefs.edit().putString(HOME_FEED_KEY, Supabase.json.encodeToString(envelope)).apply()
+        legacyPrefs.edit().remove(HOME_FEED_KEY).apply()
     }
 
-    fun loadHomeFeed(
+    suspend fun loadHomeFeed(
         nowEpochMs: Long = System.currentTimeMillis(),
         allowExpired: Boolean = false
-    ): HomeFeed? {
-        val raw = prefs.getString(HOME_FEED_KEY, null) ?: return null
-        val envelope = runCatching {
-            Supabase.json.decodeFromString<HomeFeedCacheEnvelope>(raw)
-        }.getOrNull()
-        if (envelope == null) {
-            prefs.edit().remove(HOME_FEED_KEY).apply()
-            return null
-        }
-        if (!allowExpired && !MarketplaceCachePolicy.isFresh(
-                version = envelope.version,
-                savedAtEpochMs = envelope.savedAtEpochMs,
-                nowEpochMs = nowEpochMs,
-                maxAgeMs = MarketplaceCachePolicy.HOME_TTL_MS
+    ): HomeFeed? = withContext(Dispatchers.IO) {
+        val entry = dao.get(HOME_FEED_KEY) ?: migrateLegacyHomeFeed() ?: return@withContext null
+        if (!isUsable(
+                entry,
+                nowEpochMs,
+                MarketplaceCachePolicy.HOME_TTL_MS,
+                allowExpired
             )
-        ) {
-            return null
-        }
-        return envelope.feed
+        ) return@withContext null
+
+        decodeOrDelete<HomeFeed>(entry)
     }
 
-    fun saveStores(stores: List<StoreCard>, nowEpochMs: Long = System.currentTimeMillis()) {
-        val envelope = StoresCacheEnvelope(
-            version = MarketplaceCachePolicy.CURRENT_VERSION,
-            savedAtEpochMs = nowEpochMs,
-            stores = stores
+    suspend fun saveStores(
+        stores: List<StoreCard>,
+        nowEpochMs: Long = System.currentTimeMillis()
+    ) = withContext(Dispatchers.IO) {
+        dao.upsert(
+            MarketplaceCacheEntry(
+                key = STORES_KEY,
+                version = MarketplaceCachePolicy.CURRENT_VERSION,
+                savedAtEpochMs = nowEpochMs,
+                payload = Supabase.json.encodeToString(stores)
+            )
         )
-        prefs.edit().putString(STORES_KEY, Supabase.json.encodeToString(envelope)).apply()
+        legacyPrefs.edit().remove(STORES_KEY).apply()
     }
 
-    fun loadStores(
+    suspend fun loadStores(
         maxAgeMs: Long = MarketplaceCachePolicy.DEFAULT_TTL_MS,
         nowEpochMs: Long = System.currentTimeMillis(),
         allowExpired: Boolean = false
-    ): List<StoreCard> {
-        val raw = prefs.getString(STORES_KEY, null) ?: return emptyList()
+    ): List<StoreCard> = withContext(Dispatchers.IO) {
+        val entry = dao.get(STORES_KEY) ?: migrateLegacyStores() ?: return@withContext emptyList()
+        if (!isUsable(entry, nowEpochMs, maxAgeMs, allowExpired)) return@withContext emptyList()
+
+        decodeOrDelete<List<StoreCard>>(entry)
+            ?: emptyList()
+    }
+
+    private fun isUsable(
+        entry: MarketplaceCacheEntry,
+        nowEpochMs: Long,
+        maxAgeMs: Long,
+        allowExpired: Boolean
+    ): Boolean = MarketplaceCachePolicy.isUsable(
+        version = entry.version,
+        savedAtEpochMs = entry.savedAtEpochMs,
+        nowEpochMs = nowEpochMs,
+        maxAgeMs = maxAgeMs,
+        allowExpired = allowExpired
+    )
+
+    private suspend inline fun <reified T> decodeOrDelete(entry: MarketplaceCacheEntry): T? {
+        val decoded = runCatching {
+            Supabase.json.decodeFromString<T>(entry.payload)
+        }.getOrNull()
+        if (decoded == null) dao.delete(entry.key)
+        return decoded
+    }
+
+    private suspend fun migrateLegacyProducts(key: String): MarketplaceCacheEntry? {
+        val raw = legacyPrefs.getString(key, null) ?: return null
         val envelope = runCatching {
-            Supabase.json.decodeFromString<StoresCacheEnvelope>(raw)
+            Supabase.json.decodeFromString<LegacyMarketplaceCacheEnvelope>(raw)
         }.getOrNull()
         if (envelope == null) {
-            prefs.edit().remove(STORES_KEY).apply()
-            return emptyList()
+            legacyPrefs.edit().remove(key).apply()
+            return null
         }
-        if (!allowExpired && !MarketplaceCachePolicy.isFresh(
-                version = envelope.version,
-                savedAtEpochMs = envelope.savedAtEpochMs,
-                nowEpochMs = nowEpochMs,
-                maxAgeMs = maxAgeMs
-            )
-        ) return emptyList()
-        return envelope.stores
+
+        val entry = MarketplaceCacheEntry(
+            key = key,
+            version = MarketplaceCachePolicy.CURRENT_VERSION,
+            savedAtEpochMs = envelope.savedAtEpochMs,
+            payload = Supabase.json.encodeToString(envelope.products)
+        )
+        dao.upsert(entry)
+        legacyPrefs.edit().remove(key).apply()
+        return entry
+    }
+
+    private suspend fun migrateLegacyHomeFeed(): MarketplaceCacheEntry? {
+        val raw = legacyPrefs.getString(HOME_FEED_KEY, null) ?: return null
+        val envelope = runCatching {
+            Supabase.json.decodeFromString<LegacyHomeFeedCacheEnvelope>(raw)
+        }.getOrNull()
+        if (envelope == null) {
+            legacyPrefs.edit().remove(HOME_FEED_KEY).apply()
+            return null
+        }
+
+        val entry = MarketplaceCacheEntry(
+            key = HOME_FEED_KEY,
+            version = MarketplaceCachePolicy.CURRENT_VERSION,
+            savedAtEpochMs = envelope.savedAtEpochMs,
+            payload = Supabase.json.encodeToString(envelope.feed)
+        )
+        dao.upsert(entry)
+        legacyPrefs.edit().remove(HOME_FEED_KEY).apply()
+        return entry
+    }
+
+    private suspend fun migrateLegacyStores(): MarketplaceCacheEntry? {
+        val raw = legacyPrefs.getString(STORES_KEY, null) ?: return null
+        val envelope = runCatching {
+            Supabase.json.decodeFromString<LegacyStoresCacheEnvelope>(raw)
+        }.getOrNull()
+        if (envelope == null) {
+            legacyPrefs.edit().remove(STORES_KEY).apply()
+            return null
+        }
+
+        val entry = MarketplaceCacheEntry(
+            key = STORES_KEY,
+            version = MarketplaceCachePolicy.CURRENT_VERSION,
+            savedAtEpochMs = envelope.savedAtEpochMs,
+            payload = Supabase.json.encodeToString(envelope.stores)
+        )
+        dao.upsert(entry)
+        legacyPrefs.edit().remove(STORES_KEY).apply()
+        return entry
     }
 
     private companion object {
+        const val LEGACY_PREFS = "tani_market_cache"
         const val HOME_FEED_KEY = "home_feed"
         const val STORES_KEY = "all_stores"
     }

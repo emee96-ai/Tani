@@ -25,6 +25,7 @@ import com.tani.app.data.Repository
 import com.tani.app.data.cache.AppContentStore
 import com.tani.app.data.cache.MarketplaceCache
 import com.tani.app.data.catalog.CatalogPagination
+import com.tani.app.data.network.NetworkStatus
 import com.tani.app.ui.marketplace.ProductDetailsFragment
 import com.tani.app.ui.marketplace.ProductListAdapter
 import kotlinx.coroutines.CancellationException
@@ -46,6 +47,7 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
         val status = view.findViewById<TextView>(R.id.products_loading)
         val loadMore = view.findViewById<Button>(R.id.products_load_more)
         val list = view.findViewById<RecyclerView>(R.id.products_list)
+        val cache = MarketplaceCache(requireContext())
 
         val categoryId = arguments?.getString(ARG_CATEGORY_ID)
         val categoryName = arguments?.getString(ARG_CATEGORY_NAME)
@@ -130,6 +132,41 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
             renderPageState()
 
             requestJob = viewLifecycleOwner.lifecycleScope.launch {
+                if (!NetworkStatus.isOnline(requireContext())) {
+                    isLoading = false
+                    if (reset && sellerId.isNullOrBlank()) {
+                        if (!AppContentStore.productsLoaded) {
+                            val disk = cache.load(AppContentStore.CATALOG_PREVIEW_KEY, allowExpired = true)
+                            if (disk.isNotEmpty()) AppContentStore.updateProducts(disk)
+                        }
+                        val cached = AppContentStore.filteredProducts(
+                            search = searchValue,
+                            categoryId = categoryId,
+                            minPrice = minValue,
+                            maxPrice = maxValue,
+                            inStockOnly = stockOnly,
+                            sort = sortValue
+                        ).take(PAGE_SIZE)
+                        loaded.clear()
+                        loaded.addAll(cached)
+                        hasMore = false
+                        adapter.submitList(loaded.toList())
+                        renderPageState(
+                            if (cached.isNotEmpty()) {
+                                "بدون اتصال — نعرض ${cached.size} منتج من النسخة المحفوظة"
+                            } else {
+                                "لا يوجد اتصال ولا توجد نتائج محفوظة لهذه الفلاتر"
+                            }
+                        )
+                    } else {
+                        renderPageState(
+                            if (loaded.isEmpty()) "لا يوجد اتصال ولا توجد بيانات محفوظة لهذه الصفحة"
+                            else "لا يوجد اتصال — المنتجات المعروضة محفوظة على الجهاز"
+                        )
+                    }
+                    return@launch
+                }
+
                 try {
                     val page = repository.marketplaceProductPage(
                         search = searchValue,
@@ -155,7 +192,7 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
                         !stockOnly && sortValue == ProductSort.NEWEST
                     ) {
                         AppContentStore.updateProducts(page.items)
-                        MarketplaceCache(requireContext()).save(AppContentStore.CATALOG_PREVIEW_KEY, page.items)
+                        cache.save(AppContentStore.CATALOG_PREVIEW_KEY, page.items)
                     }
                     adapter.submitList(loaded.toList())
                     isLoading = false
@@ -165,7 +202,11 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
                 } catch (error: Throwable) {
                     if (requestGeneration != generation) return@launch
                     isLoading = false
-                    if (reset && sellerId.isNullOrBlank() && AppContentStore.productsLoaded) {
+                    if (reset && sellerId.isNullOrBlank()) {
+                        if (!AppContentStore.productsLoaded) {
+                            val disk = cache.load(AppContentStore.CATALOG_PREVIEW_KEY, allowExpired = true)
+                            if (disk.isNotEmpty()) AppContentStore.updateProducts(disk)
+                        }
                         val cached = AppContentStore.filteredProducts(
                             search = searchValue,
                             categoryId = categoryId,
@@ -179,7 +220,7 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
                             loaded.addAll(cached)
                             hasMore = false
                             adapter.submitList(loaded.toList())
-                            renderPageState("تم عرض ${loaded.size} منتج من النسخة المحفوظة")
+                            renderPageState("تعذر التحديث — نعرض ${loaded.size} منتج من النسخة المحفوظة")
                             return@launch
                         }
                     }

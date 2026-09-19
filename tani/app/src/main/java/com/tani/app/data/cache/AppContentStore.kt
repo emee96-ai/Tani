@@ -16,7 +16,9 @@ import com.tani.app.data.growth.NotificationItem
 import com.tani.app.data.growth.NotificationPreferences
 import com.tani.app.data.repository.GrowthRepository
 import com.tani.app.data.repository.ScaleRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
 
 /**
@@ -72,7 +74,7 @@ object AppContentStore {
     private var privateDataUserId: String? = null
     @Volatile private var recommendationsUserId: String? = null
 
-    fun hydrateFromDisk(context: Context): Boolean {
+    fun hydrateFromDisk(context: Context): Boolean = runBlocking(Dispatchers.IO) {
         val cache = MarketplaceCache(context)
         homeFeed = cache.loadHomeFeed(allowExpired = true)
         products = cache.load(CATALOG_PREVIEW_KEY, allowExpired = true)
@@ -86,7 +88,7 @@ object AppContentStore {
 
         productsLoaded = products.isNotEmpty()
         storesLoaded = stores.isNotEmpty()
-        return hasCoreContent()
+        hasCoreContent()
     }
 
     fun hasCoreContent(): Boolean = homeFeed != null && productsLoaded && storesLoaded
