@@ -29,6 +29,7 @@ class MainActivitySmokeTest {
 
     @Test
     fun guestLaunchShowsPrimaryNavigation() {
+        waitForDisplayed(R.id.home_search)
         waitForDisplayed(R.id.bottom_nav)
         onView(withId(R.id.home)).check(matches(isDisplayed()))
         onView(withId(R.id.categories)).check(matches(isDisplayed()))
@@ -57,6 +58,7 @@ class MainActivitySmokeTest {
         onView(withText("مرحباً بعودتك")).check(matches(isDisplayed()))
         onView(withId(R.id.browse_as_guest)).perform(scrollTo()).check(matches(isDisplayed())).perform(click())
 
+        waitForDisplayed(R.id.home_search)
         waitForDisplayed(R.id.bottom_nav)
         onView(withId(R.id.home)).check(matches(isDisplayed()))
     }
@@ -115,7 +117,9 @@ class MainActivitySmokeTest {
             Supabase.clearSession()
             AppContentStore.clearPrivateData()
             activity.showApp()
+            activity.supportFragmentManager.executePendingTransactions()
         }
+        waitForDisplayed(R.id.home_search)
         waitForDisplayed(R.id.bottom_nav)
     }
 
