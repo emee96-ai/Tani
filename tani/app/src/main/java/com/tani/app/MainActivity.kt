@@ -144,9 +144,13 @@ class MainActivity : AppCompatActivity() {
             val warmUp = launch { AppContentStore.warmUp(this@MainActivity) }
             val waitMs = if (AppContentStore.hasCoreContent()) 2_500L else 12_000L
             withTimeoutOrNull(waitMs) { warmUp.join() }
+            if (!canCommitNavigation()) return@launch
             showApp()
         }
     }
+
+    private fun canCommitNavigation(): Boolean =
+        !isFinishing && !isDestroyed && !supportFragmentManager.isStateSaved
 
     private fun hideLaunchSplash() {
         val launchSplash = findViewById<View>(R.id.launch_splash)
@@ -336,12 +340,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun showApp() {
+        if (!canCommitNavigation()) return
         showPrimary(HomeFragment())
         refreshDrawerAccount()
         hideLaunchSplash()
     }
 
     fun show(fragment: Fragment, addToBackStack: Boolean = true) {
+        if (!canCommitNavigation()) return
         val screen = fragment.javaClass.simpleName
             .removeSuffix("Fragment")
             .replace(Regex("([a-z])([A-Z])"), "$1_$2")
@@ -366,6 +372,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showPrimary(fragment: Fragment) {
+        if (!canCommitNavigation()) return
         supportFragmentManager.popBackStackImmediate(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
         setDrawerEnabled(true)
         toolbar.visibility = View.VISIBLE
