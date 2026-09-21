@@ -6,6 +6,7 @@ DB_URL="${TANI_DATABASE_URL:-postgresql://postgres:postgres@127.0.0.1:5432/postg
 PSQL=(psql "$DB_URL" -X -v ON_ERROR_STOP=1)
 
 "${PSQL[@]}" -f "$ROOT/qa/database/bootstrap.sql"
+"${PSQL[@]}" -f "$ROOT/supabase/20260921091014_restrict_current_user_role_rpc.sql"
 "${PSQL[@]}" -f "$ROOT/supabase/20260918_product_variants_checkout_v4.sql"
 "${PSQL[@]}" -f "$ROOT/supabase/20260919_fix_variant_rowtype_assignment.sql"
 "${PSQL[@]}" -f "$ROOT/supabase/fix_recursive_order_rls.sql"
