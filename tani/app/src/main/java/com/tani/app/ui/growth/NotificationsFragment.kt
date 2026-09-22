@@ -13,14 +13,23 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.tani.app.MainActivity
 import com.tani.app.R
+import com.tani.app.data.cache.AppContentStore
 import com.tani.app.data.growth.NotificationItem
 import com.tani.app.data.growth.NotificationPreferences
 import com.tani.app.data.notifications.NotificationGatewayProvider
-import com.tani.app.data.cache.AppContentStore
 import com.tani.app.ui.commerce.CommerceUi
+import com.tani.app.ui.commerce.OrderDetailsFragment
+import com.tani.app.ui.common.NotificationBadgeController
 import com.tani.app.ui.common.ScreenUi
+import com.tani.app.ui.orders.OrdersFragment
+import com.tani.app.ui.seller.MerchantOrdersFragment
+import com.tani.app.ui.seller.MerchantProductsFragment
+import com.tani.app.ui.seller.SellerFragment
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonPrimitive
 
 class NotificationsFragment : Fragment() {
     private val gateway get() = NotificationGatewayProvider.gateway
@@ -47,6 +56,7 @@ class NotificationsFragment : Fragment() {
         if (!forceRefresh && AppContentStore.notificationsLoaded) {
             preferences = AppContentStore.notificationPreferences
             items = AppContentStore.notifications
+            syncBadge()
             render()
             return
         }
@@ -61,6 +71,7 @@ class NotificationsFragment : Fragment() {
                     preferences = prefs
                     items = loadedItems
                     AppContentStore.updateNotifications(loadedItems, prefs)
+                    syncBadge()
                     render()
                 }
                 .onFailure {
@@ -154,7 +165,12 @@ class NotificationsFragment : Fragment() {
 
     private fun notificationCard(notification: NotificationItem): View {
         val context = requireContext()
-        val card = ScreenUi.card(context)
+        val card = ScreenUi.card(context).apply {
+            isClickable = true
+            isFocusable = true
+            contentDescription = "${notification.title}. ${notification.body}"
+            setOnClickListener { openNotification(notification) }
+        }
         val isUnread = notification.read_at == null
 
         val top = LinearLayout(context).apply {
@@ -185,6 +201,9 @@ class NotificationsFragment : Fragment() {
         val date = CommerceUi.formatDate(notification.created_at)
         if (date.isNotBlank()) card.addView(ScreenUi.muted(context, date))
 
+        if (hasDestination(notification)) {
+            card.addView(ScreenUi.muted(context, "اضغطي على الإشعار لفتح التفاصيل"))
+        }
         if (isUnread) {
             card.addView(ScreenUi.button(context, "تحديد كمقروء") { markRead(notification.id) })
         }
@@ -252,11 +271,64 @@ class NotificationsFragment : Fragment() {
         }
     }
 
+    private fun openNotification(notification: NotificationItem) {
+        val main = activity as? MainActivity ?: return
+        viewLifecycleOwner.lifecycleScope.launch {
+            if (notification.read_at == null) {
+                runCatching { gateway.markRead(notification.id) }
+                    .onSuccess {
+                        items = items.map { item ->
+                            if (item.id == notification.id) item.copy(read_at = "read") else item
+                        }
+                        AppContentStore.updateNotifications(items, preferences)
+                        syncBadge()
+                    }
+                    .onFailure {
+                        Toast.makeText(requireContext(), it.message ?: "تعذر تحديث الإشعار", Toast.LENGTH_LONG).show()
+                    }
+            }
+            openDestination(main, notification)
+        }
+    }
+
+    private fun openDestination(main: MainActivity, notification: NotificationItem) {
+        when (notification.type.lowercase()) {
+            "new_order", "merchant_order_update" -> main.show(MerchantOrdersFragment())
+            "stock_alert", "stock", "inventory" -> main.show(MerchantProductsFragment())
+            "merchant_verification", "merchant", "seller" -> main.show(SellerFragment())
+            "order", "order_update", "order_status" -> {
+                val groupId = notification.data["order_group_id"]?.jsonPrimitive?.contentOrNull
+                if (groupId.isNullOrBlank()) main.show(OrdersFragment())
+                else main.show(OrderDetailsFragment.newInstance(groupId))
+            }
+        }
+    }
+
+    private fun hasDestination(notification: NotificationItem): Boolean =
+        notification.type.lowercase() in setOf(
+            "new_order",
+            "merchant_order_update",
+            "stock_alert",
+            "stock",
+            "inventory",
+            "merchant_verification",
+            "merchant",
+            "seller",
+            "order",
+            "order_update",
+            "order_status"
+        )
+
     private fun markRead(id: String) {
         val context = requireContext()
         viewLifecycleOwner.lifecycleScope.launch {
             runCatching { gateway.markRead(id) }
-                .onSuccess { load(forceRefresh = true) }
+                .onSuccess {
+                    items = items.map { item -> if (item.id == id) item.copy(read_at = "read") else item }
+                    AppContentStore.updateNotifications(items, preferences)
+                    syncBadge()
+                    render()
+                }
                 .onFailure {
                     Toast.makeText(context, it.message ?: "تعذر تحديث الإشعار", Toast.LENGTH_LONG).show()
                 }
@@ -268,13 +340,20 @@ class NotificationsFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             runCatching { gateway.markAllRead() }
                 .onSuccess {
+                    items = items.map { it.copy(read_at = it.read_at ?: "read") }
+                    AppContentStore.updateNotifications(items, preferences)
+                    syncBadge()
                     Toast.makeText(context, "تم تحديد كل الإشعارات كمقروءة", Toast.LENGTH_SHORT).show()
-                    load(forceRefresh = true)
+                    render()
                 }
                 .onFailure {
                     Toast.makeText(context, it.message ?: "تعذر تحديث الإشعارات", Toast.LENGTH_LONG).show()
                 }
         }
+    }
+
+    private fun syncBadge() {
+        (activity as? MainActivity)?.let { NotificationBadgeController.updateFromItems(it, items) }
     }
 
     private fun filterButton(label: String, selected: Boolean, onClick: () -> Unit): Button =
@@ -287,10 +366,13 @@ class NotificationsFragment : Fragment() {
         }
 
     private fun typeLabel(type: String): String = when (type.lowercase()) {
+        "new_order" -> "طلب جديد للمتجر"
+        "merchant_order_update" -> "تحديث طلب للمتجر"
         "order", "order_update", "order_status" -> "تحديث طلب"
         "promotion", "promo", "campaign" -> "عرض وحملة"
         "message", "support" -> "رسالة ودعم"
-        "stock", "inventory" -> "تحديث مخزون"
+        "stock_alert", "stock", "inventory" -> "تنبيه مخزون"
+        "merchant_verification" -> "تحديث حساب التاجر"
         "merchant", "seller" -> "تحديث متجر"
         else -> "إشعار من تاني"
     }
