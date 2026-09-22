@@ -238,29 +238,14 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             return
         }
         val cards = products.map { product ->
-            MarketplaceUi.productCard(
+            HomeProductUi.productCard(
                 requireContext(),
                 viewLifecycleOwner.lifecycleScope,
-                product,
-                onOpen = {
-                    (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id))
-                },
-                onAdd = {
-                    if (product.has_variants) {
-                        Toast.makeText(requireContext(), "اختاري المقاس أو اللون أولاً", Toast.LENGTH_SHORT).show()
-                        (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id))
-                    } else if (Cart.add(product.toProduct())) {
-                        (activity as? MainActivity)?.refreshCartBadge()
-                        viewLifecycleOwner.lifecycleScope.launch {
-                            Analytics.track("add_to_cart", screen = "home", entityType = "product", entityId = product.id)
-                        }
-                        Toast.makeText(requireContext(), "تمت إضافة ${product.name} للسلة", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(requireContext(), "تعذر إضافة كمية إضافية", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            )
+                product
+            ) {
+                (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id))
+            }
         }
-        MarketplaceUi.addTwoColumnGrid(container, cards, requireContext())
+        HomeProductUi.addMasonryGrid(container, cards, requireContext())
     }
 }
