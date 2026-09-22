@@ -1,5 +1,6 @@
 package com.tani.app.ui.orders
 
+import android.content.res.ColorStateList
 import android.graphics.Typeface
 import android.os.Bundle
 import android.view.Gravity
@@ -118,7 +119,7 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
         val context = requireContext()
         val card = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(16), dp(16), dp(16), dp(16))
+            setPadding(dp(18), dp(18), dp(18), dp(18))
             background = context.getDrawable(R.drawable.bg_card)
             isClickable = true
             isFocusable = true
@@ -132,24 +133,24 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
         }
         header.addView(TextView(context).apply {
             text = "طلب #${group.id.take(8).uppercase()}"
-            textSize = 17f
+            textSize = 18f
             setTypeface(typeface, Typeface.BOLD)
             setTextColor(context.getColor(R.color.text_dark))
         }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         header.addView(TextView(context).apply {
             text = CommerceUi.statusLabel(group.status)
-            textSize = 12.5f
+            textSize = 13.5f
             setTypeface(typeface, Typeface.BOLD)
             setTextColor(context.getColor(statusColor(group.status)))
             setBackgroundResource(R.drawable.bg_chip)
-            setPadding(dp(10), dp(6), dp(10), dp(6))
+            setPadding(dp(11), dp(7), dp(11), dp(7))
         })
         card.addView(header)
 
         card.addView(TextView(context).apply {
             text = CommerceUi.formatDate(group.created_at)
-            textSize = 13f
-            setPadding(0, dp(7), 0, 0)
+            textSize = 14.5f
+            setPadding(0, dp(8), 0, 0)
             setTextColor(context.getColor(R.color.text_muted))
         })
 
@@ -162,12 +163,12 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
         }
         totalRow.addView(TextView(context).apply {
             text = "الإجمالي"
-            textSize = 14f
+            textSize = 15.5f
             setTextColor(context.getColor(R.color.text_muted))
         }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         totalRow.addView(TextView(context).apply {
             text = MarketplaceUi.formatPrice(group.grand_total)
-            textSize = 17f
+            textSize = 20f
             setTypeface(typeface, Typeface.BOLD)
             setTextColor(context.getColor(R.color.text_dark))
         })
@@ -177,8 +178,8 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
         val paymentState = paymentStatusLabel(group.payment_status)
         card.addView(TextView(context).apply {
             text = "$payment • $paymentState"
-            textSize = 13f
-            setPadding(0, dp(7), 0, 0)
+            textSize = 15f
+            setPadding(0, dp(9), 0, 0)
             setTextColor(context.getColor(R.color.text_muted))
         })
 
@@ -189,19 +190,23 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
                     if (group.discount_total > 0) add("الخصم ${MarketplaceUi.formatPrice(group.discount_total)}")
                 }
                 text = parts.joinToString(" • ")
-                textSize = 12.5f
-                setPadding(0, dp(4), 0, 0)
+                textSize = 14f
+                setPadding(0, dp(6), 0, 0)
                 setTextColor(context.getColor(R.color.text_muted))
             })
         }
 
         card.addView(Button(context).apply {
             text = if (isActive(group)) "متابعة الطلب" else "عرض التفاصيل"
+            textSize = 16f
+            setTypeface(typeface, Typeface.BOLD)
+            setTextColor(context.getColor(R.color.white))
+            backgroundTintList = ColorStateList.valueOf(context.getColor(R.color.tani_primary))
             setOnClickListener { openDetails(group.id) }
         }, LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
-            dp(50)
-        ).apply { topMargin = dp(14) })
+            dp(54)
+        ).apply { topMargin = dp(16) })
 
         return card
     }
@@ -212,15 +217,15 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
             LinearLayout.LayoutParams.MATCH_PARENT,
             dp(1)
         ).apply {
-            topMargin = dp(12)
-            bottomMargin = dp(12)
+            topMargin = dp(14)
+            bottomMargin = dp(14)
         }
     }
 
     private fun emptyState() = LinearLayout(requireContext()).apply {
         orientation = LinearLayout.VERTICAL
         gravity = Gravity.CENTER
-        setPadding(dp(18), dp(34), dp(18), dp(34))
+        setPadding(dp(18), dp(38), dp(18), dp(38))
         background = requireContext().getDrawable(R.drawable.bg_card)
         addView(TextView(requireContext()).apply {
             text = when (filter) {
@@ -229,16 +234,16 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
                 Filter.COMPLETED -> "ما عندك طلبات مكتملة لسه"
                 Filter.CANCELLED -> "ما عندك طلبات ملغاة"
             }
-            textSize = 17f
+            textSize = 19f
             setTypeface(typeface, Typeface.BOLD)
             gravity = Gravity.CENTER
             setTextColor(requireContext().getColor(R.color.text_dark))
         })
         addView(TextView(requireContext()).apply {
-            text = if (filter == Filter.ALL) "أي طلب جديد ح يظهر هنا وتقدري تتابعي حالته." else "اختاري قسم تاني لعرض بقية الطلبات."
-            textSize = 14f
+            text = if (filter == Filter.ALL) "أي طلب جديد حيظهر هنا وتقدري تتابعي حالته." else "اختاري قسم تاني لعرض بقية الطلبات."
+            textSize = 15f
             gravity = Gravity.CENTER
-            setPadding(0, dp(6), 0, 0)
+            setPadding(0, dp(8), 0, 0)
             setTextColor(requireContext().getColor(R.color.text_muted))
         })
     }
@@ -251,8 +256,10 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
             Filter.CANCELLED to cancelledButton
         )
         buttons.forEach { (type, button) ->
-            button.alpha = if (type == filter) 1f else 0.68f
-            button.setTypeface(button.typeface, if (type == filter) Typeface.BOLD else Typeface.NORMAL)
+            val selected = type == filter
+            button.alpha = if (selected) 1f else 0.78f
+            button.setTypeface(button.typeface, if (selected) Typeface.BOLD else Typeface.NORMAL)
+            button.textSize = 15f
         }
     }
 
@@ -300,7 +307,7 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
     private fun cardParams() = LinearLayout.LayoutParams(
         LinearLayout.LayoutParams.MATCH_PARENT,
         LinearLayout.LayoutParams.WRAP_CONTENT
-    ).apply { bottomMargin = dp(12) }
+    ).apply { bottomMargin = dp(14) }
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
