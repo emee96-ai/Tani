@@ -161,17 +161,16 @@ object NotificationBadgeController {
     }
 }
 
-/** Auto-initializes the notification chrome without coupling every screen to MainActivity. */
+/** Auto-initializes the notification chrome after MainActivity has completed onCreate. */
 class NotificationBadgeInitProvider : ContentProvider() {
     override fun onCreate(): Boolean {
         val app = context?.applicationContext as? Application ?: return true
         app.registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
-            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-                (activity as? MainActivity)?.let(NotificationBadgeController::bind)
-            }
+            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
 
             override fun onActivityResumed(activity: Activity) {
-                (activity as? MainActivity)?.let { NotificationBadgeController.refresh(it, force = true) }
+                // Supabase.init(...) and setContentView(...) have completed by this point.
+                (activity as? MainActivity)?.let(NotificationBadgeController::bind)
             }
 
             override fun onActivityStarted(activity: Activity) = Unit
