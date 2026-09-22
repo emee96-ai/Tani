@@ -11,6 +11,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Tani">
 
+        <provider
+            android:name=".ui.common.NotificationBadgeInitProvider"
+            android:authorities="${applicationId}.notification-badge-init"
+            android:exported="false" />
+
         <activity
             android:name=".MainActivity"
             android:theme="@style/Theme.Tani.Starting"
