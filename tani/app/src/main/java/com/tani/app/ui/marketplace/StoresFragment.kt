@@ -14,13 +14,11 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.tani.app.MainActivity
 import com.tani.app.R
-import com.tani.app.data.StoreCard
-import com.tani.app.data.Repository
+import com.tani.app.data.*
 import com.tani.app.data.cache.AppContentStore
 import com.tani.app.data.cache.MarketplaceCache
 import com.tani.app.data.catalog.CatalogPagination
 import com.tani.app.data.network.NetworkStatus
-import com.tani.app.data.storePage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -143,8 +141,11 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
                     hasMore = page.hasMore
 
                     if (reset && term.isBlank()) {
-                        AppContentStore.updateStores(page.items)
-                        cache.saveStores(page.items)
+                        val refreshedCache = (page.items + AppContentStore.stores)
+                            .distinctBy { it.id }
+                            .take(MAX_CACHED_STORES)
+                        AppContentStore.updateStores(refreshedCache)
+                        cache.saveStores(refreshedCache)
                     }
 
                     adapter.submitList(loaded.toList())
@@ -216,6 +217,7 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
         private const val PAGE_SIZE = CatalogPagination.DEFAULT_PAGE_SIZE
         private const val LOAD_AHEAD_ITEMS = 5
         private const val SEARCH_DEBOUNCE_MS = 450L
+        private const val MAX_CACHED_STORES = 100
 
         fun newSearchInstance(query: String): StoresFragment = StoresFragment().apply {
             arguments = Bundle().apply { putString(ARG_QUERY, query) }
