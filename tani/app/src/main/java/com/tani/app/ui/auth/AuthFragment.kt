@@ -227,11 +227,6 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
     private fun continueAfterAuthentication(destination: String?) {
         val host = activity as? MainActivity ?: return
         if (destination == AFTER_AUTH_CHECKOUT && Cart.all().isNotEmpty()) {
-            // Keep the locally persisted cart authoritative for this checkout, and sync a
-            // copy to the account in the background without delaying the customer.
-            host.lifecycleScope.launch {
-                runCatching { Repository().syncCart(Cart.all()) }
-            }
             parentFragmentManager.popBackStackImmediate()
             host.show(CheckoutFragment())
         } else {
