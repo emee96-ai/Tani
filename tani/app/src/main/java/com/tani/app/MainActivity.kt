@@ -12,6 +12,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -37,7 +39,6 @@ import java.net.URL
 import java.net.URLDecoder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
@@ -51,9 +52,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var drawerAccountName: TextView
     private lateinit var drawerAccountEmail: TextView
 
+    private var selectedPrimaryItemId: Int = R.id.home
+    private var suppressNavCallback = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(R.style.Theme_Tani)
         super.onCreate(savedInstanceState)
+        selectedPrimaryItemId = savedInstanceState?.getInt(STATE_SELECTED_PRIMARY, R.id.home) ?: R.id.home
+
         Supabase.init(this)
         AuthRedirect.install()
         Cart.init(this)
@@ -77,7 +83,7 @@ class MainActivity : AppCompatActivity() {
             .alpha(1f)
             .scaleX(1f)
             .scaleY(1f)
-            .setDuration(480L)
+            .setDuration(240L)
             .start()
 
         toolbar = findViewById(R.id.top_app_bar)
@@ -103,15 +109,12 @@ class MainActivity : AppCompatActivity() {
         nav = findViewById(R.id.bottom_nav)
         nav.menu.clear()
         nav.inflateMenu(R.menu.bottom_nav)
-        nav.setOnItemSelectedListener {
-            when (it.itemId) {
-                R.id.home -> showPrimary(HomeFragment())
-                R.id.categories -> showPrimary(StoresFragment())
-                R.id.cart -> showPrimary(CartFragment())
-                R.id.orders -> showProtected(OrdersFragment())
-                R.id.profile -> showProtected(ProfileFragment())
-            }
-            true
+        nav.setOnItemSelectedListener { item ->
+            if (suppressNavCallback) return@setOnItemSelectedListener true
+            openPrimary(item.itemId)
+        }
+        nav.setOnItemReselectedListener {
+            // Intentionally keep the current fragment instance and its scroll/filter state.
         }
 
         setupDrawerNavigation()
@@ -133,19 +136,32 @@ class MainActivity : AppCompatActivity() {
 
         if (!handleAuthDeepLink(intent)) {
             if (!Supabase.hasStoredSession()) Supabase.clearSession()
-            startAppWithPreload()
+            startAppFast(savedInstanceState != null)
         }
     }
 
-    private fun startAppWithPreload() {
-        findViewById<TextView>(R.id.launch_loading_text)?.text =
-            if (AppContentStore.hasCoreContent()) "تحديث البيانات…" else "جاري تجهيز التطبيق…"
-        lifecycleScope.launch {
-            val warmUp = launch { AppContentStore.warmUp(this@MainActivity) }
-            val waitMs = if (AppContentStore.hasCoreContent()) 2_500L else 12_000L
-            withTimeoutOrNull(waitMs) { warmUp.join() }
-            if (!canCommitNavigation()) return@launch
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putInt(STATE_SELECTED_PRIMARY, selectedPrimaryItemId)
+        super.onSaveInstanceState(outState)
+    }
+
+    private fun startAppFast(restoringState: Boolean) {
+        findViewById<TextView>(R.id.launch_loading_text)?.text = "فتح تاني…"
+
+        if (restoringState && visibleContentFragment() != null) {
+            syncBottomNavSelection(selectedPrimaryItemId)
+            updateChromeFromBackStack()
+            hideLaunchSplash()
+        } else {
             showApp()
+        }
+
+        // Refresh cached public data after the UI is already usable. On a cold cache the
+        // Home screen performs its own request, so avoid firing a duplicate startup fetch.
+        if (AppContentStore.hasCoreContent()) {
+            lifecycleScope.launch {
+                runCatching { AppContentStore.warmUp(this@MainActivity) }
+            }
         }
     }
 
@@ -157,9 +173,9 @@ class MainActivity : AppCompatActivity() {
         if (launchSplash.visibility != View.VISIBLE) return
         launchSplash.animate()
             .alpha(0f)
-            .scaleX(1.03f)
-            .scaleY(1.03f)
-            .setDuration(260L)
+            .scaleX(1.02f)
+            .scaleY(1.02f)
+            .setDuration(180L)
             .withEndAction { launchSplash.visibility = View.GONE }
             .start()
     }
@@ -168,16 +184,24 @@ class MainActivity : AppCompatActivity() {
         drawerNav.setNavigationItemSelectedListener { item ->
             drawer.closeDrawer(GravityCompat.START)
             when (item.itemId) {
-                R.id.drawer_home -> showPrimary(HomeFragment())
-                R.id.drawer_stores -> showPrimary(StoresFragment())
-                R.id.drawer_favorites -> showProtectedSecondary(FavoritesFragment())
-                R.id.drawer_cart -> showPrimary(CartFragment())
-                R.id.drawer_orders -> showProtected(OrdersFragment())
-                R.id.drawer_notifications -> showProtectedSecondary(NotificationsFragment())
-                R.id.drawer_about -> show(AboutFragment())
-                else -> return@setNavigationItemSelectedListener false
+                R.id.drawer_home -> openPrimary(R.id.home)
+                R.id.drawer_stores -> openPrimary(R.id.categories)
+                R.id.drawer_favorites -> {
+                    showProtectedSecondary(FavoritesFragment())
+                    true
+                }
+                R.id.drawer_cart -> openPrimary(R.id.cart)
+                R.id.drawer_orders -> openPrimary(R.id.orders)
+                R.id.drawer_notifications -> {
+                    showProtectedSecondary(NotificationsFragment())
+                    true
+                }
+                R.id.drawer_about -> {
+                    show(AboutFragment())
+                    true
+                }
+                else -> false
             }
-            true
         }
     }
 
@@ -286,6 +310,7 @@ class MainActivity : AppCompatActivity() {
                 AuthFragment.newResetInstance(null, null, error),
                 addToBackStack = false
             )
+            hideLaunchSplash()
             return true
         }
 
@@ -310,6 +335,7 @@ class MainActivity : AppCompatActivity() {
             },
             addToBackStack = false
         )
+        hideLaunchSplash()
         return true
     }
 
@@ -341,7 +367,7 @@ class MainActivity : AppCompatActivity() {
 
     fun showApp() {
         if (!canCommitNavigation()) return
-        showPrimary(HomeFragment())
+        showPrimary(R.id.home)
         refreshDrawerAccount()
         hideLaunchSplash()
     }
@@ -354,26 +380,88 @@ class MainActivity : AppCompatActivity() {
             .lowercase()
         lifecycleScope.launch { Analytics.track("screen_view", screen = screen) }
 
-        if (addToBackStack) {
-            drawer.closeDrawer(GravityCompat.START)
-            setDrawerEnabled(false)
-            nav.visibility = View.GONE
-            toolbar.visibility = View.VISIBLE
-            toolbar.setNavigationIcon(R.drawable.ic_back)
-            toolbar.logo = null
-            toolbar.title = screenTitle(fragment)
+        if (!addToBackStack) {
+            supportFragmentManager.popBackStackImmediate(
+                null,
+                FragmentManager.POP_BACK_STACK_INCLUSIVE
+            )
+            supportFragmentManager.beginTransaction()
+                .setReorderingAllowed(true)
+                .replace(R.id.nav_host, fragment, "root_$screen")
+                .setPrimaryNavigationFragment(fragment)
+                .commit()
+            return
         }
 
-        val transaction = supportFragmentManager
-            .beginTransaction()
-            .replace(R.id.nav_host, fragment)
-        if (addToBackStack) transaction.addToBackStack(screen)
-        transaction.commit()
+        drawer.closeDrawer(GravityCompat.START)
+        setDrawerEnabled(false)
+        nav.visibility = View.GONE
+        toolbar.visibility = View.VISIBLE
+        toolbar.setNavigationIcon(R.drawable.ic_back)
+        toolbar.logo = null
+        toolbar.title = screenTitle(fragment)
+
+        val current = visibleContentFragment()
+        supportFragmentManager.beginTransaction()
+            .setReorderingAllowed(true)
+            .apply {
+                if (current != null) hide(current)
+                add(R.id.nav_host, fragment, "secondary_${screen}_${System.nanoTime()}")
+                setPrimaryNavigationFragment(fragment)
+            }
+            .addToBackStack(screen)
+            .commit()
     }
 
-    private fun showPrimary(fragment: Fragment) {
+    private fun openPrimary(itemId: Int): Boolean {
+        val protected = itemId == R.id.orders || itemId == R.id.profile
+        if (protected && !Supabase.hasStoredSession()) {
+            show(AuthFragment())
+            return false
+        }
+        showPrimary(itemId)
+        return true
+    }
+
+    private fun showPrimary(itemId: Int) {
         if (!canCommitNavigation()) return
-        supportFragmentManager.popBackStackImmediate(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
+
+        supportFragmentManager.popBackStackImmediate(
+            null,
+            FragmentManager.POP_BACK_STACK_INCLUSIVE
+        )
+
+        val tag = primaryTag(itemId)
+        val existing = supportFragmentManager.findFragmentByTag(tag)
+        val target = existing ?: createPrimaryFragment(itemId)
+        val transaction = supportFragmentManager.beginTransaction()
+            .setReorderingAllowed(true)
+
+        supportFragmentManager.fragments
+            .filter { it.id == R.id.nav_host && it.isAdded }
+            .forEach { fragment ->
+                if (fragment === target) {
+                    transaction.show(fragment)
+                    transaction.setMaxLifecycle(fragment, Lifecycle.State.RESUMED)
+                } else {
+                    transaction.hide(fragment)
+                    transaction.setMaxLifecycle(fragment, Lifecycle.State.STARTED)
+                }
+            }
+
+        if (!target.isAdded) {
+            transaction.add(R.id.nav_host, target, tag)
+            transaction.setMaxLifecycle(target, Lifecycle.State.RESUMED)
+        }
+        transaction.setPrimaryNavigationFragment(target)
+        transaction.commitNow()
+
+        selectedPrimaryItemId = itemId
+        syncBottomNavSelection(itemId)
+        configurePrimaryChrome(target)
+    }
+
+    private fun configurePrimaryChrome(fragment: Fragment) {
         setDrawerEnabled(true)
         toolbar.visibility = View.VISIBLE
         toolbar.setNavigationIcon(R.drawable.ic_menu)
@@ -387,16 +475,53 @@ class MainActivity : AppCompatActivity() {
         nav.visibility = View.VISIBLE
         refreshCartBadge()
         updateDrawerSelection(fragment)
-        show(fragment, addToBackStack = false)
     }
 
-    private fun showProtected(fragment: Fragment) {
-        if (Supabase.hasStoredSession()) {
-            showPrimary(fragment)
-        } else {
-            show(AuthFragment())
+    private fun createPrimaryFragment(itemId: Int): Fragment = when (itemId) {
+        R.id.home -> HomeFragment()
+        R.id.categories -> StoresFragment()
+        R.id.cart -> CartFragment()
+        R.id.orders -> OrdersFragment()
+        R.id.profile -> ProfileFragment()
+        else -> HomeFragment()
+    }
+
+    private fun primaryTag(itemId: Int): String = when (itemId) {
+        R.id.home -> TAG_HOME
+        R.id.categories -> TAG_STORES
+        R.id.cart -> TAG_CART
+        R.id.orders -> TAG_ORDERS
+        R.id.profile -> TAG_PROFILE
+        else -> TAG_HOME
+    }
+
+    private fun primaryItemId(fragment: Fragment?): Int? = when (fragment?.tag) {
+        TAG_HOME -> R.id.home
+        TAG_STORES -> R.id.categories
+        TAG_CART -> R.id.cart
+        TAG_ORDERS -> R.id.orders
+        TAG_PROFILE -> R.id.profile
+        else -> when (fragment) {
+            is HomeFragment -> R.id.home
+            is StoresFragment -> R.id.categories
+            is CartFragment -> R.id.cart
+            is OrdersFragment -> R.id.orders
+            is ProfileFragment -> R.id.profile
+            else -> null
         }
     }
+
+    private fun syncBottomNavSelection(itemId: Int) {
+        if (!::nav.isInitialized || nav.selectedItemId == itemId) return
+        suppressNavCallback = true
+        nav.selectedItemId = itemId
+        suppressNavCallback = false
+    }
+
+    private fun visibleContentFragment(): Fragment? =
+        supportFragmentManager.fragments.lastOrNull {
+            it.id == R.id.nav_host && it.isAdded && !it.isHidden
+        } ?: supportFragmentManager.primaryNavigationFragment
 
     private fun showProtectedSecondary(fragment: Fragment) {
         if (Supabase.hasStoredSession()) {
@@ -442,7 +567,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateChromeFromBackStack() {
         val count = supportFragmentManager.backStackEntryCount
-        val current = supportFragmentManager.findFragmentById(R.id.nav_host)
+        val current = visibleContentFragment()
+
         if (count <= 0) {
             if (current is AuthFragment && !Supabase.hasStoredSession()) {
                 setDrawerEnabled(false)
@@ -450,21 +576,24 @@ class MainActivity : AppCompatActivity() {
                 nav.visibility = View.GONE
                 return
             }
-            setDrawerEnabled(true)
-            toolbar.visibility = View.VISIBLE
-            toolbar.setNavigationIcon(R.drawable.ic_menu)
-            if (current is HomeFragment) {
-                toolbar.logo = getDrawable(R.drawable.ic_brand)
-                toolbar.title = "تاني"
+
+            val primaryId = primaryItemId(current)
+            if (primaryId != null && current != null) {
+                selectedPrimaryItemId = primaryId
+                syncBottomNavSelection(primaryId)
+                configurePrimaryChrome(current)
             } else {
+                setDrawerEnabled(true)
+                toolbar.visibility = View.VISIBLE
+                toolbar.setNavigationIcon(R.drawable.ic_menu)
                 toolbar.logo = null
                 toolbar.title = current?.let(::screenTitle) ?: "تاني"
+                nav.visibility = View.VISIBLE
+                refreshCartBadge()
             }
-            nav.visibility = View.VISIBLE
-            current?.let(::updateDrawerSelection)
-            refreshCartBadge()
             return
         }
+
         setDrawerEnabled(false)
         nav.visibility = View.GONE
         toolbar.visibility = View.VISIBLE
@@ -494,5 +623,14 @@ class MainActivity : AppCompatActivity() {
         "AboutFragment" -> "من نحن"
         "SupportCenterFragment" -> "مركز المساعدة"
         else -> "تاني"
+    }
+
+    companion object {
+        private const val STATE_SELECTED_PRIMARY = "selected_primary"
+        private const val TAG_HOME = "primary_home"
+        private const val TAG_STORES = "primary_stores"
+        private const val TAG_CART = "primary_cart"
+        private const val TAG_ORDERS = "primary_orders"
+        private const val TAG_PROFILE = "primary_profile"
     }
 }
