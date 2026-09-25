@@ -21,8 +21,10 @@ import com.tani.app.R
 import com.tani.app.data.*
 import com.tani.app.data.commerce.CartQuote
 import com.tani.app.ui.marketplace.MarketplaceUi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -44,6 +46,9 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
     private var selectedAddressId: String? = null
     private var checkoutKey: String = UUID.randomUUID().toString()
     private var dataLoaded = false
+    private var latestQuote: CartQuote? = null
+    private var latestQuoteSignature: String? = null
+    private var quoteJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -79,9 +84,16 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
         loadCheckoutData()
     }
 
+    override fun onDestroyView() {
+        quoteJob?.cancel()
+        quoteJob = null
+        super.onDestroyView()
+    }
+
     private fun loadCheckoutData() {
         progress.visibility = View.VISIBLE
         dataLoaded = false
+        clearQuote()
         updateConfirmState()
         val sellerIds = Cart.groupedBySeller().keys.toList()
 
@@ -108,8 +120,10 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
                 if (phone.text.isBlank()) phone.setText(account.profile.phone)
                 renderAddresses()
                 renderDeliveryZones()
-                renderSummary()
                 dataLoaded = true
+                renderSummary()
+                updateConfirmState()
+                requestQuoteRefresh()
             }.onFailure {
                 Toast.makeText(
                     requireContext(),
@@ -157,9 +171,11 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
                         address.phone?.takeIf { it.isNotBlank() }?.let { phone.setText(it) }
                         if (changed) {
                             selectedZones.clear()
+                            clearQuote()
                             renderDeliveryZones()
                             renderSummary()
                             updateConfirmState()
+                            requestQuoteRefresh()
                         }
                     }
                 }
@@ -188,7 +204,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
 
             if (zones.isEmpty()) {
                 deliveryZonesBox.addView(TextView(requireContext()).apply {
-                    text = "رسوم التوصيل الحالية تُحسب من الخادم عند التأكيد"
+                    text = "سيتم حساب التوصيل لهذا المتجر تلقائياً قبل التأكيد"
                     textSize = 14f
                     setTextColor(requireContext().getColor(R.color.text_muted))
                     setPadding(0, 0, 0, dp(10))
@@ -217,9 +233,11 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
                     setOnCheckedChangeListener { _, checked ->
                         if (checked) {
                             selectedZones[sellerId] = zone
+                            clearQuote()
                             renderSummary()
                             updateDeliveryHint()
                             updateConfirmState()
+                            requestQuoteRefresh()
                         }
                     }
                 })
@@ -228,7 +246,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
         }
 
         if (merchantsWithChoices == 0) {
-            deliveryHint.text = "سيتم جلب رسوم التوصيل الحالية من الخادم قبل التأكيد."
+            deliveryHint.text = multiMerchantPrefix() + "سنحسب رسوم التوصيل تلقائياً قبل التأكيد."
         } else {
             updateDeliveryHint()
         }
@@ -248,17 +266,25 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
     private fun updateDeliveryHint() {
         val missing = sellersRequiringZone().count { it !in selectedZones }
         deliveryHint.text = if (missing == 0) {
-            "تم اختيار منطقة التوصيل لكل متجر ✓"
+            multiMerchantPrefix() + "تم اختيار التوصيل لكل متجر ✓"
         } else {
-            "اختاري منطقة التوصيل لـ $missing ${if (missing == 1) "متجر" else "متاجر"} حتى نحسب الإجمالي الصحيح."
+            multiMerchantPrefix() + "اختاري منطقة التوصيل لـ $missing ${if (missing == 1) "متجر" else "متاجر"}."
         }
+    }
+
+    private fun multiMerchantPrefix(): String {
+        val count = Cart.groupedBySeller().size
+        return if (count > 1) "طلبك موزع على $count متاجر • " else ""
     }
 
     private fun renderSummary() {
         summary.removeAllViews()
         var missingZone = false
+        var serverDeliveryNeeded = false
+        var selectedDeliveryTotal = 0.0
+        val grouped = Cart.groupedBySeller()
 
-        Cart.groupedBySeller().forEach { (sellerId, group) ->
+        grouped.forEach { (sellerId, group) ->
             val first = group.first()
             val storeName = first.product.store_name ?: "المتجر"
             val subtotal = group.sumOf { it.unitPrice * it.quantity }
@@ -266,20 +292,22 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
             val chosen = selectedZones[sellerId]
             val delivery = if (zones.isEmpty()) null else chosen?.fee
 
+            if (zones.isEmpty()) serverDeliveryNeeded = true
             if (zones.isNotEmpty() && delivery == null) missingZone = true
+            if (delivery != null) selectedDeliveryTotal += delivery
 
             summary.addView(TextView(requireContext()).apply {
                 text = buildString {
                     append(storeName)
                     append("\n${group.sumOf { it.quantity }} منتج • ${MarketplaceUi.formatPrice(subtotal)}")
                     append("\n")
-                    if (zones.isEmpty()) {
-                        append("التوصيل: يُحسب من الخادم عند التأكيد")
-                    } else if (delivery == null) {
-                        append("التوصيل: اختاري المنطقة")
-                    } else {
-                        append("التوصيل التقديري: ${MarketplaceUi.formatPrice(delivery)}")
-                        chosen?.let { append(" • ${it.area_name}") }
+                    when {
+                        zones.isEmpty() -> append("التوصيل: يُحسب تلقائياً")
+                        delivery == null -> append("التوصيل: اختاري المنطقة")
+                        else -> {
+                            append("التوصيل: ${MarketplaceUi.formatPrice(delivery)}")
+                            chosen?.let { append(" • ${it.area_name}") }
+                        }
                     }
                 }
                 textSize = 15f
@@ -288,10 +316,31 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
             })
         }
 
-        total.text = if (missingZone) {
-            "الإجمالي يظهر بعد اختيار مناطق التوصيل"
+        val validQuote = latestQuote?.takeIf { latestQuoteSignature == currentQuoteSignature() }
+        total.text = when {
+            validQuote != null -> {
+                val deliveryTotal = validQuote.deliveries.sumOf { it.fee }
+                buildString {
+                    append("قيمة المنتجات: ${MarketplaceUi.formatPrice(validQuote.subtotal)}")
+                    append("\nالتوصيل: ${MarketplaceUi.formatPrice(deliveryTotal)}")
+                    if (validQuote.discount_total > 0) {
+                        append("\nالخصم: ${MarketplaceUi.formatPrice(validQuote.discount_total)}")
+                    }
+                    append("\nالإجمالي النهائي: ${MarketplaceUi.formatPrice(validQuote.grand_total)}")
+                }
+            }
+            missingZone -> "اختاري منطقة التوصيل لإظهار الإجمالي النهائي."
+            serverDeliveryNeeded -> "قيمة المنتجات: ${MarketplaceUi.formatPrice(Cart.subtotal())}\nجاري حساب التوصيل والإجمالي النهائي…"
+            else -> {
+                val estimated = Cart.subtotal() + selectedDeliveryTotal
+                "التوصيل: ${MarketplaceUi.formatPrice(selectedDeliveryTotal)}\nالإجمالي المتوقع: ${MarketplaceUi.formatPrice(estimated)}\nيتم التحقق تلقائياً قبل التأكيد."
+            }
+        }
+
+        confirm.text = if (validQuote != null && !hasBlockingWarnings(validQuote)) {
+            "تأكيد الطلب • ${MarketplaceUi.formatPrice(validQuote.grand_total)}"
         } else {
-            "الإجمالي النهائي يُحسب من الخادم عند التأكيد"
+            "مراجعة وتأكيد الطلب"
         }
     }
 
@@ -341,6 +390,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
                     }.onSuccess { saved ->
                         selectedAddressId = saved.id
                         selectedZones.clear()
+                        clearQuote()
                         phone.setText(saved.phone.orEmpty())
                         dialog.dismiss()
                         loadCheckoutData()
@@ -363,6 +413,12 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
             Toast.makeText(requireContext(), "اختاري عنوان التوصيل", Toast.LENGTH_SHORT).show()
             return
         }
+        val phoneValue = phone.text.toString().trim()
+        if (phoneValue.length < 7) {
+            phone.error = "أدخلي رقم هاتف صحيح للتوصيل"
+            phone.requestFocus()
+            return
+        }
         val missingSeller = sellersRequiringZone().firstOrNull { it !in selectedZones }
         if (missingSeller != null) {
             val store = Cart.groupedBySeller()[missingSeller]?.firstOrNull()?.product?.store_name ?: "المتجر"
@@ -370,12 +426,23 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
             return
         }
 
+        val signature = currentQuoteSignature()
+        val cachedQuote = latestQuote?.takeIf { latestQuoteSignature == signature }
+        if (cachedQuote != null) {
+            showQuoteConfirmation(addressId, cachedQuote)
+            return
+        }
+
         confirm.isEnabled = false
         progress.visibility = View.VISIBLE
+        total.text = "جاري التحقق من السعر والتوصيل…"
         viewLifecycleOwner.lifecycleScope.launch {
             runCatching {
                 repository.quoteCart(Cart.all(), selectedZones.toMap())
             }.onSuccess { quote ->
+                latestQuote = quote
+                latestQuoteSignature = signature
+                renderSummary()
                 showQuoteConfirmation(addressId, quote)
             }.onFailure {
                 Toast.makeText(
@@ -389,16 +456,45 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
         }
     }
 
+    private fun requestQuoteRefresh() {
+        quoteJob?.cancel()
+        if (!canQuote()) {
+            renderSummary()
+            updateConfirmState()
+            return
+        }
+
+        val signature = currentQuoteSignature()
+        if (latestQuote != null && latestQuoteSignature == signature) {
+            renderSummary()
+            updateConfirmState()
+            return
+        }
+
+        total.text = "جاري حساب الإجمالي النهائي…"
+        quoteJob = viewLifecycleOwner.lifecycleScope.launch {
+            delay(180)
+            val result = runCatching { repository.quoteCart(Cart.all(), selectedZones.toMap()) }
+            if (!isAdded || signature != currentQuoteSignature()) return@launch
+
+            result.onSuccess { quote ->
+                latestQuote = quote
+                latestQuoteSignature = signature
+                renderSummary()
+            }.onFailure {
+                latestQuote = null
+                latestQuoteSignature = null
+                renderSummary()
+            }
+            updateConfirmState()
+        }
+    }
+
     private fun showQuoteConfirmation(
         addressId: String,
         quote: CartQuote
     ) {
-        val unavailable = quote.items.filterNot { it.available }
-        val warnings = buildList {
-            addAll(quote.warnings)
-            unavailable.forEach { add("${it.name}: الكمية المطلوبة غير متاحة") }
-        }.distinct()
-
+        val warnings = quoteWarnings(quote)
         if (warnings.isNotEmpty()) {
             AlertDialog.Builder(requireContext())
                 .setTitle("راجعي السلة")
@@ -408,7 +504,9 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
             return
         }
 
-        total.text = "الإجمالي من الخادم: ${MarketplaceUi.formatPrice(quote.grand_total)}"
+        latestQuote = quote
+        latestQuoteSignature = currentQuoteSignature()
+        renderSummary()
 
         val message = buildString {
             append("قيمة المنتجات: ${MarketplaceUi.formatPrice(quote.subtotal)}\n")
@@ -424,10 +522,10 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
         }
 
         AlertDialog.Builder(requireContext())
-            .setTitle("تأكيد الطلب")
+            .setTitle("التأكيد الأخير")
             .setMessage(message)
             .setNegativeButton("رجوع", null)
-            .setPositiveButton("تأكيد الطلب") { _, _ -> placeOrder(addressId, quote) }
+            .setPositiveButton("إرسال الطلب") { _, _ -> placeOrder(addressId, quote) }
             .show()
     }
 
@@ -438,8 +536,8 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
             runCatching {
                 repository.checkoutWithDeliveryZones(
                     addressId = addressId,
-                    phone = phone.text.toString(),
-                    notes = notes.text.toString(),
+                    phone = phone.text.toString().trim(),
+                    notes = notes.text.toString().trim(),
                     items = Cart.all(),
                     idempotencyKey = checkoutKey,
                     deliveryZones = selectedZones.toMap(),
@@ -448,8 +546,12 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
                 )
             }.onSuccess { groupId ->
                 Cart.clear()
+                (activity as? MainActivity)?.refreshCartBadge()
                 (activity as? MainActivity)?.show(OrderConfirmationFragment.newInstance(groupId))
             }.onFailure {
+                clearQuote()
+                renderSummary()
+                requestQuoteRefresh()
                 Toast.makeText(
                     requireContext(),
                     it.message ?: "تعذر إنشاء الطلب",
@@ -458,6 +560,41 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
             }
             progress.visibility = View.GONE
             updateConfirmState()
+        }
+    }
+
+    private fun quoteWarnings(quote: CartQuote): List<String> {
+        val unavailable = quote.items.filterNot { it.available }
+        return buildList {
+            addAll(quote.warnings)
+            unavailable.forEach { add("${it.name}: الكمية المطلوبة غير متاحة") }
+        }.distinct()
+    }
+
+    private fun hasBlockingWarnings(quote: CartQuote): Boolean = quoteWarnings(quote).isNotEmpty()
+
+    private fun canQuote(): Boolean =
+        dataLoaded && selectedAddressId != null && sellersRequiringZone().all { it in selectedZones }
+
+    private fun clearQuote() {
+        quoteJob?.cancel()
+        latestQuote = null
+        latestQuoteSignature = null
+    }
+
+    private fun currentQuoteSignature(): String = buildString {
+        Cart.all().sortedBy { it.key }.forEach { item ->
+            append(item.key)
+            append(':')
+            append(item.quantity)
+            append('|')
+        }
+        append('#')
+        selectedZones.toSortedMap().forEach { (sellerId, zone) ->
+            append(sellerId)
+            append(':')
+            append(zone.id)
+            append('|')
         }
     }
 

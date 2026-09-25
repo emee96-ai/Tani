@@ -10,7 +10,9 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.tani.app.MainActivity
 import com.tani.app.R
+import com.tani.app.data.Cart
 import com.tani.app.data.Repository
+import com.tani.app.ui.commerce.CheckoutFragment
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -27,6 +29,8 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
         private const val ARG_RECOVERY_TOKEN = "recovery_token"
         private const val ARG_RECOVERY_REFRESH_TOKEN = "recovery_refresh_token"
         private const val ARG_RECOVERY_ERROR = "recovery_error"
+        private const val ARG_AFTER_AUTH = "after_auth"
+        private const val AFTER_AUTH_CHECKOUT = "checkout"
 
         fun newResetInstance(
             token: String?,
@@ -38,6 +42,10 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
                 putString(ARG_RECOVERY_REFRESH_TOKEN, refreshToken)
                 putString(ARG_RECOVERY_ERROR, error)
             }
+        }
+
+        fun newCheckoutInstance() = AuthFragment().apply {
+            arguments = Bundle().apply { putString(ARG_AFTER_AUTH, AFTER_AUTH_CHECKOUT) }
         }
     }
 
@@ -58,6 +66,8 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
         val browseAsGuest = view.findViewById<TextView>(R.id.browse_as_guest)
         val status = view.findViewById<TextView>(R.id.status)
         val progress = view.findViewById<ProgressBar>(R.id.progress)
+        val afterAuth = arguments?.getString(ARG_AFTER_AUTH)
+        val continuingCheckout = afterAuth == AFTER_AUTH_CHECKOUT
 
         recoveryToken = arguments?.getString(ARG_RECOVERY_TOKEN).orEmpty()
         recoveryRefreshToken = arguments?.getString(ARG_RECOVERY_REFRESH_TOKEN).orEmpty()
@@ -81,17 +91,26 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
             toggle.visibility = if (mode == Mode.LOGIN || mode == Mode.SIGNUP) View.VISIBLE else View.GONE
             backToLogin.visibility = if (mode == Mode.FORGOT || mode == Mode.RESET) View.VISIBLE else View.GONE
             browseAsGuest.visibility = if (mode == Mode.LOGIN || mode == Mode.SIGNUP) View.VISIBLE else View.GONE
+            browseAsGuest.text = if (continuingCheckout) "الرجوع للسلة" else "التصفح كزائر"
 
             when (mode) {
                 Mode.LOGIN -> {
                     title.text = "مرحباً بعودتك"
-                    subtitle.text = "سجّلي الدخول لمتابعة طلباتك وحسابك في تاني"
+                    subtitle.text = if (continuingCheckout) {
+                        "سجّلي الدخول لإكمال طلبك. السلة محفوظة ولن تضيع."
+                    } else {
+                        "سجّلي الدخول لمتابعة طلباتك وحسابك في تاني"
+                    }
                     action.text = "تسجيل الدخول"
                     toggle.text = "ليس لديك حساب؟ إنشاء حساب"
                 }
                 Mode.SIGNUP -> {
                     title.text = "إنشاء حساب"
-                    subtitle.text = "أدخلي بياناتك الأساسية للبدء في تاني"
+                    subtitle.text = if (continuingCheckout) {
+                        "أنشئي حسابك لإكمال الطلب. كل المنتجات في سلتك محفوظة."
+                    } else {
+                        "أدخلي بياناتك الأساسية للبدء في تاني"
+                    }
                     action.text = "إنشاء الحساب"
                     toggle.text = "لديك حساب؟ تسجيل الدخول"
                 }
@@ -134,7 +153,13 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
         }
 
         backToLogin.setOnClickListener { goLogin() }
-        browseAsGuest.setOnClickListener { (activity as? MainActivity)?.showApp() }
+        browseAsGuest.setOnClickListener {
+            if (continuingCheckout) {
+                parentFragmentManager.popBackStack()
+            } else {
+                (activity as? MainActivity)?.showApp()
+            }
+        }
 
         action.setOnClickListener {
             viewLifecycleOwner.lifecycleScope.launch {
@@ -177,7 +202,8 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
                     }
                 }.onSuccess { result ->
                     when (result) {
-                        "LOGIN_OK", "SIGNUP_OK", "RESET_OK" -> (activity as? MainActivity)?.showApp()
+                        "LOGIN_OK", "SIGNUP_OK" -> continueAfterAuthentication(afterAuth)
+                        "RESET_OK" -> (activity as? MainActivity)?.showApp()
                         "RECOVERY_SENT" -> {
                             status.text = "إذا كان البريد مسجلاً، ستصلك رسالة لاستعادة كلمة المرور."
                         }
@@ -196,6 +222,16 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
                 else -> ""
             }
         )
+    }
+
+    private fun continueAfterAuthentication(destination: String?) {
+        val host = activity as? MainActivity ?: return
+        if (destination == AFTER_AUTH_CHECKOUT && Cart.all().isNotEmpty()) {
+            parentFragmentManager.popBackStackImmediate()
+            host.show(CheckoutFragment())
+        } else {
+            host.showApp()
+        }
     }
 
     private fun friendlyError(error: Throwable): String {

@@ -91,15 +91,15 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
             background = requireContext().getDrawable(R.drawable.bg_card)
         }
         summary.addView(summaryLine("قيمة المنتجات", MarketplaceUi.formatPrice(Cart.subtotal())))
-        summary.addView(summaryLine("إجمالي التوصيل", MarketplaceUi.formatPrice(Cart.deliveryTotal())))
+        summary.addView(summaryLine("التوصيل المبدئي", MarketplaceUi.formatPrice(Cart.deliveryTotal())))
         summary.addView(TextView(requireContext()).apply {
-            text = "الإجمالي: ${MarketplaceUi.formatPrice(Cart.grandTotal())}"
+            text = "الإجمالي المبدئي: ${MarketplaceUi.formatPrice(Cart.grandTotal())}"
             textSize = 21f
             setTextColor(requireContext().getColor(R.color.tani_primary))
             setPadding(0, MarketplaceUi.dp(requireContext(), 12), 0, MarketplaceUi.dp(requireContext(), 6))
         })
         summary.addView(TextView(requireContext()).apply {
-            text = "يتم التحقق من السعر والمخزون ورسوم التوصيل مرة أخرى عند تأكيد الطلب."
+            text = "في الخطوة التالية سنعرض رسوم التوصيل والإجمالي النهائي قبل تأكيد الطلب."
             textSize = 13f
             setTextColor(requireContext().getColor(R.color.text_muted))
         })
@@ -112,8 +112,8 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
                     viewLifecycleOwner.lifecycleScope.launch { Analytics.track("checkout_started", screen = "cart") }
                     (activity as? MainActivity)?.show(CheckoutFragment())
                 } else {
-                    Toast.makeText(requireContext(), "سجّلي الدخول لإتمام الطلب", Toast.LENGTH_SHORT).show()
-                    (activity as? MainActivity)?.show(AuthFragment())
+                    Toast.makeText(requireContext(), "سجّلي الدخول لإتمام الطلب — السلة محفوظة", Toast.LENGTH_SHORT).show()
+                    (activity as? MainActivity)?.show(AuthFragment.newCheckoutInstance())
                 }
             }
         }, LinearLayout.LayoutParams(
@@ -148,7 +148,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
             })
             items.forEach { addView(itemRow(it)) }
             addView(TextView(requireContext()).apply {
-                text = "المجموع: ${MarketplaceUi.formatPrice(subtotal)}\nالتوصيل: ${MarketplaceUi.formatPrice(delivery)}"
+                text = "المجموع: ${MarketplaceUi.formatPrice(subtotal)}\nالتوصيل المبدئي: ${MarketplaceUi.formatPrice(delivery)}"
                 textSize = 14f
                 setPadding(0, MarketplaceUi.dp(requireContext(), 10), 0, 0)
                 setTextColor(requireContext().getColor(R.color.text_muted))
