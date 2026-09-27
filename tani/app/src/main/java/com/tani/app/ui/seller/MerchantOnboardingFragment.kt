@@ -27,14 +27,17 @@ import com.google.android.material.textfield.TextInputLayout
 import com.tani.app.MainActivity
 import com.tani.app.R
 import com.tani.app.data.Category
-import com.tani.app.data.MerchantProfile
 import com.tani.app.data.MerchantDeliveryZoneInput
+import com.tani.app.data.MerchantProfile
 import com.tani.app.data.Repository
+import com.tani.app.data.network.CustomerErrorMessages
 import com.tani.app.ui.legal.PoliciesFragment
+import java.io.ByteArrayOutputStream
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.ByteArrayOutputStream
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -54,6 +57,8 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
     private var merchant: MerchantProfile? = null
     private var categories: List<Category> = emptyList()
     private var identityPath: String? = null
+    private var reviewNotice: String? = null
+    private var submissionInFlight = false
     private val inputs = mutableMapOf<String, EditText>()
     private var categoryField: MaterialAutoCompleteTextView? = null
     private var documentField: MaterialAutoCompleteTextView? = null
@@ -103,29 +108,66 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         addInfoText("جاري تجهيز تسجيل التاجر…")
         viewLifecycleOwner.lifecycleScope.launch {
             runCatching {
-                merchant = repository.merchantProfile()
-                categories = repository.categories()
-                identityPath = repository.merchantIdentityDocuments().firstOrNull()?.storage_path
-            }.onSuccess {
-                val profile = merchant
+                coroutineScope {
+                    val profileRequest = async { repository.merchantProfile() }
+                    val categoriesRequest = async {
+                        runCatching { repository.categories() }.getOrDefault(emptyList())
+                    }
+                    val documentsRequest = async {
+                        runCatching { repository.merchantIdentityDocuments() }.getOrDefault(emptyList())
+                    }
+                    Triple(
+                        profileRequest.await(),
+                        categoriesRequest.await(),
+                        documentsRequest.await()
+                    )
+                }
+            }.onSuccess { (profile, loadedCategories, documents) ->
+                merchant = profile
+                categories = loadedCategories
+                identityPath = documents.firstOrNull()?.storage_path
+                    ?: prefs.getString("identity_path", null)
+                reviewNotice = null
                 when (profile?.verification_status) {
                     "pending" -> renderStatus(profile, "طلبك قيد المراجعة")
                     "suspended" -> renderStatus(profile, "حساب التاجر موقوف مؤقتاً")
                     "approved" -> renderStatus(profile, "متجرك معتمد ومفعّل", approved = true)
+                    "changes_requested" -> openForReviewChanges(
+                        profile,
+                        "الإدارة طلبت تعديل بعض البيانات قبل اعتماد المتجر."
+                    )
+                    "rejected" -> openForReviewChanges(
+                        profile,
+                        "الطلب لم يُعتمد بصورته الحالية. عدّلي البيانات المطلوبة ويمكنك إعادة الإرسال."
+                    )
                     else -> {
                         restoreDraft(profile)
                         setBusy(false)
                         renderStep()
                     }
                 }
-            }.onFailure {
+            }.onFailure { error ->
                 setBusy(false)
                 content.removeAllViews()
                 addSectionTitle("تعذر فتح تسجيل التاجر")
-                addInfoText(it.message ?: "حدث خطأ غير متوقع")
+                addInfoText(merchantError(error, "تعذر تحميل بيانات التسجيل الآن. حاولي مرة أخرى."))
                 addPrimaryButton("إعادة المحاولة") { loadEntry() }
             }
         }
+    }
+
+    private fun openForReviewChanges(profile: MerchantProfile, headline: String) {
+        restoreDraft(profile)
+        step = prefs.getInt("step", 1).coerceIn(1, 4)
+        reviewNotice = buildString {
+            append(headline)
+            profile.review_note?.trim()?.takeIf { it.isNotBlank() }?.let {
+                append("\nملاحظة الإدارة: ")
+                append(it)
+            }
+        }
+        setBusy(false)
+        renderStep()
     }
 
     private fun restoreDraft(profile: MerchantProfile?) {
@@ -145,6 +187,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
             draft.deliveryZones = restoreDeliveryZones()
             draft.documentType = prefs.getString("document_type", "national_id").orEmpty()
             draft.policiesAccepted = prefs.getBoolean("policies", false)
+            identityPath = prefs.getString("identity_path", identityPath)
             step = prefs.getInt("step", 1).coerceIn(1, 4)
             return
         }
@@ -154,8 +197,12 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         draft.phone = profile?.phone.orEmpty()
         draft.whatsapp = profile?.whatsapp.orEmpty()
         draft.whatsappSameAsPhone = draft.phone.isNotBlank() && draft.phone == draft.whatsapp
-        draft.categoryId = profile?.category_id.orEmpty()
         draft.requestedCategory = profile?.requested_category.orEmpty()
+        draft.categoryId = if (draft.requestedCategory.isNotBlank()) {
+            ""
+        } else {
+            profile?.category_id.orEmpty()
+        }
         draft.storeName = profile?.store_name ?: profile?.business_name.orEmpty()
         draft.storeDescription = profile?.store_description ?: profile?.description.orEmpty()
         draft.city = profile?.city?.takeIf { it.isNotBlank() } ?: "كوستي"
@@ -190,6 +237,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
             .putString("area", draft.area)
             .putString("delivery_zones", deliveryZonesJson())
             .putString("document_type", draft.documentType)
+            .putString("identity_path", identityPath)
             .putBoolean("policies", draft.policiesAccepted)
             .putInt("step", step)
             .apply()
@@ -205,6 +253,8 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         identityStatus = null
         whatsappSameCheck = null
 
+        progress.visibility = View.VISIBLE
+        stepText.visibility = View.VISIBLE
         progress.max = 4
         progress.setProgressCompat(step, true)
         stepText.text = "الخطوة $step من 4"
@@ -212,12 +262,30 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         nextButton.visibility = View.VISIBLE
         nextButton.text = if (step == 4) "إرسال للمراجعة" else "التالي"
 
+        reviewNotice?.let(::addReviewNotice)
+
         when (step) {
             1 -> renderBusinessStep()
             2 -> renderStoreStep()
             3 -> renderDeliveryIdentityStep()
             else -> renderReviewStep()
         }
+    }
+
+    private fun addReviewNotice(message: String) {
+        val card = card().apply {
+            strokeColor = ContextCompat.getColor(requireContext(), R.color.warning)
+        }
+        val body = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(16), dp(14), dp(16), dp(14))
+            addView(sectionText("مطلوب منك تعديل"))
+            addView(smallText(message).apply {
+                setTextColor(ContextCompat.getColor(requireContext(), R.color.text_dark))
+            })
+        }
+        card.addView(body)
+        content.addView(card, matchWrapWithMargins())
     }
 
     private fun renderBusinessStep() {
@@ -250,6 +318,9 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
     private fun renderStoreStep() {
         title.text = "بيانات المتجر"
         addInfoText("دي البيانات البتظهر للعميل بعد اعتماد الحساب.")
+        if (categories.isEmpty()) {
+            addInfoText("تعذر تحديث قائمة الفئات الآن. يمكنك كتابة اسم الفئة في خانة «الفئة غير موجودة» ومواصلة التسجيل.")
+        }
         addCard {
             addField(this, "store_name", "اسم المتجر", draft.storeName)
             addDropdown(
@@ -390,6 +461,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
     }
 
     private fun advance() {
+        if (submissionInFlight) return
         captureCurrentStep()
         if (!validateStep()) return
         saveDraft()
@@ -472,6 +544,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
     }
 
     private fun submit() {
+        if (submissionInFlight) return
         val identity = identityPath ?: return
         val category = draft.categoryId.takeIf { it.isNotBlank() }
         val zones = draft.deliveryZones.map { zone ->
@@ -481,6 +554,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
                 estimated_minutes = zone.estimatedMinutes.toIntOrNull()
             )
         }
+        submissionInFlight = true
         setBusy(true)
         submitStatus.text = "جاري إرسال طلب التسجيل… لا تغلقي الصفحة"
         viewLifecycleOwner.lifecycleScope.launch {
@@ -502,16 +576,37 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
                     acceptPolicies = draft.policiesAccepted
                 )
             }.onSuccess {
+                submissionInFlight = false
                 prefs.edit().clear().apply()
-                submitStatus.text = "تم إرسال الطلب بنجاح ✓"
+                reviewNotice = null
+                renderSubmittedState()
                 Toast.makeText(requireContext(), "تم إرسال طلب التاجر للمراجعة", Toast.LENGTH_LONG).show()
-                loadEntry()
-            }.onFailure {
+            }.onFailure { error ->
+                submissionInFlight = false
                 setBusy(false)
                 nextButton.text = "إرسال للمراجعة"
-                Toast.makeText(requireContext(), it.message ?: "تعذر إرسال الطلب", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    requireContext(),
+                    merchantError(error, "تعذر إرسال الطلب. راجعي اتصال الإنترنت وحاولي مرة أخرى."),
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
+    }
+
+    private fun renderSubmittedState() {
+        setBusy(false)
+        content.removeAllViews()
+        progress.visibility = View.GONE
+        stepText.visibility = View.GONE
+        backButton.visibility = View.GONE
+        nextButton.visibility = View.GONE
+        title.text = "تم إرسال الطلب"
+        addCard {
+            addView(sectionText("طلبك وصل للإدارة ✓"))
+            addView(smallText("الطلب الآن قيد المراجعة. يمكنك الرجوع للتطبيق بشكل طبيعي والعودة هنا لاحقاً لمتابعة الحالة."))
+        }
+        addSecondaryButton("تحديث حالة الطلب") { loadEntry() }
     }
 
     private fun renderStatus(profile: MerchantProfile, headline: String, approved: Boolean = false) {
@@ -547,12 +642,17 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
                 repository.uploadMerchantIdentity(pair.first, pair.second)
             }.onSuccess { path ->
                 identityPath = path
+                saveDraft()
                 setBusy(false)
                 Toast.makeText(requireContext(), "تم رفع مستند الهوية ✓", Toast.LENGTH_SHORT).show()
                 renderStep()
-            }.onFailure {
+            }.onFailure { error ->
                 setBusy(false)
-                Toast.makeText(requireContext(), it.message ?: "تعذر رفع مستند الهوية", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    requireContext(),
+                    merchantError(error, localizedFallback(error, "تعذر رفع مستند الهوية")),
+                    Toast.LENGTH_LONG
+                ).show()
                 renderStep()
             }
         }
@@ -584,6 +684,35 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         }
         require(bytes.size <= 5 * 1024 * 1024) { "الصورة أكبر من 5 ميجابايت" }
         return bytes to "image/jpeg"
+    }
+
+    private fun merchantError(error: Throwable, fallback: String): String {
+        val raw = error.message.orEmpty()
+        val specific = when {
+            raw.contains("Identity document was not uploaded", ignoreCase = true) ||
+                raw.contains("Identity document is required", ignoreCase = true) ->
+                "مستند الهوية غير متاح. ارفعي المستند مرة أخرى ثم أعيدي الإرسال."
+            raw.contains("Store category is invalid", ignoreCase = true) ->
+                "الفئة المختارة لم تعد متاحة. اختاري فئة أخرى أو اكتبي اسم الفئة المطلوبة."
+            raw.contains("Choose a category", ignoreCase = true) ->
+                "اختاري فئة للمتجر أو اكتبي اسم الفئة غير الموجودة."
+            raw.contains("At least one delivery zone", ignoreCase = true) ||
+                raw.contains("Invalid delivery", ignoreCase = true) ->
+                "راجعي مناطق التوصيل والرسوم وزمن الوصول ثم أعيدي المحاولة."
+            raw.contains("Merchant policies", ignoreCase = true) ->
+                "يجب الموافقة على اتفاقية وسياسات التاجر قبل الإرسال."
+            raw.contains("cannot be resubmitted", ignoreCase = true) ->
+                "حالة حساب التاجر لا تسمح بإعادة إرسال الطلب. حدّثي الحالة أولاً."
+            raw.contains("Authentication required", ignoreCase = true) ->
+                "انتهت جلسة تسجيل الدخول. سجّلي الدخول من جديد لإكمال تسجيل التاجر."
+            else -> localizedFallback(error, fallback)
+        }
+        return CustomerErrorMessages.from(error, specific)
+    }
+
+    private fun localizedFallback(error: Throwable, fallback: String): String {
+        val raw = error.message.orEmpty()
+        return if (raw.any { it in '\u0600'..'\u06FF' }) raw else fallback
     }
 
     private fun addField(
