@@ -30,7 +30,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="بياناتك الشخصية وإدارة متجرك"
+                android:text="بياناتك الشخصية وعناوين التوصيل"
                 android:textColor="@color/text_muted"
                 android:textSize="13sp" />
 
@@ -43,12 +43,12 @@
                 android:text="بيانات الحساب" />
 
             <Button
-                android:id="@+id/profile_dashboard"
+                android:id="@+id/profile_addresses"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:layout_marginTop="10dp"
-                android:text="المتجر والبيع على تاني" />
+                android:text="عناويني" />
         </LinearLayout>
 
         <LinearLayout
