@@ -17,17 +17,12 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.tani.app.MainActivity
 import com.tani.app.R
-import com.tani.app.data.Analytics
-import com.tani.app.data.Cart
-import com.tani.app.data.ProductCard
-import com.tani.app.data.Repository
-import com.tani.app.data.StoreCard
+import com.tani.app.data.*
 import com.tani.app.data.cache.AppContentStore
 import com.tani.app.data.cache.MarketplaceCache
 import com.tani.app.data.cache.SearchPreferences
 import com.tani.app.data.network.NetworkStatus
 import com.tani.app.data.repository.ScaleRepository
-import com.tani.app.data.storePage
 import com.tani.app.ui.products.ProductsFragment
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -65,6 +60,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         var debounceJob: Job? = null
         var generation = 0
         val cityOptions = mutableListOf<String>()
+        lateinit var scheduleSearch: (Boolean, Boolean) -> Unit
 
         fun currentTerm(): String = query.text.toString().trim()
         fun selectedCity(): String? = cityOptions
@@ -81,7 +77,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                     MarketplaceUi.chipButton(requireContext(), term) {
                         query.setText(term)
                         query.setSelection(query.text.length)
-                        scheduleSearch(immediate = true, remember = true)
+                        scheduleSearch(true, true)
                     },
                     LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -117,7 +113,6 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         }
 
         setCityOptions(listOfNotNull(searchPreferences.selectedCity))
-        renderRecentSearches()
 
         refine.setOnClickListener {
             val term = currentTerm()
@@ -318,26 +313,26 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             }
         }
 
-        fun scheduleSearch(immediate: Boolean = false, remember: Boolean = false) {
+        scheduleSearch = { immediate, remember ->
             val term = currentTerm()
             debounceJob?.cancel()
             if (term.length < 2) {
                 clearForShortQuery()
-                return
-            }
-            debounceJob = viewLifecycleOwner.lifecycleScope.launch {
-                if (!immediate) delay(SEARCH_DEBOUNCE_MS)
-                runSearch(remember)
+            } else {
+                debounceJob = viewLifecycleOwner.lifecycleScope.launch {
+                    if (!immediate) delay(SEARCH_DEBOUNCE_MS)
+                    runSearch(remember)
+                }
             }
         }
 
-        fun renderSuggestions(categories: List<com.tani.app.data.Category>) {
+        fun renderSuggestions(categories: List<Category>) {
             suggestionsBox.removeAllViews()
             categories.take(8).forEach { category ->
                 val chip = MarketplaceUi.chipButton(requireContext(), category.name) {
                     query.setText(category.name)
                     query.setSelection(query.text.length)
-                    scheduleSearch(immediate = true, remember = true)
+                    scheduleSearch(true, true)
                 }
                 suggestionsBox.addView(
                     chip,
@@ -349,12 +344,14 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             }
         }
 
+        renderRecentSearches()
+
         citySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, itemView: View?, position: Int, id: Long) {
                 val city = selectedCity()
                 if (city == searchPreferences.selectedCity) return
                 searchPreferences.selectedCity = city
-                if (currentTerm().length >= 2) scheduleSearch(immediate = true)
+                if (currentTerm().length >= 2) scheduleSearch(true, false)
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) = Unit
@@ -376,22 +373,22 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
             override fun afterTextChanged(s: Editable?) {
-                scheduleSearch()
+                scheduleSearch(false, false)
             }
         })
 
         view.findViewById<Button>(R.id.search_button).setOnClickListener {
-            scheduleSearch(immediate = true, remember = true)
+            scheduleSearch(true, true)
         }
         query.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                scheduleSearch(immediate = true, remember = true)
+                scheduleSearch(true, true)
                 true
             } else false
         }
 
         if (currentTerm().length >= 2) {
-            scheduleSearch(immediate = true, remember = explicitQuery != null)
+            scheduleSearch(true, explicitQuery != null)
         } else {
             clearForShortQuery()
         }
