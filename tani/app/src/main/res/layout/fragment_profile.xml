@@ -21,10 +21,18 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="الحساب والمتجر"
+                android:text="حسابي"
                 android:textColor="@color/text_dark"
                 android:textSize="20sp"
                 android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="بياناتك الشخصية وإدارة متجرك"
+                android:textColor="@color/text_muted"
+                android:textSize="13sp" />
 
             <Button
                 android:id="@+id/profile_account"
@@ -32,7 +40,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:layout_marginTop="14dp"
-                android:text="حسابي" />
+                android:text="بيانات الحساب" />
 
             <Button
                 android:id="@+id/profile_dashboard"
@@ -40,7 +48,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:layout_marginTop="10dp"
-                android:text="لوحة المتجر" />
+                android:text="المتجر والبيع على تاني" />
         </LinearLayout>
 
         <LinearLayout
@@ -54,26 +62,18 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="إعدادات وخدمات"
+                android:text="الأمان والمشاركة"
                 android:textColor="@color/text_dark"
                 android:textSize="20sp"
                 android:textStyle="bold" />
 
             <Button
-                android:id="@+id/profile_favorites"
+                android:id="@+id/profile_change_password"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:layout_marginTop="14dp"
-                android:text="المفضلة" />
-
-            <Button
-                android:id="@+id/profile_notifications"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="10dp"
-                android:text="الإشعارات" />
+                android:text="تغيير كلمة المرور" />
 
             <Button
                 android:id="@+id/profile_referrals"
@@ -82,55 +82,31 @@
                 android:layout_height="56dp"
                 android:layout_marginTop="10dp"
                 android:text="دعوة الأصدقاء" />
-
-            <Button
-                android:id="@+id/profile_support"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="10dp"
-                android:text="الدعم والشكاوى" />
-
-            <Button
-                android:id="@+id/profile_policies"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="10dp"
-                android:text="السياسات والخصوصية" />
-
-            <Button
-                android:id="@+id/profile_change_password"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="10dp"
-                android:text="تغيير كلمة المرور" />
-
-            <Button
-                android:id="@+id/profile_about"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="10dp"
-                android:text="من نحن" />
         </LinearLayout>
 
-        <Button
-            android:id="@+id/profile_delete_account"
-            style="@style/Widget.Material3.Button.OutlinedButton"
+        <TextView
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginTop="24dp"
-            android:text="حذف الحساب" />
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:text="إدارة الجلسة والحساب"
+            android:textColor="@color/text_muted"
+            android:textSize="13sp" />
 
         <Button
             android:id="@+id/profile_logout"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="30dp"
+            android:layout_marginTop="10dp"
             android:text="تسجيل الخروج" />
+
+        <Button
+            android:id="@+id/profile_delete_account"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="30dp"
+            android:text="حذف الحساب" />
     </LinearLayout>
 </ScrollView>
