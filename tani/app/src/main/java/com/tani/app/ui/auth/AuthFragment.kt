@@ -31,6 +31,7 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
         private const val ARG_RECOVERY_ERROR = "recovery_error"
         private const val ARG_AFTER_AUTH = "after_auth"
         private const val AFTER_AUTH_CHECKOUT = "checkout"
+        private const val AFTER_AUTH_MERCHANT = "merchant"
 
         fun newResetInstance(
             token: String?,
@@ -46,6 +47,10 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
 
         fun newCheckoutInstance() = AuthFragment().apply {
             arguments = Bundle().apply { putString(ARG_AFTER_AUTH, AFTER_AUTH_CHECKOUT) }
+        }
+
+        fun newMerchantInstance() = AuthFragment().apply {
+            arguments = Bundle().apply { putString(ARG_AFTER_AUTH, AFTER_AUTH_MERCHANT) }
         }
     }
 
@@ -68,6 +73,7 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
         val progress = view.findViewById<ProgressBar>(R.id.progress)
         val afterAuth = arguments?.getString(ARG_AFTER_AUTH)
         val continuingCheckout = afterAuth == AFTER_AUTH_CHECKOUT
+        val continuingMerchant = afterAuth == AFTER_AUTH_MERCHANT
 
         recoveryToken = arguments?.getString(ARG_RECOVERY_TOKEN).orEmpty()
         recoveryRefreshToken = arguments?.getString(ARG_RECOVERY_REFRESH_TOKEN).orEmpty()
@@ -91,25 +97,29 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
             toggle.visibility = if (mode == Mode.LOGIN || mode == Mode.SIGNUP) View.VISIBLE else View.GONE
             backToLogin.visibility = if (mode == Mode.FORGOT || mode == Mode.RESET) View.VISIBLE else View.GONE
             browseAsGuest.visibility = if (mode == Mode.LOGIN || mode == Mode.SIGNUP) View.VISIBLE else View.GONE
-            browseAsGuest.text = if (continuingCheckout) "الرجوع للسلة" else "التصفح كزائر"
+            browseAsGuest.text = when {
+                continuingCheckout -> "الرجوع للسلة"
+                continuingMerchant -> "الرجوع للسوق"
+                else -> "التصفح كزائر"
+            }
 
             when (mode) {
                 Mode.LOGIN -> {
                     title.text = "مرحباً بعودتك"
-                    subtitle.text = if (continuingCheckout) {
-                        "سجّلي الدخول لإكمال طلبك. السلة محفوظة ولن تضيع."
-                    } else {
-                        "سجّلي الدخول لمتابعة طلباتك وحسابك في تاني"
+                    subtitle.text = when {
+                        continuingCheckout -> "سجّلي الدخول لإكمال طلبك. السلة محفوظة ولن تضيع."
+                        continuingMerchant -> "سجّلي الدخول للوصول إلى البيع على تاني أو متابعة متجرك."
+                        else -> "سجّلي الدخول لمتابعة طلباتك وحسابك في تاني"
                     }
                     action.text = "تسجيل الدخول"
                     toggle.text = "ليس لديك حساب؟ إنشاء حساب"
                 }
                 Mode.SIGNUP -> {
                     title.text = "إنشاء حساب"
-                    subtitle.text = if (continuingCheckout) {
-                        "أنشئي حسابك لإكمال الطلب. كل المنتجات في سلتك محفوظة."
-                    } else {
-                        "أدخلي بياناتك الأساسية للبدء في تاني"
+                    subtitle.text = when {
+                        continuingCheckout -> "أنشئي حسابك لإكمال الطلب. كل المنتجات في سلتك محفوظة."
+                        continuingMerchant -> "أنشئي حسابك أولاً، وبعدها نكمل تسجيل التاجر أو نفتح متجرك."
+                        else -> "أدخلي بياناتك الأساسية للبدء في تاني"
                     }
                     action.text = "إنشاء الحساب"
                     toggle.text = "لديك حساب؟ تسجيل الدخول"
@@ -154,10 +164,10 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
 
         backToLogin.setOnClickListener { goLogin() }
         browseAsGuest.setOnClickListener {
-            if (continuingCheckout) {
-                parentFragmentManager.popBackStack()
-            } else {
-                (activity as? MainActivity)?.showApp()
+            when {
+                continuingCheckout -> parentFragmentManager.popBackStack()
+                continuingMerchant -> (activity as? MainActivity)?.showApp()
+                else -> (activity as? MainActivity)?.showApp()
             }
         }
 
@@ -226,11 +236,16 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
 
     private fun continueAfterAuthentication(destination: String?) {
         val host = activity as? MainActivity ?: return
-        if (destination == AFTER_AUTH_CHECKOUT && Cart.all().isNotEmpty()) {
-            parentFragmentManager.popBackStackImmediate()
-            host.show(CheckoutFragment())
-        } else {
-            host.showApp()
+        when {
+            destination == AFTER_AUTH_CHECKOUT && Cart.all().isNotEmpty() -> {
+                parentFragmentManager.popBackStackImmediate()
+                host.show(CheckoutFragment())
+            }
+            destination == AFTER_AUTH_MERCHANT -> {
+                parentFragmentManager.popBackStackImmediate()
+                host.openMerchantPortal()
+            }
+            else -> host.showApp()
         }
     }
 
