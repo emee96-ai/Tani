@@ -10,7 +10,6 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
@@ -40,7 +39,6 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
     private lateinit var name: EditText
     private lateinit var email: EditText
     private lateinit var phone: EditText
-    private lateinit var role: TextView
 
     private var editMode = false
     private var selectedAvatarBytes: ByteArray? = null
@@ -62,7 +60,6 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
         name = view.findViewById(R.id.account_name)
         email = view.findViewById(R.id.account_email)
         phone = view.findViewById(R.id.account_phone)
-        role = view.findViewById(R.id.account_role)
 
         editButton.setOnClickListener {
             if (editMode) {
@@ -112,11 +109,6 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
         name.setText(account.profile.name)
         email.setText(account.email)
         phone.setText(account.profile.phone)
-        role.text = when (account.profile.role) {
-            "admin" -> "نوع الحساب: إدارة"
-            "seller" -> "نوع الحساب: تاجر"
-            else -> "نوع الحساب: عميل"
-        }
         val avatarUrl = account.profile.avatar_url
         if (!avatarUrl.isNullOrBlank()) loadRemoteAvatar(avatarUrl) else renderDefaultAvatar()
     }
