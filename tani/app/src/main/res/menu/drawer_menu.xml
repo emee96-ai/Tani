@@ -1,10 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <group android:checkableBehavior="none">
+    <group
+        android:id="@+id/drawer_customer_group"
+        android:checkableBehavior="none">
         <item
             android:id="@+id/drawer_favorites"
             android:icon="@drawable/ic_favorite_outline"
             android:title="المفضلة" />
+    </group>
+
+    <group
+        android:id="@+id/drawer_seller_group"
+        android:checkableBehavior="none">
+        <item
+            android:id="@+id/drawer_seller"
+            android:icon="@drawable/ic_store"
+            android:title="البيع على تاني" />
+    </group>
+
+    <group
+        android:id="@+id/drawer_help_group"
+        android:checkableBehavior="none">
         <item
             android:id="@+id/drawer_support"
             android:icon="@drawable/ic_help"

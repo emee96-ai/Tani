@@ -12,34 +12,32 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.tani.app.MainActivity
 import com.tani.app.R
-import com.tani.app.data.MerchantProfile
 import com.tani.app.data.Repository
 import com.tani.app.data.Supabase
 import com.tani.app.data.cache.AppContentStore
 import com.tani.app.data.cache.MarketplaceCache
+import com.tani.app.ui.commerce.AddressesFragment
 import com.tani.app.ui.growth.ReferralFragment
-import com.tani.app.ui.seller.MerchantOnboardingFragment
-import com.tani.app.ui.seller.SellerFragment
 import kotlinx.coroutines.launch
 
 class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
     private val repository = Repository()
-    private lateinit var dashboardButton: Button
     private lateinit var logoutButton: Button
     private lateinit var deleteButton: Button
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        dashboardButton = view.findViewById(R.id.profile_dashboard)
         logoutButton = view.findViewById(R.id.profile_logout)
         deleteButton = view.findViewById(R.id.profile_delete_account)
 
         view.findViewById<Button>(R.id.profile_account).setOnClickListener {
             (activity as? MainActivity)?.show(AccountFragment())
         }
-        dashboardButton.setOnClickListener { openStoreDashboard() }
+        view.findViewById<Button>(R.id.profile_addresses).setOnClickListener {
+            (activity as? MainActivity)?.show(AddressesFragment())
+        }
         view.findViewById<Button>(R.id.profile_referrals).setOnClickListener {
             (activity as? MainActivity)?.show(ReferralFragment())
         }
@@ -48,41 +46,6 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
         }
         deleteButton.setOnClickListener { confirmDeleteAccount() }
         logoutButton.setOnClickListener { confirmLogout() }
-    }
-
-    private fun openStoreDashboard() {
-        if (AppContentStore.merchantLoaded) {
-            openMerchantDestination(AppContentStore.merchant)
-            return
-        }
-        dashboardButton.isEnabled = false
-        viewLifecycleOwner.lifecycleScope.launch {
-            runCatching { repository.merchantProfile() }
-                .onSuccess { merchant ->
-                    if (!isAdded) return@onSuccess
-                    AppContentStore.updateMerchant(merchant)
-                    openMerchantDestination(merchant)
-                }
-                .onFailure {
-                    if (isAdded) {
-                        Toast.makeText(
-                            requireContext(),
-                            it.message ?: "تعذر فتح بيانات المتجر",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                }
-            if (isAdded) dashboardButton.isEnabled = true
-        }
-    }
-
-    private fun openMerchantDestination(merchant: MerchantProfile?) {
-        val destination = if (merchant?.verification_status == "approved") {
-            SellerFragment()
-        } else {
-            MerchantOnboardingFragment()
-        }
-        (activity as? MainActivity)?.show(destination)
     }
 
     private fun showChangePasswordDialog() {
@@ -198,7 +161,6 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
     }
 
     private fun setActionsEnabled(enabled: Boolean) {
-        dashboardButton.isEnabled = enabled
         logoutButton.isEnabled = enabled
         deleteButton.isEnabled = enabled
     }
