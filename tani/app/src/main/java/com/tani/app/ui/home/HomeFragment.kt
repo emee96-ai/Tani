@@ -165,7 +165,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
                 runCatching { repository.homeFeed() }
                     .onSuccess { feed ->
-                        AppContentStore.updateHomeFeed(feed)
                         cache.saveHomeFeed(feed)
                         renderFeed(feed)
                         setFeedState(null, canRetry = false)
