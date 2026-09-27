@@ -32,6 +32,7 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
         val loading = view.findViewById<TextView>(R.id.stores_loading)
         val list = view.findViewById<RecyclerView>(R.id.stores_list)
         val cache = MarketplaceCache(requireContext())
+        val selectedCity = arguments?.getString(ARG_CITY)?.trim()?.takeIf { it.isNotBlank() }
         arguments?.getString(ARG_QUERY)?.let(search::setText)
 
         val adapter = StoreListAdapter(requireContext(), viewLifecycleOwner.lifecycleScope) { store ->
@@ -50,15 +51,16 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
         var debounceJob: Job? = null
 
         fun currentTerm(): String = search.text.toString().trim()
+        fun cityLabel(): String = selectedCity?.let { " • $it" }.orEmpty()
 
         fun renderStatus(message: String? = null) {
             loading.visibility = View.VISIBLE
             loading.text = message ?: when {
-                isLoading && loaded.isEmpty() -> "جاري تحميل المتاجر..."
+                isLoading && loaded.isEmpty() -> "جاري تحميل المتاجر${cityLabel()}..."
                 isLoading -> "جاري تحميل المزيد..."
-                loaded.isEmpty() -> "لا توجد متاجر مطابقة حالياً"
-                hasMore -> "تم عرض ${loaded.size} متجر • مرري لعرض المزيد"
-                else -> "تم عرض ${loaded.size} متجر"
+                loaded.isEmpty() -> "لا توجد متاجر مطابقة${cityLabel()} حالياً"
+                hasMore -> "تم عرض ${loaded.size} متجر${cityLabel()} • مرري لعرض المزيد"
+                else -> "تم عرض ${loaded.size} متجر${cityLabel()}"
             }
         }
 
@@ -67,7 +69,9 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
                 val diskStores = cache.loadStores(allowExpired = true)
                 if (diskStores.isNotEmpty()) AppContentStore.updateStores(diskStores)
             }
-            return AppContentStore.filteredStores(term)
+            return AppContentStore.filteredStores(term).filter { store ->
+                selectedCity == null || store.city.equals(selectedCity, ignoreCase = true)
+            }
         }
 
         fun loadPage(reset: Boolean, showCacheFirst: Boolean = reset) {
@@ -109,8 +113,8 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
                         loaded.addAll(cached)
                         adapter.submitList(loaded.toList())
                         renderStatus(
-                            if (online) "نعرض آخر بيانات محفوظة • جاري التحديث..."
-                            else "بدون اتصال — نعرض ${loaded.size} متجر من النسخة المحفوظة"
+                            if (online) "نعرض آخر بيانات محفوظة${cityLabel()} • جاري التحديث..."
+                            else "بدون اتصال — نعرض ${loaded.size} متجر محفوظ${cityLabel()}"
                         )
                     }
                 }
@@ -119,9 +123,9 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
                     isLoading = false
                     hasMore = false
                     if (loaded.isEmpty()) {
-                        renderStatus("لا يوجد اتصال ولا توجد متاجر محفوظة مطابقة")
+                        renderStatus("لا يوجد اتصال ولا توجد متاجر محفوظة مطابقة${cityLabel()}")
                     } else {
-                        renderStatus("بدون اتصال — نعرض ${loaded.size} متجر من النسخة المحفوظة")
+                        renderStatus("بدون اتصال — نعرض ${loaded.size} متجر محفوظ${cityLabel()}")
                     }
                     return@launch
                 }
@@ -129,6 +133,7 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
                 try {
                     val page = repository.storePage(
                         search = term,
+                        city = selectedCity,
                         pageSize = PAGE_SIZE,
                         offset = requestOffset
                     )
@@ -140,7 +145,7 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
                     nextOffset = page.nextOffset
                     hasMore = page.hasMore
 
-                    if (reset && term.isBlank()) {
+                    if (reset && term.isBlank() && selectedCity == null) {
                         val refreshedCache = (page.items + AppContentStore.stores)
                             .distinctBy { it.id }
                             .take(MAX_CACHED_STORES)
@@ -164,7 +169,7 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
                     }
                     renderStatus(
                         if (loaded.isNotEmpty()) {
-                            "تعذر التحديث — نعرض ${loaded.size} متجر محفوظ. مرري أو ابحثي للمحاولة مجدداً."
+                            "تعذر التحديث — نعرض ${loaded.size} متجر محفوظ${cityLabel()}. مرري أو ابحثي للمحاولة مجدداً."
                         } else {
                             "تعذر تحميل المتاجر\n${error.message ?: "حاولي مرة أخرى"}"
                         }
@@ -214,13 +219,17 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
 
     companion object {
         private const val ARG_QUERY = "query"
+        private const val ARG_CITY = "city"
         private const val PAGE_SIZE = CatalogPagination.DEFAULT_PAGE_SIZE
         private const val LOAD_AHEAD_ITEMS = 5
         private const val SEARCH_DEBOUNCE_MS = 450L
         private const val MAX_CACHED_STORES = 100
 
-        fun newSearchInstance(query: String): StoresFragment = StoresFragment().apply {
-            arguments = Bundle().apply { putString(ARG_QUERY, query) }
+        fun newSearchInstance(query: String, city: String? = null): StoresFragment = StoresFragment().apply {
+            arguments = Bundle().apply {
+                putString(ARG_QUERY, query)
+                city?.takeIf { it.isNotBlank() }?.let { putString(ARG_CITY, it) }
+            }
         }
     }
 }
