@@ -4,14 +4,13 @@ import android.os.Bundle
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.ScrollView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.tani.app.MainActivity
 import com.tani.app.R
-import com.tani.app.data.MerchantDashboardSummary
-import com.tani.app.data.MerchantProfile
-import com.tani.app.data.Repository
-import com.tani.app.data.Seller
+import com.tani.app.data.*
+import com.tani.app.data.network.CustomerErrorMessages
 import com.tani.app.ui.growth.MerchantInsightsFragment
 import com.tani.app.ui.monetization.MonetizationFragment
 import kotlinx.coroutines.async
@@ -21,6 +20,7 @@ import kotlinx.coroutines.launch
 class SellerFragment : Fragment() {
     private val repository = Repository()
     private lateinit var root: LinearLayout
+    private var storeToggleInFlight = false
 
     override fun onCreateView(
         inflater: android.view.LayoutInflater,
@@ -57,21 +57,61 @@ class SellerFragment : Fragment() {
                 val profile = repository.merchantProfile()
                 val seller = repository.seller()
                 if (profile?.verification_status == "approved" && seller != null) {
-                    val summary = runCatching { repository.merchantDashboardSummary() }.getOrNull()
-                    Triple(profile, seller, summary)
-                } else Triple(profile, seller, null)
-            }.onSuccess { (profile, seller, summary) ->
-                if (profile?.verification_status == "approved" && seller != null) renderHub(profile, seller, summary)
-                else renderStatus(profile)
-            }.onFailure { showError(it.message ?: "تعذر فتح لوحة المتجر") }
+                    coroutineScope {
+                        val storeRequest = async { runCatching { repository.merchantStore() }.getOrNull() }
+                        val summaryRequest = async { runCatching { repository.merchantDashboardSummary() }.getOrNull() }
+                        val zonesRequest = async { runCatching { repository.merchantDeliveryZones(seller.id) }.getOrDefault(emptyList()) }
+                        DashboardData(
+                            profile = profile,
+                            seller = seller,
+                            store = storeRequest.await(),
+                            summary = summaryRequest.await(),
+                            deliveryZoneCount = zonesRequest.await().size
+                        )
+                    }
+                } else {
+                    DashboardData(profile, seller, null, null, 0)
+                }
+            }.onSuccess { data ->
+                if (data.profile?.verification_status == "approved" && data.seller != null) {
+                    renderHub(data)
+                } else {
+                    renderStatus(data.profile)
+                }
+            }.onFailure { error ->
+                showError(CustomerErrorMessages.from(error, "تعذر فتح لوحة المتجر. حاولي مرة أخرى."))
+            }
         }
     }
 
-    private fun renderHub(profile: MerchantProfile, seller: Seller, summary: MerchantDashboardSummary?) {
+    private fun renderHub(data: DashboardData) {
         val context = requireContext()
+        val profile = data.profile ?: return
+        val seller = data.seller ?: return
+        val store = data.store
+        val summary = data.summary
+
         root.removeAllViews()
-        root.addView(MerchantUi.title(context, profile.store_name ?: seller.store_name.ifBlank { profile.business_name }))
-        root.addView(MerchantUi.subtitle(context, "كل شغل متجرك في مكان واحد."))
+        root.addView(MerchantUi.title(context, store?.name ?: profile.store_name ?: seller.store_name.ifBlank { profile.business_name }))
+        root.addView(MerchantUi.subtitle(context, "إدارة سريعة للطلبات والمتجر والمنتجات من مكان واحد."))
+
+        val storeStateTitle = when {
+            store == null -> "بيانات المتجر تحتاج مراجعة"
+            !store.is_active -> "المتجر غير ظاهر للعملاء"
+            !store.is_open -> "المتجر مغلق مؤقتاً"
+            else -> "المتجر مفتوح لاستقبال الطلبات ✓"
+        }
+        val storeTone = when {
+            store == null || !store.is_active -> MerchantUi.Tone.WARNING
+            !store.is_open -> MerchantUi.Tone.NEUTRAL
+            else -> MerchantUi.Tone.SUCCESS
+        }
+        val storePill = when {
+            store == null -> "إعداد ناقص"
+            !store.is_active -> "مخفي"
+            !store.is_open -> "مغلق"
+            else -> "مفتوح"
+        }
 
         root.addView(MerchantUi.card(context, soft = true).apply {
             addView(LinearLayout(context).apply {
@@ -79,28 +119,60 @@ class SellerFragment : Fragment() {
                 layoutDirection = View.LAYOUT_DIRECTION_RTL
                 addView(LinearLayout(context).apply {
                     orientation = LinearLayout.VERTICAL
-                    addView(MerchantUi.text(context, "المتجر شغال ✓", 17f, true))
-                    addView(MerchantUi.muted(context, if (profile.trust_badge) "شارة الثقة مفعلة" else "شارة الثقة تُبنى مع جودة الأداء", 12f).apply {
+                    addView(MerchantUi.text(context, storeStateTitle, 17f, true))
+                    addView(MerchantUi.muted(context, if (profile.trust_badge) "شارة الثقة مفعلة" else "الحساب معتمد — شارة الثقة تُبنى مع جودة الأداء", 12f).apply {
                         setPadding(0, MerchantUi.dp(context, 4), 0, 0)
                     })
                 }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-                addView(MerchantUi.pill(context, "معتمد", MerchantUi.Tone.SUCCESS))
+                addView(MerchantUi.pill(context, storePill, storeTone))
             })
+            if (store != null && store.is_active) {
+                addView(MerchantUi.compactButton(context, if (store.is_open) "إغلاق مؤقت" else "فتح المتجر") {
+                    toggleStoreOpen(store)
+                }.apply { setPadding(MerchantUi.dp(context, 12), 0, MerchantUi.dp(context, 12), 0) })
+            }
         })
 
-        summary?.let { m ->
-            root.addView(MerchantUi.sectionTitle(context, "اليوم في متجرك"))
+        val setupIssues = buildList {
+            if (store == null) add("راجعي بيانات المتجر")
+            if (store?.logo_url.isNullOrBlank()) add("أضيفي شعار المتجر")
+            if (store?.cover_url.isNullOrBlank()) add("أضيفي غلاف المتجر")
+            if (data.deliveryZoneCount == 0) add("أضيفي منطقة توصيل واحدة على الأقل")
+        }
+        if (setupIssues.isNotEmpty()) {
+            root.addView(MerchantUi.sectionTitle(context, "يحتاج انتباهك"))
+            root.addView(MerchantUi.card(context).apply {
+                addView(MerchantUi.text(context, "كمّلي إعداد المتجر", 15.5f, true))
+                setupIssues.forEach { issue ->
+                    addView(MerchantUi.muted(context, "• $issue", 13f).apply {
+                        setPadding(0, MerchantUi.dp(context, 5), 0, 0)
+                    })
+                }
+                addView(MerchantUi.compactButton(context, "فتح بيانات المتجر") { open(MerchantStoreFragment()) })
+                if (data.deliveryZoneCount == 0) {
+                    addView(MerchantUi.compactButton(context, "إعداد التوصيل") { open(MerchantDeliveryFragment()) })
+                }
+            })
+        }
+
+        root.addView(MerchantUi.sectionTitle(context, "نظرة عامة على الأداء"))
+        if (summary != null) {
             root.addView(LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
                 layoutDirection = View.LAYOUT_DIRECTION_RTL
-                addView(MerchantUi.metricCard(context, "الطلبات", m.orders.toString()), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = MerchantUi.dp(context, 4) })
-                addView(MerchantUi.metricCard(context, "المبيعات", "${money(m.gmv)} جنيه"), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = MerchantUi.dp(context, 4) })
+                addView(MerchantUi.metricCard(context, "الطلبات", summary.orders.toString()), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = MerchantUi.dp(context, 4) })
+                addView(MerchantUi.metricCard(context, "المبيعات", "${money(summary.gmv)} جنيه"), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = MerchantUi.dp(context, 4) })
             })
             root.addView(LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
                 layoutDirection = View.LAYOUT_DIRECTION_RTL
-                addView(MerchantUi.metricCard(context, "منتجات نشطة", m.active_products.toString()), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = MerchantUi.dp(context, 4) })
-                addView(MerchantUi.metricCard(context, "العملاء", m.customers.toString()), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = MerchantUi.dp(context, 4) })
+                addView(MerchantUi.metricCard(context, "منتجات نشطة", summary.active_products.toString()), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = MerchantUi.dp(context, 4) })
+                addView(MerchantUi.metricCard(context, "العملاء", summary.customers.toString()), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = MerchantUi.dp(context, 4) })
+            })
+        } else {
+            root.addView(MerchantUi.card(context, soft = true).apply {
+                addView(MerchantUi.muted(context, "تعذر تحديث مؤشرات الأداء الآن، لكن أدوات إدارة المتجر ما زالت متاحة.", 13f))
+                addView(MerchantUi.compactButton(context, "إعادة تحديث اللوحة") { load() })
             })
         }
 
@@ -128,13 +200,40 @@ class SellerFragment : Fragment() {
         root.addView(MerchantUi.navCard(context, "✨", "النمو والظهور", "الاشتراكات والظهور الممول والحملات") {
             open(MonetizationFragment.newInstance(seller.id))
         })
+    }
 
-        root.addView(MerchantUi.card(context, soft = true).apply {
-            addView(MerchantUi.text(context, "الظهور الممول واضح دائماً", 13.5f, true))
-            addView(MerchantUi.muted(context, "أي ظهور مدفوع للعملاء يظهر بوسم «ممول» ولا يختلط بالمحتوى العضوي.", 12f).apply {
-                setPadding(0, MerchantUi.dp(context, 4), 0, 0)
-            })
-        })
+    private fun toggleStoreOpen(store: MerchantStore) {
+        if (storeToggleInFlight) return
+        storeToggleInFlight = true
+        val newOpen = !store.is_open
+        Toast.makeText(requireContext(), if (newOpen) "جاري فتح المتجر…" else "جاري إغلاق المتجر مؤقتاً…", Toast.LENGTH_SHORT).show()
+        viewLifecycleOwner.lifecycleScope.launch {
+            runCatching {
+                repository.updateMerchantStore(
+                    store.id,
+                    store.name,
+                    store.description,
+                    store.city,
+                    store.area.orEmpty(),
+                    store.contact_phone.orEmpty(),
+                    store.whatsapp.orEmpty(),
+                    newOpen,
+                    store.is_active,
+                    store.logo_url,
+                    store.cover_url
+                )
+            }.onSuccess {
+                Toast.makeText(requireContext(), if (newOpen) "المتجر مفتوح الآن ✓" else "تم إغلاق المتجر مؤقتاً", Toast.LENGTH_SHORT).show()
+                load()
+            }.onFailure { error ->
+                storeToggleInFlight = false
+                Toast.makeText(
+                    requireContext(),
+                    CustomerErrorMessages.from(error, "تعذر تحديث حالة المتجر. حاولي مرة أخرى."),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
     }
 
     private fun renderStatus(profile: MerchantProfile?) {
@@ -195,4 +294,12 @@ class SellerFragment : Fragment() {
     }
 
     private fun money(value: Double): String = if (value % 1.0 == 0.0) value.toInt().toString() else String.format(java.util.Locale.US, "%.2f", value)
+
+    private data class DashboardData(
+        val profile: MerchantProfile?,
+        val seller: Seller?,
+        val store: MerchantStore?,
+        val summary: MerchantDashboardSummary?,
+        val deliveryZoneCount: Int
+    )
 }
