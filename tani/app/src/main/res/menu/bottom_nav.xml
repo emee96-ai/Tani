@@ -1,1 +1,23 @@
-<menu xmlns:android="http://schemas.android.com/apk/res/android"><item android:icon="@drawable/ic_nav_home" android:id="@+id/home" android:title="الرئيسية"/><item android:icon="@drawable/ic_store" android:id="@+id/categories" android:title="المتاجر"/><item android:icon="@drawable/ic_nav_cart" android:id="@+id/cart" android:title="السلة"/><item android:icon="@drawable/ic_nav_orders" android:id="@+id/orders" android:title="طلباتي"/><item android:icon="@drawable/ic_settings" android:id="@+id/profile" android:title="الإعدادات"/></menu>
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/home"
+        android:icon="@drawable/ic_nav_home"
+        android:title="الرئيسية" />
+    <item
+        android:id="@+id/categories"
+        android:icon="@drawable/ic_store"
+        android:title="المتاجر" />
+    <item
+        android:id="@+id/cart"
+        android:icon="@drawable/ic_nav_cart"
+        android:title="السلة" />
+    <item
+        android:id="@+id/orders"
+        android:icon="@drawable/ic_nav_orders"
+        android:title="طلباتي" />
+    <item
+        android:id="@+id/profile"
+        android:icon="@drawable/ic_nav_profile"
+        android:title="حسابي" />
+</menu>
