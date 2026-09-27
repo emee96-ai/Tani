@@ -22,6 +22,7 @@ import com.tani.app.data.Analytics
 import com.tani.app.data.AuthRedirect
 import com.tani.app.data.Cart
 import com.tani.app.data.ErrorMonitoring
+import com.tani.app.data.MerchantProfile
 import com.tani.app.data.Repository
 import com.tani.app.data.Supabase
 import com.tani.app.data.cache.AppContentStore
@@ -35,6 +36,8 @@ import com.tani.app.ui.legal.PoliciesFragment
 import com.tani.app.ui.marketplace.StoresFragment
 import com.tani.app.ui.orders.OrdersFragment
 import com.tani.app.ui.profile.ProfileFragment
+import com.tani.app.ui.seller.MerchantOnboardingFragment
+import com.tani.app.ui.seller.SellerFragment
 import com.tani.app.ui.trust.SupportCenterFragment
 import java.net.URL
 import java.net.URLDecoder
@@ -187,6 +190,10 @@ class MainActivity : AppCompatActivity() {
                     showProtectedSecondary(FavoritesFragment())
                     true
                 }
+                R.id.drawer_seller -> {
+                    openMerchantPortal()
+                    true
+                }
                 R.id.drawer_support -> {
                     show(SupportCenterFragment())
                     true
@@ -218,6 +225,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun refreshDrawerAccount() {
         if (!::drawerAccountHeader.isInitialized) return
+        refreshMerchantEntryLabel()
         if (!Supabase.hasStoredSession()) {
             renderGuestDrawerAccount()
             return
@@ -241,6 +249,7 @@ class MainActivity : AppCompatActivity() {
     private fun renderDrawerAccount(account: com.tani.app.data.AccountProfile) {
         drawerAccountName.text = account.profile.name.ifBlank { "حسابي" }
         drawerAccountEmail.text = account.email.ifBlank { "بيانات الحساب" }
+        refreshMerchantEntryLabel()
         val avatarUrl = account.profile.avatar_url
         if (avatarUrl.isNullOrBlank()) {
             renderDefaultDrawerAvatar()
@@ -264,7 +273,23 @@ class MainActivity : AppCompatActivity() {
     private fun renderGuestDrawerAccount() {
         drawerAccountName.text = "حسابي"
         drawerAccountEmail.text = "سجلي الدخول لعرض بيانات الحساب"
+        refreshMerchantEntryLabel()
         renderDefaultDrawerAvatar()
+    }
+
+    private fun refreshMerchantEntryLabel() {
+        if (!::drawerNav.isInitialized) return
+        val item = drawerNav.menu.findItem(R.id.drawer_seller) ?: return
+        item.title = if (!Supabase.hasStoredSession()) {
+            "البيع على تاني"
+        } else {
+            when (AppContentStore.merchant?.verification_status) {
+                "approved" -> "لوحة التاجر"
+                "pending" -> "متابعة طلب التاجر"
+                "suspended" -> "حساب التاجر"
+                else -> "البيع على تاني"
+            }
+        }
     }
 
     private fun renderDefaultDrawerAvatar() {
@@ -369,6 +394,40 @@ class MainActivity : AppCompatActivity() {
         showPrimary(R.id.home)
         refreshDrawerAccount()
         hideLaunchSplash()
+    }
+
+    fun openMerchantPortal() {
+        drawer.closeDrawer(GravityCompat.START)
+        if (!Supabase.hasStoredSession()) {
+            show(AuthFragment.newMerchantInstance())
+            return
+        }
+
+        if (AppContentStore.merchantLoaded) {
+            showMerchantDestination(AppContentStore.merchant)
+            return
+        }
+
+        lifecycleScope.launch {
+            runCatching { Repository().merchantProfile() }
+                .onSuccess { merchant ->
+                    AppContentStore.updateMerchant(merchant)
+                    refreshMerchantEntryLabel()
+                    showMerchantDestination(merchant)
+                }
+                .onFailure {
+                    show(MerchantOnboardingFragment())
+                }
+        }
+    }
+
+    private fun showMerchantDestination(merchant: MerchantProfile?) {
+        val destination = if (merchant?.verification_status == "approved") {
+            SellerFragment()
+        } else {
+            MerchantOnboardingFragment()
+        }
+        show(destination)
     }
 
     fun show(fragment: Fragment, addToBackStack: Boolean = true) {
@@ -602,6 +661,8 @@ class MainActivity : AppCompatActivity() {
         "AboutFragment" -> "من نحن"
         "SupportCenterFragment" -> "الدعم والشكاوى"
         "PoliciesFragment" -> "السياسات والخصوصية"
+        "MerchantOnboardingFragment" -> "البيع على تاني"
+        "SellerFragment" -> "لوحة التاجر"
         else -> "تاني"
     }
 
