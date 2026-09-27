@@ -8,6 +8,20 @@ suspend fun Repository.merchantProductVariants(productId: String): List<ProductV
     "select=id,product_id,name,sku,price,stock,attributes,is_active&product_id=eq.$productId&order=is_active.desc,created_at.asc"
 )
 
+suspend fun Repository.uploadAndAttachMerchantProductImage(
+    bytes: ByteArray,
+    productId: String,
+    primary: Boolean
+): ProductImage {
+    val path = uploadProductImage(bytes, productId)
+    return try {
+        attachProductImage(productId, path, primary)
+    } catch (error: Throwable) {
+        runCatching { Supabase.deleteStorageObject("product-images", path) }
+        throw error
+    }
+}
+
 suspend fun Repository.setPrimaryProductImage(productId: String, imageId: String) {
     Supabase.patch<List<ProductImage>>(
         "product_images",
