@@ -12,19 +12,14 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.tani.app.MainActivity
 import com.tani.app.R
-import com.tani.app.data.Repository
 import com.tani.app.data.MerchantProfile
+import com.tani.app.data.Repository
 import com.tani.app.data.Supabase
 import com.tani.app.data.cache.AppContentStore
 import com.tani.app.data.cache.MarketplaceCache
-import com.tani.app.ui.growth.FavoritesFragment
-import com.tani.app.ui.growth.NotificationsFragment
 import com.tani.app.ui.growth.ReferralFragment
-import com.tani.app.ui.legal.AboutFragment
-import com.tani.app.ui.legal.PoliciesFragment
 import com.tani.app.ui.seller.MerchantOnboardingFragment
 import com.tani.app.ui.seller.SellerFragment
-import com.tani.app.ui.trust.SupportCenterFragment
 import kotlinx.coroutines.launch
 
 class ProfileFragment : Fragment(R.layout.fragment_profile) {
@@ -45,26 +40,11 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             (activity as? MainActivity)?.show(AccountFragment())
         }
         dashboardButton.setOnClickListener { openStoreDashboard() }
-        view.findViewById<Button>(R.id.profile_favorites).setOnClickListener {
-            (activity as? MainActivity)?.show(FavoritesFragment())
-        }
-        view.findViewById<Button>(R.id.profile_notifications).setOnClickListener {
-            (activity as? MainActivity)?.show(NotificationsFragment())
-        }
         view.findViewById<Button>(R.id.profile_referrals).setOnClickListener {
             (activity as? MainActivity)?.show(ReferralFragment())
         }
-        view.findViewById<Button>(R.id.profile_support).setOnClickListener {
-            (activity as? MainActivity)?.show(SupportCenterFragment())
-        }
-        view.findViewById<Button>(R.id.profile_policies).setOnClickListener {
-            (activity as? MainActivity)?.show(PoliciesFragment())
-        }
         view.findViewById<Button>(R.id.profile_change_password).setOnClickListener {
             showChangePasswordDialog()
-        }
-        view.findViewById<Button>(R.id.profile_about).setOnClickListener {
-            (activity as? MainActivity)?.show(AboutFragment())
         }
         deleteButton.setOnClickListener { confirmDeleteAccount() }
         logoutButton.setOnClickListener { confirmLogout() }
