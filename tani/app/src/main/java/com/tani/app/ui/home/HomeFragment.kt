@@ -21,6 +21,7 @@ import com.tani.app.data.Repository
 import com.tani.app.data.Supabase
 import com.tani.app.data.cache.AppContentStore
 import com.tani.app.data.cache.MarketplaceCache
+import com.tani.app.data.network.CustomerErrorMessages
 import com.tani.app.data.network.NetworkStatus
 import com.tani.app.data.repository.ScaleRepository
 import com.tani.app.ui.marketplace.MarketplaceUi
@@ -46,6 +47,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val popularBox = view.findViewById<LinearLayout>(R.id.home_popular_products_box)
         val storesBox = view.findViewById<LinearLayout>(R.id.home_stores_box)
         val loading = view.findViewById<TextView>(R.id.home_loading)
+        val retry = view.findViewById<Button>(R.id.home_retry)
+        val cache = MarketplaceCache(requireContext())
 
         fun openSearch() {
             val query = search.text.toString().trim()
@@ -75,13 +78,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
 
         fun renderFeed(feed: HomeFeed) {
-            loading.visibility = View.GONE
             categoriesBox.removeAllViews()
             feed.categories.forEach { category ->
                 val button = MarketplaceUi.chipButton(requireContext(), category.name) {
-                    (activity as MainActivity).show(
-                        ProductsFragment.newInstance(category.id, category.name)
-                    )
+                    (activity as MainActivity).show(ProductsFragment.newInstance(category.id, category.name))
                 }.apply {
                     background = ContextCompat.getDrawable(requireContext(), R.drawable.bg_category_card)
                     minWidth = 0
@@ -97,12 +97,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                         MarketplaceUi.dp(requireContext(), 8),
                         MarketplaceUi.dp(requireContext(), 8)
                     )
-                    setCompoundDrawablesRelativeWithIntrinsicBounds(
-                        0,
-                        categoryIcon(category.name),
-                        0,
-                        0
-                    )
+                    setCompoundDrawablesRelativeWithIntrinsicBounds(0, categoryIcon(category.name), 0, 0)
                     compoundDrawablePadding = MarketplaceUi.dp(requireContext(), 7)
                 }
                 categoriesBox.addView(
@@ -139,38 +134,55 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             }
         }
 
-        val cache = MarketplaceCache(requireContext())
-        viewLifecycleOwner.lifecycleScope.launch {
-            val online = NetworkStatus.isOnline(requireContext())
-            val cachedFeed = AppContentStore.homeFeed ?: cache.loadHomeFeed(allowExpired = true)
-            if (cachedFeed != null) {
-                renderFeed(cachedFeed)
-                if (!online) {
-                    loading.visibility = View.VISIBLE
-                    loading.text = "بدون اتصال — نعرض آخر بيانات محفوظة"
-                }
-            }
+        fun setFeedState(message: String?, canRetry: Boolean) {
+            loading.visibility = if (message == null) View.GONE else View.VISIBLE
+            loading.text = message.orEmpty()
+            retry.visibility = if (canRetry) View.VISIBLE else View.GONE
+        }
 
-            if (!online) {
-                if (cachedFeed == null) {
-                    loading.visibility = View.VISIBLE
-                    loading.text = "لا يوجد اتصال بالإنترنت ولا توجد بيانات محفوظة بعد"
+        fun refreshHomeFeed() {
+            retry.visibility = View.GONE
+            viewLifecycleOwner.lifecycleScope.launch {
+                val cachedFeed = AppContentStore.homeFeed ?: cache.loadHomeFeed(allowExpired = true)
+                if (cachedFeed != null) {
+                    renderFeed(cachedFeed)
+                    setFeedState("نعرض آخر بيانات محفوظة • جاري التحديث...", canRetry = false)
+                } else {
+                    setFeedState("جاري تحميل السوق...", canRetry = false)
                 }
-                return@launch
-            }
 
-            if (cachedFeed == null) {
+                if (!NetworkStatus.isOnline(requireContext())) {
+                    setFeedState(
+                        if (cachedFeed != null) {
+                            "بدون اتصال — نعرض آخر بيانات محفوظة"
+                        } else {
+                            "لا يوجد اتصال بالإنترنت ولا توجد بيانات محفوظة بعد"
+                        },
+                        canRetry = true
+                    )
+                    return@launch
+                }
+
                 runCatching { repository.homeFeed() }
                     .onSuccess { feed ->
+                        AppContentStore.updateHomeFeed(feed)
                         cache.saveHomeFeed(feed)
                         renderFeed(feed)
+                        setFeedState(null, canRetry = false)
                     }
-                    .onFailure {
-                        loading.visibility = View.VISIBLE
-                        loading.text = "تعذر تحديث السوق الآن\n${it.message ?: "حاولي مرة أخرى"}"
+                    .onFailure { error ->
+                        val fallback = if (cachedFeed != null) {
+                            "تعذر تحديث السوق — نعرض آخر بيانات محفوظة"
+                        } else {
+                            "تعذر تحميل السوق. حاولي مرة أخرى."
+                        }
+                        setFeedState(CustomerErrorMessages.from(error, fallback), canRetry = true)
                     }
             }
         }
+
+        retry.setOnClickListener { refreshHomeFeed() }
+        refreshHomeFeed()
 
         viewLifecycleOwner.lifecycleScope.launch {
             val online = NetworkStatus.isOnline(requireContext())
@@ -190,10 +202,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             if (preloaded.isNotEmpty()) {
                 if (!online) recommendedTitle.text = "مقترحة لك • محفوظة"
                 renderProducts(recommendedBox, preloaded)
-                return@launch
-            }
-
-            if (!online) {
+                if (!online) return@launch
+            } else if (!online) {
                 recommendedTitle.text = "مقترحة لك • بدون اتصال"
                 recommendedBox.removeAllViews()
                 recommendedBox.addView(MarketplaceUi.empty(requireContext(), "لا توجد اقتراحات محفوظة لهذا الحساب بعد"))
@@ -205,8 +215,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     if (Supabase.userId != userId || !Supabase.hasStoredSession()) return@onSuccess
                     AppContentStore.updateRecommendations(userId, products)
                     cache.saveRecommendations(userId, products)
+                    recommendedTitle.text = "مقترحة لك"
                     if (products.isEmpty()) {
-                        recommendedTitle.text = "مقترحة لك"
                         recommendedBox.removeAllViews()
                         recommendedBox.addView(MarketplaceUi.empty(requireContext(), "ستتحسن الاقتراحات مع استخدامك لتاني"))
                     } else {
@@ -242,21 +252,14 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 context = requireContext(),
                 scope = viewLifecycleOwner.lifecycleScope,
                 product = product,
-                onOpen = {
-                    (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id))
-                },
+                onOpen = { (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id)) },
                 onAdd = {
                     if (product.has_variants) {
                         (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id))
                     } else if (Cart.add(product.toProduct())) {
                         (activity as? MainActivity)?.refreshCartBadge()
                         viewLifecycleOwner.lifecycleScope.launch {
-                            Analytics.track(
-                                "add_to_cart",
-                                screen = "home",
-                                entityType = "product",
-                                entityId = product.id
-                            )
+                            Analytics.track("add_to_cart", screen = "home", entityType = "product", entityId = product.id)
                         }
                         Toast.makeText(requireContext(), "تمت إضافة ${product.name} للسلة", Toast.LENGTH_SHORT).show()
                     } else {
