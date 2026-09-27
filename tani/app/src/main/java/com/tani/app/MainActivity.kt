@@ -31,10 +31,11 @@ import com.tani.app.ui.growth.FavoritesFragment
 import com.tani.app.ui.growth.NotificationsFragment
 import com.tani.app.ui.home.HomeFragment
 import com.tani.app.ui.legal.AboutFragment
+import com.tani.app.ui.legal.PoliciesFragment
 import com.tani.app.ui.marketplace.StoresFragment
 import com.tani.app.ui.orders.OrdersFragment
-import com.tani.app.ui.profile.AccountFragment
 import com.tani.app.ui.profile.ProfileFragment
+import com.tani.app.ui.trust.SupportCenterFragment
 import java.net.URL
 import java.net.URLDecoder
 import kotlinx.coroutines.Dispatchers
@@ -114,7 +115,7 @@ class MainActivity : AppCompatActivity() {
             openPrimary(item.itemId)
         }
         nav.setOnItemReselectedListener {
-            // Intentionally keep the current fragment instance and its scroll/filter state.
+            // Keep the existing tab instance so scroll, filters and in-progress state survive.
         }
 
         setupDrawerNavigation()
@@ -156,8 +157,6 @@ class MainActivity : AppCompatActivity() {
             showApp()
         }
 
-        // Refresh cached public data after the UI is already usable. On a cold cache the
-        // Home screen performs its own request, so avoid firing a duplicate startup fetch.
         if (AppContentStore.hasCoreContent()) {
             lifecycleScope.launch {
                 runCatching { AppContentStore.warmUp(this@MainActivity) }
@@ -184,16 +183,16 @@ class MainActivity : AppCompatActivity() {
         drawerNav.setNavigationItemSelectedListener { item ->
             drawer.closeDrawer(GravityCompat.START)
             when (item.itemId) {
-                R.id.drawer_home -> openPrimary(R.id.home)
-                R.id.drawer_stores -> openPrimary(R.id.categories)
                 R.id.drawer_favorites -> {
                     showProtectedSecondary(FavoritesFragment())
                     true
                 }
-                R.id.drawer_cart -> openPrimary(R.id.cart)
-                R.id.drawer_orders -> openPrimary(R.id.orders)
-                R.id.drawer_notifications -> {
-                    showProtectedSecondary(NotificationsFragment())
+                R.id.drawer_support -> {
+                    show(SupportCenterFragment())
+                    true
+                }
+                R.id.drawer_policies -> {
+                    show(PoliciesFragment())
                     true
                 }
                 R.id.drawer_about -> {
@@ -212,7 +211,7 @@ class MainActivity : AppCompatActivity() {
         drawerAccountEmail = drawerAccountHeader.findViewById(R.id.drawer_account_email)
         drawerAccountHeader.setOnClickListener {
             drawer.closeDrawer(GravityCompat.START)
-            showProtectedSecondary(AccountFragment())
+            openPrimary(R.id.profile)
         }
         refreshDrawerAccount()
     }
@@ -474,7 +473,6 @@ class MainActivity : AppCompatActivity() {
         }
         nav.visibility = View.VISIBLE
         refreshCartBadge()
-        updateDrawerSelection(fragment)
     }
 
     private fun createPrimaryFragment(itemId: Int): Fragment = when (itemId) {
@@ -538,25 +536,6 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    private fun updateDrawerSelection(fragment: Fragment) {
-        drawerNav.menu.setGroupCheckable(0, true, true)
-        val item = when (fragment.javaClass.simpleName) {
-            "HomeFragment" -> R.id.drawer_home
-            "StoresFragment" -> R.id.drawer_stores
-            "CartFragment" -> R.id.drawer_cart
-            "OrdersFragment" -> R.id.drawer_orders
-            "ProfileFragment" -> null
-            else -> null
-        }
-        if (item == null) {
-            for (index in 0 until drawerNav.menu.size()) {
-                drawerNav.menu.getItem(index).isChecked = false
-            }
-        } else {
-            drawerNav.setCheckedItem(item)
-        }
-    }
-
     fun refreshCartBadge() {
         if (!::nav.isInitialized || nav.menu.findItem(R.id.cart) == null) return
         val count = Cart.itemCount()
@@ -607,8 +586,8 @@ class MainActivity : AppCompatActivity() {
         "CategoriesFragment" -> "التصنيفات"
         "CartFragment" -> "السلة"
         "OrdersFragment" -> "طلباتي"
-        "ProfileFragment" -> "الإعدادات"
-        "AccountFragment" -> "حسابي"
+        "ProfileFragment" -> "حسابي"
+        "AccountFragment" -> "بيانات الحساب"
         "ProductDetailsFragment" -> "تفاصيل المنتج"
         "SearchFragment" -> "البحث"
         "ProductsFragment" -> "المنتجات"
@@ -621,7 +600,8 @@ class MainActivity : AppCompatActivity() {
         "FavoritesFragment" -> "المفضلة"
         "NotificationsFragment" -> "الإشعارات"
         "AboutFragment" -> "من نحن"
-        "SupportCenterFragment" -> "مركز المساعدة"
+        "SupportCenterFragment" -> "الدعم والشكاوى"
+        "PoliciesFragment" -> "السياسات والخصوصية"
         else -> "تاني"
     }
 
