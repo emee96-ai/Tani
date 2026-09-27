@@ -8,6 +8,15 @@ suspend fun Repository.merchantProductVariants(productId: String): List<ProductV
     "select=id,product_id,name,sku,price,stock,attributes,is_active&product_id=eq.$productId&order=is_active.desc,created_at.asc"
 )
 
+suspend fun Repository.merchantProductVariantsForProducts(productIds: List<String>): List<ProductVariant> {
+    val ids = productIds.distinct().filter { it.isNotBlank() }
+    if (ids.isEmpty()) return emptyList()
+    return Supabase.get(
+        "product_variants",
+        "select=id,product_id,name,sku,price,stock,attributes,is_active&product_id=in.(${ids.joinToString(",")})&order=product_id.asc,is_active.desc,created_at.asc"
+    )
+}
+
 suspend fun Repository.uploadAndAttachMerchantProductImage(
     bytes: ByteArray,
     productId: String,
