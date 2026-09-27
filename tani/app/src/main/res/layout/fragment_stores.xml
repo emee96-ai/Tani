@@ -56,6 +56,15 @@
         android:text="جاري تحميل المتاجر..."
         android:textColor="@color/text_muted" />
 
+    <Button
+        android:id="@+id/stores_retry"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:text="إعادة المحاولة"
+        android:visibility="gone" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/stores_list"
         android:layout_width="match_parent"
