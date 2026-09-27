@@ -26,10 +26,26 @@
             android:text="ابحثي عن منتج، متجر، أو فئة في السوق المحلي"
             android:textColor="@color/text_muted" />
 
-        <LinearLayout
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
+            android:text="المدينة"
+            android:textColor="@color/text_dark"
+            android:textStyle="bold" />
+
+        <Spinner
+            android:id="@+id/search_city"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_field"
+            android:paddingHorizontal="12dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
             android:orientation="horizontal">
 
             <EditText
@@ -50,6 +66,31 @@
                 android:layout_marginStart="8dp"
                 android:text="بحث" />
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/search_recent_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="آخر عمليات البحث"
+            android:textColor="@color/text_dark"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <HorizontalScrollView
+            android:id="@+id/search_recent_scroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:scrollbars="none"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/search_recent_box"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
 
         <TextView
             android:layout_width="match_parent"

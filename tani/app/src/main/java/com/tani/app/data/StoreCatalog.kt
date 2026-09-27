@@ -5,6 +5,7 @@ import com.tani.app.data.catalog.CatalogPagination
 
 suspend fun Repository.storePage(
     search: String? = null,
+    city: String? = null,
     pageSize: Int = CatalogPagination.DEFAULT_PAGE_SIZE,
     offset: Int = 0
 ): CatalogPage<StoreCard> {
@@ -16,6 +17,11 @@ suspend fun Repository.storePage(
         "limit=${CatalogPagination.requestLimit(size)}",
         "offset=$offset"
     )
+
+    city?.trim()?.takeIf { it.isNotBlank() }?.let { selectedCity ->
+        val encodedCity = java.net.URLEncoder.encode(selectedCity, Charsets.UTF_8.name())
+        query += "city=eq.$encodedCity"
+    }
 
     sanitizeStoreSearch(search)?.let { term ->
         val pattern = java.net.URLEncoder.encode("*$term*", Charsets.UTF_8.name())
