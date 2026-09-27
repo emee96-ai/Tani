@@ -26,6 +26,7 @@ import com.tani.app.data.cache.AppContentStore
 import com.tani.app.data.cache.MarketplaceCache
 import com.tani.app.data.catalog.CatalogPagination
 import com.tani.app.data.network.NetworkStatus
+import com.tani.app.data.storePage
 import com.tani.app.ui.marketplace.ProductDetailsFragment
 import com.tani.app.ui.marketplace.ProductListAdapter
 import kotlinx.coroutines.CancellationException
@@ -54,9 +55,11 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
         val sellerId = arguments?.getString(ARG_SELLER_ID)
         val sellerName = arguments?.getString(ARG_SELLER_NAME)
         val initialSearch = arguments?.getString(ARG_SEARCH)
+        val selectedCity = arguments?.getString(ARG_CITY)?.trim()?.takeIf { it.isNotBlank() }
         title.text = when {
             !categoryName.isNullOrBlank() -> categoryName
             !sellerName.isNullOrBlank() -> "منتجات $sellerName"
+            !initialSearch.isNullOrBlank() && selectedCity != null -> "نتائج البحث • $selectedCity"
             else -> "المنتجات"
         }
         if (!initialSearch.isNullOrBlank()) search.setText(initialSearch)
@@ -80,6 +83,7 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
         var isLoading = false
         var generation = 0
         var requestJob: Job? = null
+        var citySellerIds: Set<String>? = null
 
         fun currentSort(): ProductSort = when (sort.selectedItemPosition) {
             1 -> ProductSort.PRICE_LOW
@@ -90,6 +94,7 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
 
         fun updateSummary() {
             val parts = mutableListOf(sortLabels[sort.selectedItemPosition.coerceIn(sortLabels.indices)])
+            selectedCity?.let { parts += it }
             minPrice.text.toString().toDoubleOrNull()?.let { parts += "من ${it.toLong()}" }
             maxPrice.text.toString().toDoubleOrNull()?.let { parts += "حتى ${it.toLong()}" }
             if (inStock.isChecked) parts += "المتوفر فقط"
@@ -102,12 +107,52 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
                 isLoading && loaded.isEmpty() -> "جاري تحميل المنتجات..."
                 isLoading -> "جاري تحميل المزيد..."
                 loaded.isEmpty() -> "ما لقينا نتائج مطابقة. جرّبي تغيير البحث أو الفلاتر."
-                else -> "تم عرض ${loaded.size} منتج"
+                else -> "تم عرض ${loaded.size} منتج${selectedCity?.let { " • $it" }.orEmpty()}"
             }
-            loadMore.visibility = if (loaded.isNotEmpty() && hasMore) View.VISIBLE else View.GONE
+            loadMore.visibility = if (hasMore && !isLoading) View.VISIBLE else View.GONE
             loadMore.isEnabled = hasMore && !isLoading
             loadMore.text = if (isLoading) "جاري التحميل..." else "عرض المزيد"
         }
+
+        suspend fun resolveCitySellerIds(online: Boolean): Set<String>? {
+            if (selectedCity == null) return null
+            citySellerIds?.let { return it }
+
+            val cachedIds = AppContentStore.stores
+                .filter { it.city.equals(selectedCity, ignoreCase = true) }
+                .mapTo(linkedSetOf()) { it.seller_id }
+
+            if (!online) {
+                citySellerIds = cachedIds
+                return cachedIds
+            }
+
+            return try {
+                val ids = linkedSetOf<String>()
+                var offset = 0
+                var hasMoreStores = true
+                var pages = 0
+                while (hasMoreStores && pages < CITY_STORE_PAGE_LIMIT) {
+                    val page = repository.storePage(
+                        city = selectedCity,
+                        pageSize = CatalogPagination.MAX_PAGE_SIZE,
+                        offset = offset
+                    )
+                    page.items.mapTo(ids) { it.seller_id }
+                    offset = page.nextOffset
+                    hasMoreStores = page.hasMore
+                    pages++
+                }
+                citySellerIds = ids
+                ids
+            } catch (_: Throwable) {
+                citySellerIds = cachedIds
+                cachedIds
+            }
+        }
+
+        fun filterCachedByCity(products: List<ProductCard>, sellerIds: Set<String>?): List<ProductCard> =
+            if (sellerIds == null) products else products.filter { it.seller_id in sellerIds }
 
         fun loadPage(reset: Boolean) {
             if (!reset && (isLoading || !hasMore)) return
@@ -132,20 +177,26 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
             renderPageState()
 
             requestJob = viewLifecycleOwner.lifecycleScope.launch {
-                if (!NetworkStatus.isOnline(requireContext())) {
+                val online = NetworkStatus.isOnline(requireContext())
+                val allowedSellerIds = resolveCitySellerIds(online)
+
+                if (!online) {
                     isLoading = false
                     if (reset && sellerId.isNullOrBlank()) {
                         if (!AppContentStore.productsLoaded) {
                             val disk = cache.load(AppContentStore.CATALOG_PREVIEW_KEY, allowExpired = true)
                             if (disk.isNotEmpty()) AppContentStore.updateProducts(disk)
                         }
-                        val cached = AppContentStore.filteredProducts(
-                            search = searchValue,
-                            categoryId = categoryId,
-                            minPrice = minValue,
-                            maxPrice = maxValue,
-                            inStockOnly = stockOnly,
-                            sort = sortValue
+                        val cached = filterCachedByCity(
+                            AppContentStore.filteredProducts(
+                                search = searchValue,
+                                categoryId = categoryId,
+                                minPrice = minValue,
+                                maxPrice = maxValue,
+                                inStockOnly = stockOnly,
+                                sort = sortValue
+                            ),
+                            allowedSellerIds
                         ).take(PAGE_SIZE)
                         loaded.clear()
                         loaded.addAll(cached)
@@ -153,7 +204,7 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
                         adapter.submitList(loaded.toList())
                         renderPageState(
                             if (cached.isNotEmpty()) {
-                                "بدون اتصال — نعرض ${cached.size} منتج من النسخة المحفوظة"
+                                "بدون اتصال — نعرض ${cached.size} منتج محفوظ${selectedCity?.let { " • $it" }.orEmpty()}"
                             } else {
                                 "لا يوجد اتصال ولا توجد نتائج محفوظة لهذه الفلاتر"
                             }
@@ -168,31 +219,59 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
                 }
 
                 try {
-                    val page = repository.marketplaceProductPage(
-                        search = searchValue,
-                        categoryId = categoryId,
-                        minPrice = minValue,
-                        maxPrice = maxValue,
-                        inStockOnly = stockOnly,
-                        sort = sortValue,
-                        pageSize = PAGE_SIZE,
-                        offset = requestOffset,
-                        sellerId = sellerId
+                    if (selectedCity != null && allowedSellerIds.isNullOrEmpty()) {
+                        nextOffset = requestOffset
+                        hasMore = false
+                        isLoading = false
+                        adapter.submitList(emptyList())
+                        renderPageState("لا توجد متاجر نشطة في $selectedCity حالياً")
+                        return@launch
+                    }
+
+                    var cursor = requestOffset
+                    var rawHasMore = true
+                    var scans = 0
+                    val pageProducts = mutableListOf<ProductCard>()
+                    do {
+                        val page = repository.marketplaceProductPage(
+                            search = searchValue,
+                            categoryId = categoryId,
+                            minPrice = minValue,
+                            maxPrice = maxValue,
+                            inStockOnly = stockOnly,
+                            sort = sortValue,
+                            pageSize = PAGE_SIZE,
+                            offset = cursor,
+                            sellerId = sellerId
+                        )
+                        if (requestGeneration != generation) return@launch
+
+                        cursor = page.nextOffset
+                        rawHasMore = page.hasMore
+                        val filtered = if (allowedSellerIds == null) {
+                            page.items
+                        } else {
+                            page.items.filter { it.seller_id in allowedSellerIds }
+                        }
+                        pageProducts.addAll(filtered)
+                        scans++
+                    } while (
+                        allowedSellerIds != null && pageProducts.size < PAGE_SIZE && rawHasMore &&
+                        scans < CITY_PRODUCT_SCAN_LIMIT
                     )
-                    if (requestGeneration != generation) return@launch
 
                     val ids = loaded.mapTo(mutableSetOf()) { it.id }
-                    page.items.forEach { product -> if (ids.add(product.id)) loaded += product }
-                    nextOffset = page.nextOffset
-                    hasMore = page.hasMore
+                    pageProducts.forEach { product -> if (ids.add(product.id)) loaded += product }
+                    nextOffset = cursor
+                    hasMore = rawHasMore
 
                     if (
                         requestOffset == 0 && searchValue.isBlank() && categoryId.isNullOrBlank() &&
-                        sellerId.isNullOrBlank() && minValue == null && maxValue == null &&
+                        sellerId.isNullOrBlank() && selectedCity == null && minValue == null && maxValue == null &&
                         !stockOnly && sortValue == ProductSort.NEWEST
                     ) {
-                        AppContentStore.updateProducts(page.items)
-                        cache.save(AppContentStore.CATALOG_PREVIEW_KEY, page.items)
+                        AppContentStore.updateProducts(pageProducts)
+                        cache.save(AppContentStore.CATALOG_PREVIEW_KEY, pageProducts)
                     }
                     adapter.submitList(loaded.toList())
                     isLoading = false
@@ -207,13 +286,16 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
                             val disk = cache.load(AppContentStore.CATALOG_PREVIEW_KEY, allowExpired = true)
                             if (disk.isNotEmpty()) AppContentStore.updateProducts(disk)
                         }
-                        val cached = AppContentStore.filteredProducts(
-                            search = searchValue,
-                            categoryId = categoryId,
-                            minPrice = minValue,
-                            maxPrice = maxValue,
-                            inStockOnly = stockOnly,
-                            sort = sortValue
+                        val cached = filterCachedByCity(
+                            AppContentStore.filteredProducts(
+                                search = searchValue,
+                                categoryId = categoryId,
+                                minPrice = minValue,
+                                maxPrice = maxValue,
+                                inStockOnly = stockOnly,
+                                sort = sortValue
+                            ),
+                            allowedSellerIds
                         ).take(PAGE_SIZE)
                         if (cached.isNotEmpty()) {
                             loaded.clear()
@@ -285,10 +367,13 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
         private const val ARG_CATEGORY_ID = "category_id"
         private const val ARG_CATEGORY_NAME = "category_name"
         private const val ARG_SEARCH = "search"
+        private const val ARG_CITY = "city"
         private const val ARG_SELLER_ID = "seller_id"
         private const val ARG_SELLER_NAME = "seller_name"
         private const val PAGE_SIZE = CatalogPagination.DEFAULT_PAGE_SIZE
         private const val LOAD_AHEAD_ITEMS = 6
+        private const val CITY_STORE_PAGE_LIMIT = 10
+        private const val CITY_PRODUCT_SCAN_LIMIT = 8
 
         fun newInstance(categoryId: String, categoryName: String): ProductsFragment =
             ProductsFragment().apply {
@@ -298,8 +383,11 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
                 }
             }
 
-        fun newSearchInstance(search: String): ProductsFragment = ProductsFragment().apply {
-            arguments = Bundle().apply { putString(ARG_SEARCH, search) }
+        fun newSearchInstance(search: String, city: String? = null): ProductsFragment = ProductsFragment().apply {
+            arguments = Bundle().apply {
+                putString(ARG_SEARCH, search)
+                city?.takeIf { it.isNotBlank() }?.let { putString(ARG_CITY, it) }
+            }
         }
 
         fun newStoreInstance(sellerId: String, sellerName: String): ProductsFragment =
