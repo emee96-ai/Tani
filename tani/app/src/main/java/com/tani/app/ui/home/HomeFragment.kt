@@ -239,13 +239,32 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
         val cards = products.map { product ->
             HomeProductUi.productCard(
-                requireContext(),
-                viewLifecycleOwner.lifecycleScope,
-                product
-            ) {
-                (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id))
-            }
+                context = requireContext(),
+                scope = viewLifecycleOwner.lifecycleScope,
+                product = product,
+                onOpen = {
+                    (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id))
+                },
+                onAdd = {
+                    if (product.has_variants) {
+                        (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id))
+                    } else if (Cart.add(product.toProduct())) {
+                        (activity as? MainActivity)?.refreshCartBadge()
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            Analytics.track(
+                                "add_to_cart",
+                                screen = "home",
+                                entityType = "product",
+                                entityId = product.id
+                            )
+                        }
+                        Toast.makeText(requireContext(), "تمت إضافة ${product.name} للسلة", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(requireContext(), "تعذر إضافة كمية إضافية", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            )
         }
-        HomeProductUi.addMasonryGrid(container, cards, requireContext())
+        HomeProductUi.addGrid(container, cards, requireContext())
     }
 }

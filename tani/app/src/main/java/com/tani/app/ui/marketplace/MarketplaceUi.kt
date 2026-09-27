@@ -42,6 +42,12 @@ object MarketplaceUi {
         onOpen: () -> Unit,
         onAdd: () -> Unit
     ): View {
+        val availability = availabilityLabel(product)
+        val delivery = deliveryLabel(product)
+        val ratingText = if (product.review_count > 0) {
+            String.format(Locale.US, "★ %.1f (%d)", product.average_rating, product.review_count)
+        } else "جديد"
+
         val card = MaterialCardView(context).apply {
             radius = dp(context, 18).toFloat()
             cardElevation = 0f
@@ -51,7 +57,13 @@ object MarketplaceUi {
             clipToOutline = true
             isClickable = true
             isFocusable = true
-            contentDescription = "${product.name}، ${formatPrice(product.price)}"
+            contentDescription = buildString {
+                append(product.name)
+                append("، ${product.store_name}")
+                append("، ${formatPrice(product.price)}")
+                append("، ${availability.first}")
+                delivery?.let { append("، $it") }
+            }
             setOnClickListener { onOpen() }
         }
 
@@ -64,7 +76,7 @@ object MarketplaceUi {
             layoutDirection = View.LAYOUT_DIRECTION_RTL
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                dp(context, 150)
+                dp(context, PRODUCT_IMAGE_HEIGHT_DP)
             )
         }
         val image = ImageView(context).apply {
@@ -142,13 +154,30 @@ object MarketplaceUi {
             maxLines = 2
             ellipsize = TextUtils.TruncateAt.END
         }
-        val ratingText = if (product.review_count > 0) {
-            String.format(Locale.US, "★ %.1f (%d)", product.average_rating, product.review_count)
-        } else "جديد"
-        val meta = text(context, "${product.store_name} • $ratingText", 11.5f, false, R.color.text_muted).apply {
+        val store = text(
+            context,
+            buildString {
+                append(product.store_name)
+                verificationLabel(product.verification_status)?.let { append(" • $it") }
+            },
+            11.5f,
+            false,
+            R.color.text_muted
+        ).apply {
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
         }
+
+        val meta = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            layoutDirection = View.LAYOUT_DIRECTION_RTL
+        }
+        meta.addView(
+            text(context, availability.first, 11f, true, availability.second),
+            LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        )
+        meta.addView(text(context, ratingText, 11f, false, R.color.text_muted))
 
         val price = text(context, formatPrice(product.price), 16f, true, R.color.tani_secondary).apply {
             maxLines = 1
@@ -161,26 +190,71 @@ object MarketplaceUi {
         }
         footer.addView(price, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
 
-        val canAdd = product.stock > 0
-        footer.addView(ImageButton(context).apply {
-            setImageResource(R.drawable.ic_cart_plus)
-            background = cartButtonBackground(context, canAdd)
-            scaleType = ImageView.ScaleType.CENTER_INSIDE
-            setPadding(dp(context, 10), dp(context, 10), dp(context, 10), dp(context, 10))
-            isEnabled = canAdd
-            alpha = if (canAdd) 1f else 0.45f
-            contentDescription = if (canAdd) "إضافة ${product.name} للسلة" else "المنتج غير متوفر"
-            setOnClickListener { onAdd() }
-        }, LinearLayout.LayoutParams(dp(context, 44), dp(context, 44)))
+        when {
+            product.stock <= 0 -> {
+                footer.addView(ImageButton(context).apply {
+                    setImageResource(R.drawable.ic_cart_plus)
+                    background = cartButtonBackground(context, false)
+                    scaleType = ImageView.ScaleType.CENTER_INSIDE
+                    setPadding(dp(context, 10), dp(context, 10), dp(context, 10), dp(context, 10))
+                    isEnabled = false
+                    alpha = 0.45f
+                    contentDescription = "المنتج غير متوفر"
+                }, LinearLayout.LayoutParams(dp(context, 44), dp(context, 44)))
+            }
+            product.has_variants -> {
+                footer.addView(text(context, "خيارات", 11.5f, true, R.color.tani_primary).apply {
+                    background = ContextCompat.getDrawable(context, R.drawable.bg_chip)
+                    gravity = Gravity.CENTER
+                    setPadding(dp(context, 10), dp(context, 7), dp(context, 10), dp(context, 7))
+                    contentDescription = "المنتج له خيارات، افتحي المنتج للاختيار"
+                })
+            }
+            else -> {
+                footer.addView(ImageButton(context).apply {
+                    setImageResource(R.drawable.ic_cart_plus)
+                    background = cartButtonBackground(context, true)
+                    scaleType = ImageView.ScaleType.CENTER_INSIDE
+                    setPadding(dp(context, 10), dp(context, 10), dp(context, 10), dp(context, 10))
+                    contentDescription = "إضافة ${product.name} للسلة"
+                    setOnClickListener { onAdd() }
+                }, LinearLayout.LayoutParams(dp(context, 44), dp(context, 44)))
+            }
+        }
 
         content.addView(title)
-        content.addView(meta, marginTop(context, 4))
+        content.addView(store, marginTop(context, 4))
+        content.addView(meta, marginTop(context, 5))
+        delivery?.let {
+            content.addView(
+                text(context, it, 11f, false, R.color.text_muted).apply {
+                    maxLines = 1
+                    ellipsize = TextUtils.TruncateAt.END
+                },
+                marginTop(context, 4)
+            )
+        }
         content.addView(footer, marginTop(context, 8))
 
         body.addView(imageFrame)
         body.addView(content)
         card.addView(body)
         return card
+    }
+
+    private fun availabilityLabel(product: ProductCard): Pair<String, Int> = when {
+        product.stock <= 0 -> "غير متوفر" to R.color.error
+        product.stock <= LOW_STOCK_THRESHOLD -> "باقي ${product.stock} فقط" to R.color.warning
+        else -> "متوفر" to R.color.success
+    }
+
+    private fun deliveryLabel(product: ProductCard): String? {
+        val minutes = product.estimated_minutes?.takeIf { it > 0 } ?: return null
+        return when {
+            minutes < 60 -> "توصيل متوقع: $minutes دقيقة"
+            minutes % 60 == 0 -> "توصيل متوقع: ${minutes / 60} ساعة"
+            else -> "توصيل متوقع: ${minutes / 60} س ${minutes % 60} د"
+        }
     }
 
     private suspend fun favoriteState(productId: String): Boolean {
@@ -345,6 +419,7 @@ object MarketplaceUi {
             val row = LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
                 layoutDirection = View.LAYOUT_DIRECTION_RTL
+                gravity = Gravity.TOP
             }
             pair.forEachIndexed { index, item ->
                 row.addView(
@@ -387,4 +462,7 @@ object MarketplaceUi {
 
     fun dp(context: Context, value: Int): Int =
         (value * context.resources.displayMetrics.density).toInt()
+
+    private const val PRODUCT_IMAGE_HEIGHT_DP = 156
+    private const val LOW_STOCK_THRESHOLD = 5
 }
