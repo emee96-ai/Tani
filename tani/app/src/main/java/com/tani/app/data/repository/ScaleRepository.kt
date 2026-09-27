@@ -7,11 +7,19 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
 class ScaleRepository {
-    suspend fun rankedSearch(query: String, categoryId: String? = null, city: String = "كوستي", limit: Int = 30): List<ProductCard> = Supabase.post(
+    suspend fun rankedSearch(
+        query: String,
+        categoryId: String? = null,
+        city: String? = null,
+        limit: Int = 30
+    ): List<ProductCard> = Supabase.post(
         "rpc/search_marketplace_ranked",
         buildJsonObject {
-            put("p_query", query.trim()); categoryId?.let { put("p_category_id", it) }
-            put("p_city", city); put("p_limit", limit.coerceIn(1, 60)); put("p_offset", 0)
+            put("p_query", query.trim())
+            categoryId?.takeIf { it.isNotBlank() }?.let { put("p_category_id", it) }
+            city?.takeIf { it.isNotBlank() }?.let { put("p_city", it) }
+            put("p_limit", limit.coerceIn(1, 60))
+            put("p_offset", 0)
         }.toString()
     )
 
