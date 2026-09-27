@@ -21,6 +21,7 @@ import com.tani.app.data.*
 import com.tani.app.data.cache.AppContentStore
 import com.tani.app.data.cache.MarketplaceCache
 import com.tani.app.data.cache.SearchPreferences
+import com.tani.app.data.network.CustomerErrorMessages
 import com.tani.app.data.network.NetworkStatus
 import com.tani.app.data.repository.ScaleRepository
 import com.tani.app.ui.products.ProductsFragment
@@ -41,6 +42,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         val query = view.findViewById<EditText>(R.id.search_query)
         val citySpinner = view.findViewById<Spinner>(R.id.search_city)
         val status = view.findViewById<TextView>(R.id.search_status)
+        val retry = view.findViewById<Button>(R.id.search_retry)
         val productBox = view.findViewById<LinearLayout>(R.id.search_products_box)
         val storeBox = view.findViewById<LinearLayout>(R.id.search_stores_box)
         val suggestionsBox = view.findViewById<LinearLayout>(R.id.search_suggestions_box)
@@ -95,9 +97,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                 if (!preferred.isNullOrBlank() && clean.none { it.equals(preferred, ignoreCase = true) }) {
                     add(preferred)
                 }
-                clean.forEach { city ->
-                    if (none { it.equals(city, ignoreCase = true) }) add(city)
-                }
+                clean.forEach { city -> if (none { it.equals(city, ignoreCase = true) }) add(city) }
             }
             cityOptions.clear()
             cityOptions.addAll(options)
@@ -117,57 +117,51 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         refine.setOnClickListener {
             val term = currentTerm()
             if (term.length >= 2) {
-                (activity as MainActivity).show(
-                    ProductsFragment.newSearchInstance(term, selectedCity())
-                )
+                (activity as MainActivity).show(ProductsFragment.newSearchInstance(term, selectedCity()))
             }
         }
         allStores.setOnClickListener {
             val term = currentTerm()
             if (term.length >= 2) {
-                (activity as MainActivity).show(
-                    StoresFragment.newSearchInstance(term, selectedCity())
-                )
+                (activity as MainActivity).show(StoresFragment.newSearchInstance(term, selectedCity()))
             }
         }
 
-        fun productCard(product: ProductCard): View =
-            MarketplaceUi.productCard(
-                requireContext(), viewLifecycleOwner.lifecycleScope, product,
-                onOpen = { (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id)) },
-                onAdd = {
-                    if (product.has_variants) {
-                        Toast.makeText(requireContext(), "اختاري المقاس أو اللون أولاً", Toast.LENGTH_SHORT).show()
-                        (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id))
-                    } else if (Cart.add(product.toProduct())) {
-                        (activity as? MainActivity)?.refreshCartBadge()
-                        viewLifecycleOwner.lifecycleScope.launch {
-                            Analytics.track("add_to_cart", screen = "search", entityType = "product", entityId = product.id)
-                        }
-                        Toast.makeText(requireContext(), "تمت إضافة ${product.name} للسلة", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(requireContext(), "تعذر إضافة كمية إضافية", Toast.LENGTH_SHORT).show()
+        fun productCard(product: ProductCard): View = MarketplaceUi.productCard(
+            requireContext(), viewLifecycleOwner.lifecycleScope, product,
+            onOpen = { (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id)) },
+            onAdd = {
+                if (product.has_variants) {
+                    Toast.makeText(requireContext(), "اختاري المقاس أو اللون أولاً", Toast.LENGTH_SHORT).show()
+                    (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id))
+                } else if (Cart.add(product.toProduct())) {
+                    (activity as? MainActivity)?.refreshCartBadge()
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        Analytics.track("add_to_cart", screen = "search", entityType = "product", entityId = product.id)
                     }
+                    Toast.makeText(requireContext(), "تمت إضافة ${product.name} للسلة", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(requireContext(), "تعذر إضافة كمية إضافية", Toast.LENGTH_SHORT).show()
                 }
-            )
+            }
+        )
 
         fun renderResults(
             products: List<ProductCard>,
             stores: List<StoreCard>,
-            message: String
+            message: String,
+            canRetry: Boolean = false
         ) {
             status.visibility = View.VISIBLE
             status.text = message
+            retry.visibility = if (canRetry) View.VISIBLE else View.GONE
             refine.visibility = if (products.isNotEmpty()) View.VISIBLE else View.GONE
             allStores.visibility = if (stores.isNotEmpty()) View.VISIBLE else View.GONE
 
             productBox.removeAllViews()
             if (products.isEmpty()) {
                 productBox.addView(
-                    MarketplaceUi.empty(
-                        requireContext(),
-                        "ما لقينا منتجات مطابقة. جرّبي كلمة أبسط أو اختاري فئة من الاقتراحات."
-                    )
+                    MarketplaceUi.empty(requireContext(), "ما لقينا منتجات مطابقة. جرّبي كلمة أبسط أو اختاري فئة من الاقتراحات.")
                 )
             } else {
                 MarketplaceUi.addTwoColumnGrid(
@@ -205,6 +199,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             generation++
             searchJob?.cancel()
             debounceJob?.cancel()
+            retry.visibility = View.GONE
             refine.visibility = View.GONE
             allStores.visibility = View.GONE
             productBox.removeAllViews()
@@ -230,6 +225,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             val requestGeneration = generation
             val city = selectedCity()
             val citySuffix = city?.let { " • $it" }.orEmpty()
+            retry.visibility = View.GONE
             searchJob?.cancel()
             searchJob = viewLifecycleOwner.lifecycleScope.launch {
                 val cacheKey = searchCacheKey(term, city)
@@ -247,11 +243,13 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                             "نتائج محفوظة$citySuffix • جاري التحديث..."
                         } else {
                             "بدون اتصال$citySuffix • ${cachedProducts.size} منتج • ${cachedStoreResults.size} متجر محفوظ"
-                        }
+                        },
+                        canRetry = !online
                     )
                 } else {
                     status.visibility = View.VISIBLE
                     status.text = if (online) "جاري البحث$citySuffix..." else "لا يوجد اتصال ولا توجد نتائج محفوظة لهذا البحث$citySuffix"
+                    retry.visibility = if (online) View.GONE else View.VISIBLE
                     refine.visibility = View.GONE
                     allStores.visibility = View.GONE
                     productBox.removeAllViews()
@@ -299,15 +297,22 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                     throw cancelled
                 } catch (error: Throwable) {
                     if (requestGeneration != generation) return@launch
+                    val fallback = if (cachedProducts.isNotEmpty() || cachedStoreResults.isNotEmpty()) {
+                        "تعذر التحديث$citySuffix • نعرض آخر نتائج محفوظة"
+                    } else {
+                        "تعذر البحث. حاولي مرة أخرى."
+                    }
                     if (cachedProducts.isNotEmpty() || cachedStoreResults.isNotEmpty()) {
                         renderResults(
                             cachedProducts,
                             cachedStoreResults,
-                            "تعذر التحديث$citySuffix • نعرض آخر نتائج محفوظة"
+                            CustomerErrorMessages.from(error, fallback),
+                            canRetry = true
                         )
                     } else {
                         status.visibility = View.VISIBLE
-                        status.text = "تعذر البحث\n${error.message ?: "حاولي مرة أخرى"}"
+                        status.text = CustomerErrorMessages.from(error, fallback)
+                        retry.visibility = View.VISIBLE
                     }
                 }
             }
@@ -353,7 +358,6 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                 searchPreferences.selectedCity = city
                 if (currentTerm().length >= 2) scheduleSearch(true, false)
             }
-
             override fun onNothingSelected(parent: AdapterView<*>?) = Unit
         }
 
@@ -364,22 +368,17 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         }
         viewLifecycleOwner.lifecycleScope.launch {
             if (!NetworkStatus.isOnline(requireContext())) return@launch
-            runCatching { scaleRepository.activeCities() }.onSuccess { cities ->
-                setCityOptions(cities.map { it.name })
-            }
+            runCatching { scaleRepository.activeCities() }.onSuccess { cities -> setCityOptions(cities.map { it.name }) }
         }
 
         query.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
-            override fun afterTextChanged(s: Editable?) {
-                scheduleSearch(false, false)
-            }
+            override fun afterTextChanged(s: Editable?) { scheduleSearch(false, false) }
         })
 
-        view.findViewById<Button>(R.id.search_button).setOnClickListener {
-            scheduleSearch(true, true)
-        }
+        retry.setOnClickListener { scheduleSearch(true, false) }
+        view.findViewById<Button>(R.id.search_button).setOnClickListener { scheduleSearch(true, true) }
         query.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 scheduleSearch(true, true)
@@ -387,11 +386,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             } else false
         }
 
-        if (currentTerm().length >= 2) {
-            scheduleSearch(true, explicitQuery != null)
-        } else {
-            clearForShortQuery()
-        }
+        if (currentTerm().length >= 2) scheduleSearch(true, explicitQuery != null) else clearForShortQuery()
     }
 
     private fun searchCacheKey(term: String, city: String?): String {

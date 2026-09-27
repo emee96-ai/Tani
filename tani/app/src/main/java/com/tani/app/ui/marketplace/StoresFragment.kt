@@ -18,6 +18,7 @@ import com.tani.app.data.*
 import com.tani.app.data.cache.AppContentStore
 import com.tani.app.data.cache.MarketplaceCache
 import com.tani.app.data.catalog.CatalogPagination
+import com.tani.app.data.network.CustomerErrorMessages
 import com.tani.app.data.network.NetworkStatus
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -30,6 +31,7 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val search = view.findViewById<EditText>(R.id.stores_search)
         val loading = view.findViewById<TextView>(R.id.stores_loading)
+        val retry = view.findViewById<Button>(R.id.stores_retry)
         val list = view.findViewById<RecyclerView>(R.id.stores_list)
         val cache = MarketplaceCache(requireContext())
         val selectedCity = arguments?.getString(ARG_CITY)?.trim()?.takeIf { it.isNotBlank() }
@@ -53,7 +55,7 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
         fun currentTerm(): String = search.text.toString().trim()
         fun cityLabel(): String = selectedCity?.let { " • $it" }.orEmpty()
 
-        fun renderStatus(message: String? = null) {
+        fun renderStatus(message: String? = null, canRetry: Boolean = false) {
             loading.visibility = View.VISIBLE
             loading.text = message ?: when {
                 isLoading && loaded.isEmpty() -> "جاري تحميل المتاجر${cityLabel()}..."
@@ -62,6 +64,8 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
                 hasMore -> "تم عرض ${loaded.size} متجر${cityLabel()} • مرري لعرض المزيد"
                 else -> "تم عرض ${loaded.size} متجر${cityLabel()}"
             }
+            retry.visibility = if (canRetry && !isLoading) View.VISIBLE else View.GONE
+            retry.isEnabled = !isLoading
         }
 
         suspend fun cachedStores(term: String): List<StoreCard> {
@@ -114,7 +118,8 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
                         adapter.submitList(loaded.toList())
                         renderStatus(
                             if (online) "نعرض آخر بيانات محفوظة${cityLabel()} • جاري التحديث..."
-                            else "بدون اتصال — نعرض ${loaded.size} متجر محفوظ${cityLabel()}"
+                            else "بدون اتصال — نعرض ${loaded.size} متجر محفوظ${cityLabel()}",
+                            canRetry = !online
                         )
                     }
                 }
@@ -122,11 +127,14 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
                 if (!online) {
                     isLoading = false
                     hasMore = false
-                    if (loaded.isEmpty()) {
-                        renderStatus("لا يوجد اتصال ولا توجد متاجر محفوظة مطابقة${cityLabel()}")
-                    } else {
-                        renderStatus("بدون اتصال — نعرض ${loaded.size} متجر محفوظ${cityLabel()}")
-                    }
+                    renderStatus(
+                        if (loaded.isEmpty()) {
+                            "لا يوجد اتصال بالإنترنت ولا توجد متاجر محفوظة مطابقة${cityLabel()}"
+                        } else {
+                            "بدون اتصال — نعرض ${loaded.size} متجر محفوظ${cityLabel()}"
+                        },
+                        canRetry = true
+                    )
                     return@launch
                 }
 
@@ -167,13 +175,12 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
                         loaded.addAll(cached)
                         adapter.submitList(loaded.toList())
                     }
-                    renderStatus(
-                        if (loaded.isNotEmpty()) {
-                            "تعذر التحديث — نعرض ${loaded.size} متجر محفوظ${cityLabel()}. مرري أو ابحثي للمحاولة مجدداً."
-                        } else {
-                            "تعذر تحميل المتاجر\n${error.message ?: "حاولي مرة أخرى"}"
-                        }
-                    )
+                    val fallback = if (loaded.isNotEmpty()) {
+                        "تعذر التحديث — نعرض ${loaded.size} متجر محفوظ${cityLabel()}"
+                    } else {
+                        "تعذر تحميل المتاجر. حاولي مرة أخرى."
+                    }
+                    renderStatus(CustomerErrorMessages.from(error, fallback), canRetry = true)
                 }
             }
         }
@@ -199,11 +206,10 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
         search.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
-            override fun afterTextChanged(s: Editable?) {
-                scheduleSearch()
-            }
+            override fun afterTextChanged(s: Editable?) { scheduleSearch() }
         })
 
+        retry.setOnClickListener { loadPage(reset = true) }
         view.findViewById<Button>(R.id.stores_search_button).setOnClickListener {
             scheduleSearch(immediate = true)
         }

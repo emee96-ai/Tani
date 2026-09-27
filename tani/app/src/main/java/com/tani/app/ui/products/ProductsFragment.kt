@@ -21,6 +21,7 @@ import com.tani.app.data.*
 import com.tani.app.data.cache.AppContentStore
 import com.tani.app.data.cache.MarketplaceCache
 import com.tani.app.data.catalog.CatalogPagination
+import com.tani.app.data.network.CustomerErrorMessages
 import com.tani.app.data.network.NetworkStatus
 import com.tani.app.ui.marketplace.ProductDetailsFragment
 import com.tani.app.ui.marketplace.ProductListAdapter
@@ -76,6 +77,8 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
         var nextOffset = 0
         var hasMore = true
         var isLoading = false
+        var retryMode = false
+        var retryReset = true
         var generation = 0
         var requestJob: Job? = null
         var citySellerIds: Set<String>? = null
@@ -104,9 +107,13 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
                 loaded.isEmpty() -> "ما لقينا نتائج مطابقة. جرّبي تغيير البحث أو الفلاتر."
                 else -> "تم عرض ${loaded.size} منتج${selectedCity?.let { " • $it" }.orEmpty()}"
             }
-            loadMore.visibility = if (hasMore && !isLoading) View.VISIBLE else View.GONE
-            loadMore.isEnabled = hasMore && !isLoading
-            loadMore.text = if (isLoading) "جاري التحميل..." else "عرض المزيد"
+            loadMore.visibility = if ((hasMore || retryMode) && !isLoading) View.VISIBLE else View.GONE
+            loadMore.isEnabled = !isLoading && (hasMore || retryMode)
+            loadMore.text = when {
+                isLoading -> "جاري التحميل..."
+                retryMode -> "إعادة المحاولة"
+                else -> "عرض المزيد"
+            }
         }
 
         suspend fun resolveCitySellerIds(online: Boolean): Set<String>? {
@@ -150,7 +157,7 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
             if (sellerIds == null) products else products.filter { it.seller_id in sellerIds }
 
         fun loadPage(reset: Boolean) {
-            if (!reset && (isLoading || !hasMore)) return
+            if (!reset && (isLoading || (!hasMore && !retryMode))) return
             if (reset) {
                 generation++
                 requestJob?.cancel()
@@ -158,6 +165,7 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
                 adapter.submitList(emptyList())
                 nextOffset = 0
                 hasMore = true
+                retryMode = false
             }
 
             val requestGeneration = generation
@@ -168,6 +176,7 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
             val stockOnly = inStock.isChecked
             val sortValue = currentSort()
             isLoading = true
+            retryMode = false
             updateSummary()
             renderPageState()
 
@@ -177,6 +186,8 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
 
                 if (!online) {
                     isLoading = false
+                    retryMode = true
+                    retryReset = true
                     if (reset && sellerId.isNullOrBlank()) {
                         if (!AppContentStore.productsLoaded) {
                             val disk = cache.load(AppContentStore.CATALOG_PREVIEW_KEY, allowExpired = true)
@@ -201,7 +212,7 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
                             if (cached.isNotEmpty()) {
                                 "بدون اتصال — نعرض ${cached.size} منتج محفوظ${selectedCity?.let { " • $it" }.orEmpty()}"
                             } else {
-                                "لا يوجد اتصال ولا توجد نتائج محفوظة لهذه الفلاتر"
+                                "لا يوجد اتصال بالإنترنت ولا توجد نتائج محفوظة لهذه الفلاتر"
                             }
                         )
                     } else {
@@ -218,6 +229,7 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
                         nextOffset = requestOffset
                         hasMore = false
                         isLoading = false
+                        retryMode = false
                         adapter.submitList(emptyList())
                         renderPageState("لا توجد متاجر نشطة في $selectedCity حالياً")
                         return@launch
@@ -243,11 +255,7 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
 
                         cursor = page.nextOffset
                         rawHasMore = page.hasMore
-                        val filtered = if (allowedSellerIds == null) {
-                            page.items
-                        } else {
-                            page.items.filter { it.seller_id in allowedSellerIds }
-                        }
+                        val filtered = if (allowedSellerIds == null) page.items else page.items.filter { it.seller_id in allowedSellerIds }
                         pageProducts.addAll(filtered)
                         scans++
                     } while (
@@ -259,6 +267,7 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
                     pageProducts.forEach { product -> if (ids.add(product.id)) loaded += product }
                     nextOffset = cursor
                     hasMore = rawHasMore
+                    retryMode = false
 
                     if (
                         requestOffset == 0 && searchValue.isBlank() && categoryId.isNullOrBlank() &&
@@ -276,6 +285,8 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
                 } catch (error: Throwable) {
                     if (requestGeneration != generation) return@launch
                     isLoading = false
+                    retryMode = true
+                    retryReset = reset
                     if (reset && sellerId.isNullOrBlank()) {
                         if (!AppContentStore.productsLoaded) {
                             val disk = cache.load(AppContentStore.CATALOG_PREVIEW_KEY, allowExpired = true)
@@ -297,14 +308,14 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
                             loaded.addAll(cached)
                             hasMore = false
                             adapter.submitList(loaded.toList())
-                            renderPageState("تعذر التحديث — نعرض ${loaded.size} منتج من النسخة المحفوظة")
-                            return@launch
                         }
                     }
-                    renderPageState(
-                        if (loaded.isEmpty()) "تعذر تحميل المنتجات\n${error.message ?: "حاولي مرة أخرى"}"
-                        else "تعذر تحميل المزيد. اضغطي «عرض المزيد» للمحاولة مجددًا."
-                    )
+                    val fallback = if (loaded.isEmpty()) {
+                        "تعذر تحميل المنتجات. حاولي مرة أخرى."
+                    } else {
+                        "تعذر التحديث — نعرض المنتجات المحفوظة"
+                    }
+                    renderPageState(CustomerErrorMessages.from(error, fallback))
                 }
             }
         }
@@ -316,7 +327,7 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
                 if (lastVisible >= adapter.itemCount - LOAD_AHEAD_ITEMS) loadPage(reset = false)
             }
         })
-        loadMore.setOnClickListener { loadPage(reset = false) }
+        loadMore.setOnClickListener { loadPage(reset = if (retryMode) retryReset else false) }
 
         view.findViewById<Button>(R.id.products_filter_toggle).setOnClickListener {
             filtersPanel.visibility = if (filtersPanel.visibility == View.VISIBLE) View.GONE else View.VISIBLE
