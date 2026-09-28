@@ -6,6 +6,31 @@
 alter table public.orders
   add column if not exists stock_restored_at timestamptz;
 
+-- Reassert the order-history read boundary here so this migration is safe on
+-- both the full production schema and the compact regression-test bootstrap.
+alter table public.order_status_history enable row level security;
+revoke all on public.order_status_history from anon;
+grant select on public.order_status_history to authenticated;
+
+drop policy if exists tani_order_status_owner_read on public.order_status_history;
+create policy tani_order_status_owner_read
+on public.order_status_history for select to authenticated
+using (
+  exists (
+    select 1
+    from public.orders o
+    where o.id = order_status_history.order_id
+      and (
+        o.customer_id = (select auth.uid())
+        or exists (
+          select 1 from public.sellers s
+          where s.id = o.seller_id and s.user_id = (select auth.uid())
+        )
+        or public.current_user_role() = any(array['admin'::text,'support'::text])
+      )
+  )
+);
+
 create or replace function public.transition_order_status(
   p_order_id uuid,
   p_to_status text,
