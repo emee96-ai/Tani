@@ -10,6 +10,8 @@ import androidx.lifecycle.lifecycleScope
 import com.tani.app.MainActivity
 import com.tani.app.R
 import com.tani.app.data.*
+import com.tani.app.data.merchant.MerchantDashboardPolicy
+import com.tani.app.data.merchant.MerchantOperationalState
 import com.tani.app.data.network.CustomerErrorMessages
 import com.tani.app.ui.growth.MerchantInsightsFragment
 import com.tani.app.ui.monetization.MonetizationFragment
@@ -45,6 +47,7 @@ class SellerFragment : Fragment() {
     }
 
     private fun load() {
+        storeToggleInFlight = false
         val context = requireContext()
         root.removeAllViews()
         root.addView(MerchantUi.title(context, "متجرك"))
@@ -61,16 +64,20 @@ class SellerFragment : Fragment() {
                         val storeRequest = async { runCatching { repository.merchantStore() }.getOrNull() }
                         val summaryRequest = async { runCatching { repository.merchantDashboardSummary() }.getOrNull() }
                         val zonesRequest = async { runCatching { repository.merchantDeliveryZones(seller.id) }.getOrDefault(emptyList()) }
+                        val deliveryRequest = async { runCatching { repository.merchantDeliverySettings(seller.id) }.getOrNull() }
+                        val zones = zonesRequest.await()
                         DashboardData(
                             profile = profile,
                             seller = seller,
                             store = storeRequest.await(),
                             summary = summaryRequest.await(),
-                            deliveryZoneCount = zonesRequest.await().size
+                            deliverySettings = deliveryRequest.await(),
+                            deliveryZoneCount = zones.size,
+                            activeDeliveryZoneCount = zones.count { it.is_active }
                         )
                     }
                 } else {
-                    DashboardData(profile, seller, null, null, 0)
+                    DashboardData(profile, seller, null, null, null, 0, 0)
                 }
             }.onSuccess { data ->
                 if (data.profile?.verification_status == "approved" && data.seller != null) {
@@ -90,27 +97,29 @@ class SellerFragment : Fragment() {
         val seller = data.seller ?: return
         val store = data.store
         val summary = data.summary
+        val delivery = data.deliverySettings
 
         root.removeAllViews()
         root.addView(MerchantUi.title(context, store?.name ?: profile.store_name ?: seller.store_name.ifBlank { profile.business_name }))
         root.addView(MerchantUi.subtitle(context, "إدارة سريعة للطلبات والمتجر والمنتجات من مكان واحد."))
 
-        val storeStateTitle = when {
-            store == null -> "بيانات المتجر تحتاج مراجعة"
-            !store.is_active -> "المتجر غير ظاهر للعملاء"
-            !store.is_open -> "المتجر مغلق مؤقتاً"
-            else -> "المتجر مفتوح لاستقبال الطلبات ✓"
-        }
-        val storeTone = when {
-            store == null || !store.is_active -> MerchantUi.Tone.WARNING
-            !store.is_open -> MerchantUi.Tone.NEUTRAL
-            else -> MerchantUi.Tone.SUCCESS
-        }
-        val storePill = when {
-            store == null -> "إعداد ناقص"
-            !store.is_active -> "مخفي"
-            !store.is_open -> "مغلق"
-            else -> "مفتوح"
+        val operationalState = MerchantDashboardPolicy.operationalState(
+            storeExists = store != null,
+            storeActive = store?.is_active == true,
+            storeOpen = store?.is_open == true,
+            deliveryConfigured = delivery != null,
+            deliveryActive = delivery?.is_active == true,
+            totalDeliveryZones = data.deliveryZoneCount,
+            activeDeliveryZones = data.activeDeliveryZoneCount
+        )
+        val (storeStateTitle, storePill, storeTone) = when (operationalState) {
+            MerchantOperationalState.MISSING_STORE -> Triple("بيانات المتجر تحتاج مراجعة", "إعداد ناقص", MerchantUi.Tone.WARNING)
+            MerchantOperationalState.HIDDEN -> Triple("المتجر غير ظاهر للعملاء", "مخفي", MerchantUi.Tone.WARNING)
+            MerchantOperationalState.CLOSED -> Triple("المتجر مغلق مؤقتاً", "مغلق", MerchantUi.Tone.NEUTRAL)
+            MerchantOperationalState.DELIVERY_UNCONFIGURED -> Triple("التوصيل غير مكتمل", "توصيل ناقص", MerchantUi.Tone.WARNING)
+            MerchantOperationalState.DELIVERY_PAUSED -> Triple("التوصيل متوقف حالياً", "التوصيل متوقف", MerchantUi.Tone.NEUTRAL)
+            MerchantOperationalState.NO_ACTIVE_DELIVERY_ZONES -> Triple("لا توجد منطقة توصيل مفعّلة", "المناطق موقوفة", MerchantUi.Tone.WARNING)
+            MerchantOperationalState.READY -> Triple("المتجر جاهز لاستقبال الطلبات ✓", "جاهز", MerchantUi.Tone.SUCCESS)
         }
 
         root.addView(MerchantUi.card(context, soft = true).apply {
@@ -126,6 +135,13 @@ class SellerFragment : Fragment() {
                 }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
                 addView(MerchantUi.pill(context, storePill, storeTone))
             })
+            addView(MerchantUi.muted(
+                context,
+                "الظهور: ${if (store?.is_active == true) "ظاهر" else "غير ظاهر"} • " +
+                    "التوصيل: ${if (delivery?.is_active == true) "متاح" else "متوقف"} • " +
+                    "المناطق: ${data.activeDeliveryZoneCount} مفعلة من ${data.deliveryZoneCount}",
+                12f
+            ).apply { setPadding(0, MerchantUi.dp(context, 7), 0, 0) })
             if (store != null && store.is_active) {
                 addView(MerchantUi.compactButton(context, if (store.is_open) "إغلاق مؤقت" else "فتح المتجر") {
                     toggleStoreOpen(store)
@@ -133,11 +149,43 @@ class SellerFragment : Fragment() {
             }
         })
 
+        val readiness = MerchantDashboardPolicy.readiness(
+            storeExists = store != null,
+            storeVisible = store?.is_active == true,
+            hasLogo = !store?.logo_url.isNullOrBlank(),
+            hasCover = !store?.cover_url.isNullOrBlank(),
+            deliveryConfigured = delivery?.is_active == true,
+            hasActiveDeliveryZone = data.activeDeliveryZoneCount > 0,
+            hasActiveProduct = (summary?.active_products ?: 0) > 0
+        )
+        root.addView(MerchantUi.card(context).apply {
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                layoutDirection = View.LAYOUT_DIRECTION_RTL
+                addView(MerchantUi.text(context, "جاهزية المتجر", 15.5f, true), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+                addView(MerchantUi.pill(
+                    context,
+                    "${readiness.completed}/${readiness.total}",
+                    if (readiness.completed == readiness.total) MerchantUi.Tone.SUCCESS else MerchantUi.Tone.BRAND
+                ))
+            })
+            addView(MerchantUi.muted(
+                context,
+                if (readiness.completed == readiness.total) "الإعداد الأساسي مكتمل. راقبي الطلبات والمخزون يومياً."
+                else "أكملي العناصر الناقصة تحت «يحتاج انتباهك» حتى تكون تجربة العميل مكتملة.",
+                12.5f
+            ).apply { setPadding(0, MerchantUi.dp(context, 6), 0, 0) })
+        })
+
         val setupIssues = buildList {
-            if (store == null) add("راجعي بيانات المتجر")
+            if (store == null) add("تعذر العثور على سجل المتجر")
+            if (store != null && !store.is_active) add("فعّلي ظهور المتجر للعملاء")
             if (store?.logo_url.isNullOrBlank()) add("أضيفي شعار المتجر")
             if (store?.cover_url.isNullOrBlank()) add("أضيفي غلاف المتجر")
-            if (data.deliveryZoneCount == 0) add("أضيفي منطقة توصيل واحدة على الأقل")
+            if (delivery == null) add("أكملي إعدادات التوصيل")
+            else if (!delivery.is_active) add("فعّلي التوصيل عندما تكوني جاهزة لاستقبال الطلبات")
+            if (data.activeDeliveryZoneCount == 0) add("فعّلي منطقة توصيل واحدة على الأقل")
+            if (summary != null && summary.active_products == 0) add("أضيفي أو فعّلي منتجاً واحداً على الأقل")
         }
         if (setupIssues.isNotEmpty()) {
             root.addView(MerchantUi.sectionTitle(context, "يحتاج انتباهك"))
@@ -148,26 +196,40 @@ class SellerFragment : Fragment() {
                         setPadding(0, MerchantUi.dp(context, 5), 0, 0)
                     })
                 }
-                addView(MerchantUi.compactButton(context, "فتح بيانات المتجر") { open(MerchantStoreFragment()) })
-                if (data.deliveryZoneCount == 0) {
+                if (store != null && (store.logo_url.isNullOrBlank() || store.cover_url.isNullOrBlank() || !store.is_active)) {
+                    addView(MerchantUi.compactButton(context, "فتح بيانات المتجر") { open(MerchantStoreFragment()) })
+                } else if (store == null) {
+                    addView(MerchantUi.compactButton(context, "إعادة التحقق من المتجر") { load() })
+                }
+                if (delivery == null || !delivery.is_active || data.activeDeliveryZoneCount == 0) {
                     addView(MerchantUi.compactButton(context, "إعداد التوصيل") { open(MerchantDeliveryFragment()) })
+                }
+                if (summary != null && summary.active_products == 0) {
+                    addView(MerchantUi.compactButton(context, "إدارة المنتجات") { open(MerchantProductsFragment()) })
                 }
             })
         }
 
         root.addView(MerchantUi.sectionTitle(context, "نظرة عامة على الأداء"))
         if (summary != null) {
+            val activeOrders = MerchantDashboardPolicy.activeOrderCount(summary.orders, summary.delivered_orders, summary.cancelled_orders)
             root.addView(LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
                 layoutDirection = View.LAYOUT_DIRECTION_RTL
-                addView(MerchantUi.metricCard(context, "الطلبات", summary.orders.toString()), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = MerchantUi.dp(context, 4) })
-                addView(MerchantUi.metricCard(context, "المبيعات", "${money(summary.gmv)} جنيه"), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = MerchantUi.dp(context, 4) })
+                addView(MerchantUi.metricCard(context, "الطلبات", summary.orders.toString(), "كل الطلبات"), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = MerchantUi.dp(context, 4) })
+                addView(MerchantUi.metricCard(context, "مبيعات مكتملة", "${money(summary.gmv)} جنيه", "طلبات تم تسليمها"), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = MerchantUi.dp(context, 4) })
             })
             root.addView(LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
                 layoutDirection = View.LAYOUT_DIRECTION_RTL
-                addView(MerchantUi.metricCard(context, "منتجات نشطة", summary.active_products.toString()), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = MerchantUi.dp(context, 4) })
-                addView(MerchantUi.metricCard(context, "العملاء", summary.customers.toString()), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = MerchantUi.dp(context, 4) })
+                addView(MerchantUi.metricCard(context, "طلبات جارية", activeOrders.toString(), "ليست مسلّمة أو ملغاة"), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = MerchantUi.dp(context, 4) })
+                addView(MerchantUi.metricCard(context, "منتجات نشطة", summary.active_products.toString(), "من ${summary.products} منتج"), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = MerchantUi.dp(context, 4) })
+            })
+            root.addView(LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                layoutDirection = View.LAYOUT_DIRECTION_RTL
+                addView(MerchantUi.metricCard(context, "العملاء", summary.customers.toString(), "عملاء مختلفون"), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = MerchantUi.dp(context, 4) })
+                addView(MerchantUi.metricCard(context, "التقييم", String.format(java.util.Locale.US, "%.1f", summary.average_rating), "متوسط تقييم المنتجات"), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = MerchantUi.dp(context, 4) })
             })
         } else {
             root.addView(MerchantUi.card(context, soft = true).apply {
@@ -177,7 +239,12 @@ class SellerFragment : Fragment() {
         }
 
         root.addView(MerchantUi.sectionTitle(context, "الشغل اليومي"))
-        root.addView(MerchantUi.navCard(context, "📦", "الطلبات", "استلام الطلبات وتحديث حالة التجهيز والتوصيل", summary?.orders?.takeIf { it > 0 }?.toString()) {
+        val activeOrdersBadge = summary?.let {
+            MerchantDashboardPolicy.activeOrderCount(it.orders, it.delivered_orders, it.cancelled_orders)
+                .takeIf { count -> count > 0 }
+                ?.let { count -> "$count جاري" }
+        }
+        root.addView(MerchantUi.navCard(context, "📦", "الطلبات", "استلام الطلبات وتحديث حالة التجهيز والتوصيل", activeOrdersBadge) {
             open(MerchantOrdersFragment())
         })
         root.addView(MerchantUi.navCard(context, "🏷️", "المنتجات والمخزون", "إضافة المنتجات والأسعار والصور والمخزون") {
@@ -208,31 +275,20 @@ class SellerFragment : Fragment() {
         val newOpen = !store.is_open
         Toast.makeText(requireContext(), if (newOpen) "جاري فتح المتجر…" else "جاري إغلاق المتجر مؤقتاً…", Toast.LENGTH_SHORT).show()
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching {
-                repository.updateMerchantStore(
-                    store.id,
-                    store.name,
-                    store.description,
-                    store.city,
-                    store.area.orEmpty(),
-                    store.contact_phone.orEmpty(),
-                    store.whatsapp.orEmpty(),
-                    newOpen,
-                    store.is_active,
-                    store.logo_url,
-                    store.cover_url
-                )
-            }.onSuccess {
-                Toast.makeText(requireContext(), if (newOpen) "المتجر مفتوح الآن ✓" else "تم إغلاق المتجر مؤقتاً", Toast.LENGTH_SHORT).show()
-                load()
-            }.onFailure { error ->
-                storeToggleInFlight = false
-                Toast.makeText(
-                    requireContext(),
-                    CustomerErrorMessages.from(error, "تعذر تحديث حالة المتجر. حاولي مرة أخرى."),
-                    Toast.LENGTH_LONG
-                ).show()
-            }
+            runCatching { repository.setMerchantStoreOpen(store.id, newOpen) }
+                .onSuccess {
+                    storeToggleInFlight = false
+                    Toast.makeText(requireContext(), if (newOpen) "المتجر مفتوح الآن ✓" else "تم إغلاق المتجر مؤقتاً", Toast.LENGTH_SHORT).show()
+                    load()
+                }
+                .onFailure { error ->
+                    storeToggleInFlight = false
+                    Toast.makeText(
+                        requireContext(),
+                        CustomerErrorMessages.from(error, "تعذر تحديث حالة المتجر. حاولي مرة أخرى."),
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
         }
     }
 
@@ -300,6 +356,8 @@ class SellerFragment : Fragment() {
         val seller: Seller?,
         val store: MerchantStore?,
         val summary: MerchantDashboardSummary?,
-        val deliveryZoneCount: Int
+        val deliverySettings: DeliverySettings?,
+        val deliveryZoneCount: Int,
+        val activeDeliveryZoneCount: Int
     )
 }
