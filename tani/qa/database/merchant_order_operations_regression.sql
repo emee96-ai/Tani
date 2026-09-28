@@ -55,6 +55,25 @@ $$;
 
 select set_config('request.jwt.claim.sub','72222222-2222-4222-8222-222222222222',true);
 
+-- The legacy/shared RPC must enforce merchant operational rules too, so a
+-- custom API caller cannot bypass the wrapper/UI requirements.
+do $$
+begin
+  begin
+    perform public.transition_order_status(
+      '77777777-7777-4777-8777-777777777771','rejected',''
+    );
+    raise exception 'expected direct missing rejection reason';
+  exception when sqlstate '22023' then
+    perform tests.assert_true(true, 'direct seller transition cannot bypass rejection reason');
+  end;
+  perform tests.assert_true(
+    (select status from public.orders where id='77777777-7777-4777-8777-777777777771') = 'pending',
+    'rejected direct transition leaves order pending'
+  );
+end
+$$;
+
 -- Destructive merchant statuses require an operational reason.
 do $$
 begin
@@ -109,6 +128,14 @@ select public.merchant_transition_order_status('77777777-7777-4777-8777-77777777
 
 do $$
 begin
+  begin
+    perform public.transition_order_status(
+      '77777777-7777-4777-8777-777777777771','out_for_delivery','مع المندوب بدون زمن'
+    );
+    raise exception 'expected direct missing ETA rejection';
+  exception when sqlstate '22023' then
+    perform tests.assert_true(true, 'direct seller transition cannot bypass delivery ETA');
+  end;
   begin
     perform public.merchant_transition_order_status(
       '77777777-7777-4777-8777-777777777771','out_for_delivery','مع المندوب',null
