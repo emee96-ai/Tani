@@ -17,6 +17,13 @@ data class MerchantDeliveryZone(
     val is_active: Boolean = true
 )
 
+data class MerchantDeliveryZoneUpdateInput(
+    val area: String,
+    val fee: Double,
+    val estimatedMinutes: Int? = null,
+    val isActive: Boolean = true
+)
+
 @Serializable
 data class MerchantDeliveryQuote(
     val seller_id: String,
@@ -75,7 +82,7 @@ suspend fun Repository.checkoutWithDeliveryZones(
     }
     val selections = buildJsonObject {
         deliveryZones.forEach { (sellerId, zone) ->
-            require(zone.seller_id == sellerId) { "اختيار منطقة التوصيل غير صالح" }
+            require(zone.seller_id == sellerId && zone.is_active) { "اختيار منطقة التوصيل غير صالح" }
             put(sellerId, zone.id)
         }
     }
@@ -126,11 +133,55 @@ suspend fun Repository.replaceMerchantDeliveryZones(
                         put("fee", zone.fee)
                         zone.estimated_minutes?.let { put("estimated_minutes", it) }
                         put("sort_order", index)
+                        put("is_active", true)
                     })
                 }
             })
         }.toString()
     )
     Analytics.track("merchant_delivery_zones_updated", screen = "merchant_delivery")
+    return result
+}
+
+suspend fun Repository.saveMerchantDeliveryConfiguration(
+    zones: List<MerchantDeliveryZoneUpdateInput>,
+    notes: String,
+    deliveryEnabled: Boolean
+): List<MerchantDeliveryZone> {
+    require(zones.isNotEmpty()) { "أضيفي منطقة توصيل واحدة على الأقل" }
+    require(zones.size <= 20) { "الحد الأقصى 20 منطقة توصيل" }
+    require(notes.length <= 500) { "ملاحظات التوصيل طويلة جداً" }
+    require(zones.all { it.area.trim().length in 2..100 && it.fee >= 0 }) { "راجعي مناطق ورسوم التوصيل" }
+    require(zones.all { it.estimatedMinutes == null || it.estimatedMinutes in 1..1440 }) { "راجعي زمن الوصول" }
+    require(zones.map { it.area.trim().lowercase() }.distinct().size == zones.size) { "لا تكرري نفس منطقة التوصيل" }
+    require(!deliveryEnabled || zones.any { it.isActive }) { "فعّلي منطقة توصيل واحدة على الأقل" }
+
+    val result: List<MerchantDeliveryZone> = Supabase.post(
+        "rpc/save_my_delivery_configuration",
+        buildJsonObject {
+            put("p_zones", buildJsonArray {
+                zones.forEachIndexed { index, zone ->
+                    add(buildJsonObject {
+                        put("area", zone.area.trim())
+                        put("fee", zone.fee)
+                        zone.estimatedMinutes?.let { put("estimated_minutes", it) }
+                        put("sort_order", index)
+                        put("is_active", zone.isActive)
+                    })
+                }
+            })
+            put("p_notes", notes.trim())
+            put("p_is_active", deliveryEnabled)
+        }.toString()
+    )
+    Analytics.track(
+        "merchant_delivery_configuration_updated",
+        screen = "merchant_delivery",
+        metadata = buildJsonObject {
+            put("zone_count", zones.size)
+            put("active_zone_count", zones.count { it.isActive })
+            put("delivery_enabled", deliveryEnabled)
+        }
+    )
     return result
 }
