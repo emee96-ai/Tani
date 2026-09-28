@@ -41,7 +41,9 @@ class MerchantDeliveryFragment : Fragment() {
         val context = requireContext()
         root.removeAllViews()
         root.addView(MerchantUi.title(context, "التوصيل"))
-        root.addView(MerchantUi.card(context, soft = true).apply { addView(MerchantUi.text(context, "جاري تحميل مناطق التوصيل…", 14f, true)) })
+        root.addView(MerchantUi.card(context, soft = true).apply {
+            addView(MerchantUi.text(context, "جاري تحميل مناطق التوصيل…", 14f, true))
+        })
 
         viewLifecycleOwner.lifecycleScope.launch {
             runCatching {
@@ -49,29 +51,43 @@ class MerchantDeliveryFragment : Fragment() {
                 coroutineScope {
                     val zones = async { repository.merchantDeliveryZones(seller.id) }
                     val settings = async { repository.merchantDeliverySettings(seller.id) }
-                    Triple(seller.id, zones.await(), settings.await())
+                    Pair(zones.await(), settings.await())
                 }
-            }.onSuccess { (sellerId, zones, settings) ->
+            }.onSuccess { (zones, settings) ->
                 val values = if (zones.isNotEmpty()) {
-                    zones.map { MerchantDeliveryZoneInput(it.area_name, it.fee, it.estimated_minutes) }
+                    zones.map {
+                        MerchantDeliveryZoneUpdateInput(
+                            area = it.area_name,
+                            fee = it.fee,
+                            estimatedMinutes = it.estimated_minutes,
+                            isActive = it.is_active
+                        )
+                    }
                 } else {
-                    listOf(MerchantDeliveryZoneInput(settings?.delivery_area.orEmpty(), settings?.base_fee ?: 0.0, settings?.estimated_minutes))
+                    listOf(
+                        MerchantDeliveryZoneUpdateInput(
+                            area = settings?.delivery_area.orEmpty(),
+                            fee = settings?.base_fee ?: 0.0,
+                            estimatedMinutes = settings?.estimated_minutes,
+                            isActive = true
+                        )
+                    )
                 }
-                render(sellerId, values, settings?.notes.orEmpty(), settings?.is_active ?: true)
+                render(values, settings?.notes.orEmpty(), settings?.is_active ?: true)
             }.onFailure { showError(it.message ?: "تعذر تحميل إعدادات التوصيل") }
         }
     }
 
-    private fun render(sellerId: String, initialZones: List<MerchantDeliveryZoneInput>, initialNotes: String, initialActive: Boolean) {
+    private fun render(initialZones: List<MerchantDeliveryZoneUpdateInput>, initialNotes: String, initialActive: Boolean) {
         val context = requireContext()
         root.removeAllViews()
         zoneEditors.clear()
         root.addView(MerchantUi.title(context, "التوصيل"))
-        root.addView(MerchantUi.subtitle(context, "حددي سعر وزمن الوصول لكل منطقة. الزمن يبدأ بعد تسليم الطلب لمندوب التوصيل."))
+        root.addView(MerchantUi.subtitle(context, "حددي المناطق المتاحة وسعر وزمن الوصول لكل منطقة. الزمن يبدأ بعد تسليم الطلب للمندوب."))
 
         root.addView(MerchantUi.card(context, soft = true).apply {
-            addView(MerchantUi.text(context, "مهم", 14.5f, true))
-            addView(MerchantUi.muted(context, "الرسوم التي تضيفينها هنا هي التي تظهر للعميل عند اختيار منطقته.", 12.5f).apply {
+            addView(MerchantUi.text(context, "كيف تعمل الإعدادات؟", 14.5f, true))
+            addView(MerchantUi.muted(context, "يمكن إيقاف منطقة مؤقتاً بدون حذفها. وإيقاف التوصيل العام يمنع الطلبات الجديدة مع الاحتفاظ بكل المناطق والرسوم.", 12.5f).apply {
                 setPadding(0, MerchantUi.dp(context, 5), 0, 0)
             })
         })
@@ -80,7 +96,7 @@ class MerchantDeliveryFragment : Fragment() {
         root.addView(MerchantUi.sectionTitle(context, "مناطق ورسوم التوصيل"))
         root.addView(zonesBox)
 
-        fun appendZone(value: MerchantDeliveryZoneInput? = null) {
+        fun appendZone(value: MerchantDeliveryZoneUpdateInput? = null) {
             if (zoneEditors.size >= 20) return toast("الحد الأقصى 20 منطقة")
             val editor = createZoneEditor(value, zonesBox)
             zoneEditors += editor
@@ -93,38 +109,53 @@ class MerchantDeliveryFragment : Fragment() {
 
         root.addView(MerchantUi.sectionTitle(context, "إعدادات عامة"))
         val notes = field("مثلاً: التوصيل بعد الساعة 4 عصراً", initialNotes, multiline = true)
-        val active = CheckBox(context).apply { text = "التوصيل متاح حالياً"; isChecked = initialActive }
+        val active = CheckBox(context).apply {
+            text = "التوصيل متاح حالياً"
+            isChecked = initialActive
+        }
         root.addView(MerchantUi.card(context).apply {
-            addView(MerchantUi.muted(context, "ملاحظات التوصيل", 12f).apply { setPadding(0, 0, 0, MerchantUi.dp(context, 5)) })
+            addView(MerchantUi.text(context, "حالة التوصيل", 14.5f, true))
+            addView(active.apply { setPadding(0, MerchantUi.dp(context, 6), 0, MerchantUi.dp(context, 10)) })
+            addView(MerchantUi.muted(context, "عند إيقافه لن يستطيع العملاء تأكيد طلبات توصيل جديدة، ولن تتغير الطلبات التي تم إنشاؤها سابقاً.", 12f))
+            addView(MerchantUi.muted(context, "ملاحظات التوصيل", 12f).apply { setPadding(0, MerchantUi.dp(context, 12), 0, MerchantUi.dp(context, 5)) })
             addView(notes)
-            addView(active.apply { setPadding(0, MerchantUi.dp(context, 10), 0, 0) })
         })
 
         root.addView(MerchantUi.primaryButton(context, "حفظ إعدادات التوصيل") {
-            val values = zoneEditors.mapNotNull { editor ->
+            val values = mutableListOf<MerchantDeliveryZoneUpdateInput>()
+            zoneEditors.forEach { editor ->
                 val area = editor.area.text.toString().trim()
                 val fee = editor.fee.text.toString().toDoubleOrNull()
-                val minutes = editor.minutes.text.toString().trim().takeIf { it.isNotEmpty() }?.toIntOrNull()
+                val minutesText = editor.minutes.text.toString().trim()
+                val minutes = minutesText.takeIf { it.isNotEmpty() }?.toIntOrNull()
                 when {
-                    area.isBlank() -> { toast("اكتبي اسم كل منطقة توصيل"); return@primaryButton }
-                    fee == null || fee < 0 -> { toast("راجعي رسوم التوصيل"); return@primaryButton }
-                    editor.minutes.text.toString().isNotBlank() && minutes == null -> { toast("راجعي زمن الوصول"); return@primaryButton }
-                    minutes != null && minutes !in 1..1440 -> { toast("زمن الوصول يجب أن يكون بين دقيقة و24 ساعة"); return@primaryButton }
-                    else -> MerchantDeliveryZoneInput(area, fee, minutes)
+                    area.isBlank() -> return@primaryButton toast("اكتبي اسم كل منطقة توصيل")
+                    fee == null || fee < 0 -> return@primaryButton toast("راجعي رسوم التوصيل")
+                    minutesText.isNotBlank() && minutes == null -> return@primaryButton toast("راجعي زمن الوصول")
+                    minutes != null && minutes !in 1..1440 -> return@primaryButton toast("زمن الوصول يجب أن يكون بين دقيقة و24 ساعة")
                 }
+                values += MerchantDeliveryZoneUpdateInput(area, fee, minutes, editor.available.isChecked)
             }
-            if (values.size != zoneEditors.size) return@primaryButton
-            if (values.map { it.area.lowercase() }.distinct().size != values.size) return@primaryButton toast("لا تكرري نفس منطقة التوصيل")
-            save(sellerId, values, notes.text.toString(), active.isChecked)
+            if (values.map { it.area.lowercase() }.distinct().size != values.size) {
+                return@primaryButton toast("لا تكرري نفس منطقة التوصيل")
+            }
+            if (active.isChecked && values.none { it.isActive }) {
+                return@primaryButton toast("فعّلي منطقة توصيل واحدة على الأقل أو أوقفي التوصيل العام")
+            }
+            save(values, notes.text.toString(), active.isChecked)
         })
     }
 
-    private fun createZoneEditor(value: MerchantDeliveryZoneInput?, parent: LinearLayout): ZoneEditor {
+    private fun createZoneEditor(value: MerchantDeliveryZoneUpdateInput?, parent: LinearLayout): ZoneEditor {
         val context = requireContext()
         val card = MerchantUi.card(context)
         val area = field("اسم المنطقة / الحي", value?.area)
         val fee = field("الرسوم بالجنيه", value?.fee?.takeIf { value.area.isNotBlank() || it > 0 }?.let(::numberText), decimal = true)
-        val minutes = field("زمن الوصول بالدقائق", value?.estimated_minutes?.toString(), number = true)
+        val minutes = field("زمن الوصول بالدقائق", value?.estimatedMinutes?.toString(), number = true)
+        val available = CheckBox(context).apply {
+            text = "المنطقة متاحة للطلب"
+            isChecked = value?.isActive ?: true
+        }
         card.addView(LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
@@ -136,35 +167,50 @@ class MerchantDeliveryFragment : Fragment() {
                 parent.removeView(card)
             })
         })
+        card.addView(available.apply { setPadding(0, MerchantUi.dp(context, 6), 0, 0) })
         addLabeled(card, "المنطقة", area)
         val row = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
         }
-        val feeBox = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; addView(MerchantUi.muted(context, "الرسوم", 12f)); addView(fee) }
-        val timeBox = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; addView(MerchantUi.muted(context, "الوصول بعد تسليم الطلب للمندوب", 12f)); addView(minutes) }
+        val feeBox = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(MerchantUi.muted(context, "الرسوم", 12f))
+            addView(fee)
+        }
+        val timeBox = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(MerchantUi.muted(context, "الوصول بعد تسليم الطلب للمندوب", 12f))
+            addView(minutes)
+        }
         row.addView(feeBox, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = MerchantUi.dp(context, 4) })
         row.addView(timeBox, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = MerchantUi.dp(context, 4) })
         card.addView(row)
-        return ZoneEditor(card, area, fee, minutes)
+        return ZoneEditor(card, area, fee, minutes, available)
     }
 
-    private fun save(sellerId: String, zones: List<MerchantDeliveryZoneInput>, notes: String, active: Boolean) {
+    private fun save(zones: List<MerchantDeliveryZoneUpdateInput>, notes: String, active: Boolean) {
         toast("جاري حفظ التوصيل…")
         viewLifecycleOwner.lifecycleScope.launch {
             runCatching {
-                repository.replaceMerchantDeliveryZones(zones)
-                val first = zones.first()
-                repository.saveMerchantDeliverySettings(sellerId, first.fee, first.area, first.estimated_minutes, notes, active)
+                repository.saveMerchantDeliveryConfiguration(zones, notes, active)
             }.onSuccess {
-                toast("تم حفظ مناطق التوصيل ✓")
+                toast(if (active) "تم حفظ إعدادات التوصيل ✓" else "تم إيقاف التوصيل مع حفظ المناطق ✓")
                 load()
-            }.onFailure { toast(it.message ?: "تعذر حفظ التوصيل") }
+            }.onFailure { error ->
+                val message = when {
+                    error.message.orEmpty().contains("Enable at least one", ignoreCase = true) -> "فعّلي منطقة توصيل واحدة على الأقل"
+                    error.message.orEmpty().contains("Approved merchant", ignoreCase = true) -> "حساب التاجر غير جاهز لتعديل التوصيل"
+                    else -> error.message ?: "تعذر حفظ التوصيل"
+                }
+                toast(message)
+            }
         }
     }
 
     private fun field(hint: String, value: String?, multiline: Boolean = false, number: Boolean = false, decimal: Boolean = false) = EditText(requireContext()).apply {
-        setText(value.orEmpty()); this.hint = hint
+        setText(value.orEmpty())
+        this.hint = hint
         setBackgroundResource(R.drawable.bg_field)
         setPadding(MerchantUi.dp(context, 12), MerchantUi.dp(context, 11), MerchantUi.dp(context, 12), MerchantUi.dp(context, 11))
         inputType = when {
@@ -177,13 +223,18 @@ class MerchantDeliveryFragment : Fragment() {
     }
 
     private fun addLabeled(parent: LinearLayout, label: String, input: EditText) {
-        parent.addView(MerchantUi.muted(requireContext(), label, 12f).apply { setPadding(0, MerchantUi.dp(requireContext(), 8), 0, MerchantUi.dp(requireContext(), 5)) })
+        parent.addView(MerchantUi.muted(requireContext(), label, 12f).apply {
+            setPadding(0, MerchantUi.dp(requireContext(), 8), 0, MerchantUi.dp(requireContext(), 5))
+        })
         parent.addView(input)
     }
+
     private fun numberText(value: Double) = if (value % 1.0 == 0.0) value.toInt().toString() else String.format(java.util.Locale.US, "%.2f", value)
     private fun toast(value: String) = Toast.makeText(requireContext(), value, Toast.LENGTH_LONG).show()
+
     private fun showError(message: String) {
-        val context = requireContext(); root.removeAllViews()
+        val context = requireContext()
+        root.removeAllViews()
         root.addView(MerchantUi.title(context, "التوصيل"))
         root.addView(MerchantUi.card(context).apply {
             addView(MerchantUi.text(context, "تعذر تحميل التوصيل", 16f, true))
@@ -192,5 +243,11 @@ class MerchantDeliveryFragment : Fragment() {
         })
     }
 
-    private data class ZoneEditor(val card: LinearLayout, val area: EditText, val fee: EditText, val minutes: EditText)
+    private data class ZoneEditor(
+        val card: LinearLayout,
+        val area: EditText,
+        val fee: EditText,
+        val minutes: EditText,
+        val available: CheckBox
+    )
 }
