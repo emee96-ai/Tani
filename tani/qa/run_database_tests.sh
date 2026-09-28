@@ -6,6 +6,7 @@ DB_URL="${TANI_DATABASE_URL:-postgresql://postgres:postgres@127.0.0.1:5432/postg
 PSQL=(psql "$DB_URL" -X -v ON_ERROR_STOP=1)
 
 "${PSQL[@]}" -f "$ROOT/qa/database/bootstrap.sql"
+"${PSQL[@]}" -f "$ROOT/qa/database/delivery_configuration_setup.sql"
 "${PSQL[@]}" -f "$ROOT/supabase/20260921091014_restrict_current_user_role_rpc.sql"
 "${PSQL[@]}" -f "$ROOT/qa/database/role_helper_security_regression.sql"
 "${PSQL[@]}" -f "$ROOT/supabase/20260918_product_variants_checkout_v4.sql"
@@ -13,11 +14,15 @@ PSQL=(psql "$DB_URL" -X -v ON_ERROR_STOP=1)
 "${PSQL[@]}" -f "$ROOT/supabase/fix_recursive_order_rls.sql"
 "${PSQL[@]}" -f "$ROOT/supabase/20260928_merchant_order_operations.sql"
 "${PSQL[@]}" -f "$ROOT/supabase/20260928_merchant_order_direct_guard.sql"
+"${PSQL[@]}" -f "$ROOT/supabase/20260928_merchant_delivery_configuration.sql"
+"${PSQL[@]}" -f "$ROOT/supabase/20260928_refresh_delivery_zone_sync_trigger.sql"
+"${PSQL[@]}" -f "$ROOT/supabase/20260928_delivery_store_compatibility.sql"
 "${PSQL[@]}" -f "$ROOT/supabase/20260919_push_notification_foundation.sql"
 "${PSQL[@]}" -f "$ROOT/qa/database/push_registration_regression.sql"
 "${PSQL[@]}" -f "$ROOT/qa/database/checkout_regression.sql"
 "${PSQL[@]}" -f "$ROOT/qa/database/release_regression.sql"
 "${PSQL[@]}" -f "$ROOT/qa/database/merchant_order_operations_regression.sql"
+"${PSQL[@]}" -f "$ROOT/qa/database/delivery_configuration_regression.sql"
 "${PSQL[@]}" -f "$ROOT/qa/database/concurrency_setup.sql"
 
 run_case() {
