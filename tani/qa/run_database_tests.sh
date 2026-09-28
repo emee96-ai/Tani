@@ -11,10 +11,12 @@ PSQL=(psql "$DB_URL" -X -v ON_ERROR_STOP=1)
 "${PSQL[@]}" -f "$ROOT/supabase/20260918_product_variants_checkout_v4.sql"
 "${PSQL[@]}" -f "$ROOT/supabase/20260919_fix_variant_rowtype_assignment.sql"
 "${PSQL[@]}" -f "$ROOT/supabase/fix_recursive_order_rls.sql"
+"${PSQL[@]}" -f "$ROOT/supabase/20260928_merchant_order_operations.sql"
 "${PSQL[@]}" -f "$ROOT/supabase/20260919_push_notification_foundation.sql"
 "${PSQL[@]}" -f "$ROOT/qa/database/push_registration_regression.sql"
 "${PSQL[@]}" -f "$ROOT/qa/database/checkout_regression.sql"
 "${PSQL[@]}" -f "$ROOT/qa/database/release_regression.sql"
+"${PSQL[@]}" -f "$ROOT/qa/database/merchant_order_operations_regression.sql"
 "${PSQL[@]}" -f "$ROOT/qa/database/concurrency_setup.sql"
 
 run_case() {
