@@ -1,8 +1,9 @@
-# Tani Release Checklist — 1 October 2026
+# Tani Release Checklist — 3 October 2026
 
-**NO-GO:** technical candidate checks pass as noted below, but device execution and
-production configuration/operational evidence remain incomplete. Check items only
-against actual evidence for the release commit. CI has not run on the repair branch.
+**NO-GO:** all eight CI jobs pass on the tested code/workflow checkpoint
+bb66cad, including 30 instrumentation executions and measured 16 KB runtime.
+Production configuration and genuine operational evidence remain incomplete.
+The live gate snapshot at 2026-10-03 12:59:46 UTC is still `ready=false`.
 
 ## Verified technical work
 
@@ -17,13 +18,17 @@ against actual evidence for the release commit. CI has not run on the repair bra
 - [x] Server function strict typecheck and four security tests pass.
 - [x] Real account-erasure evidence covers eight checks and fixture cleanup.
 - [x] Production gate rejects missing, repeated, decreasing and malformed version codes.
-- [x] Full release Lint completed: zero Error/Fatal, 309 customer + 28 admin warnings.
-- [ ] PostgreSQL 17 concurrency regressions and full CI pass on the final commit.
-- [ ] Ten instrumentation tests execute on Android 11/API30 and Android 16/API36.
-- [ ] Real 16 KB runtime and weak-network checkout/recovery verification.
+- [x] Release CI Lint: zero Error/Fatal, 319 customer + 36 admin warnings; one admin Hint.
+      Debug CI Lint: zero Error/Fatal, 318 customer + 36 admin warnings; one admin Hint.
+- [x] PostgreSQL 17.11 concurrency regressions, full-schema suites, and all eight CI
+      jobs pass on bb66cad (the tested code/workflow checkpoint).
+- [x] Ten instrumentation tests on each of Android 11/API30, Android 15/API35
+      with 16 KB pages, and Android 16/API36: 30 executions, zero failures/errors/skips.
+- [x] 16 KB runtime smoke tests on x86_64, measured as 16384-byte pages before tests.
+- [ ] Production-signed ARM64, weak-network checkout/recovery and complete user journeys.
 
-The current signing key is disposable and expires after two days. These candidates
-are for validation only and are not production releases.
+CI generates a disposable signing key for each run with a two-day lifetime.
+These candidates are for validation; production keys and configuration remain required.
 
 ## Supabase and production operations
 
@@ -75,8 +80,13 @@ Locally the gate uses `TANI_PREVIOUS_VERSION_CODE` and
 
 ## Publication
 
-- [ ] Explicit authorization to upload the repair branch and full schema to the public repository.
-- [ ] Review CI results on that exact commit, then produce and approve a production-signed release.
+- [x] Explicit authorization received on 3 October to upload the repair branch and full schema.
+- [x] Uploaded the reviewed files and verified exact initial Git tree equality.
+- [x] Reviewed passing CI on bb66cad and checked device/XML/archive evidence.
+- [ ] Produce and approve a production-signed release after the live gates pass.
 - [ ] Separate authorization for Google Play publication when the release is ready.
 
-Details and limitations: `LAUNCH_REPAIR_STATUS_2026-10-01.md`.
+Details and limitations: [LAUNCH_REPAIR_STATUS_2026-10-03.md](LAUNCH_REPAIR_STATUS_2026-10-03.md).
+
+Machine evidence: [launch-checks-2026-10-03.json](../qa/evidence/launch-checks-2026-10-03.json).
+CI: [all eight jobs passed](https://github.com/emee96-ai/Tani/actions/runs/37124506987).

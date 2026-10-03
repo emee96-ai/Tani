@@ -1,0 +1,1117 @@
+{
+  "generated_at_utc": "2026-10-03T13:21:11.241518+00:00",
+  "repository": "emee96-ai/Tani",
+  "branch": "maintenance/launch-20260930",
+  "public_upload_authorization": {
+    "granted": true,
+    "date": "2026-10-03",
+    "scope": "Maintenance branch, full database schema, and CI; explicit approval from project owner"
+  },
+  "source_verification": {
+    "original_local_commit": "3b1a67e1c3e2381ced8359cfefa546eb889b110b",
+    "initial_published_commit": "0ead91e6058b4db256a76c298a2b4936d0433448",
+    "original_and_published_tree": "5f61df56ab776925ed4266d75daf67b0bbb61def",
+    "identical": true,
+    "device_test_commit": "bb66cad079c478b3f879629a66a6f36ef2a9cdc1",
+    "device_test_tree": "0652df5ce3ac4be11b3f5278e8aa921360c3698d"
+  },
+  "runs": [
+    {
+      "id": 37123815342,
+      "url": "https://github.com/emee96-ai/Tani/actions/runs/37123815342",
+      "commit": "0ead91e6058b4db256a76c298a2b4936d0433448",
+      "branch": "maintenance/launch-20260930",
+      "event": "push",
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-03T12:43:53Z",
+      "updated_at": "2026-10-03T13:00:22Z"
+    },
+    {
+      "id": 37124506987,
+      "url": "https://github.com/emee96-ai/Tani/actions/runs/37124506987",
+      "commit": "bb66cad079c478b3f879629a66a6f36ef2a9cdc1",
+      "branch": "maintenance/launch-20260930",
+      "event": "push",
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-03T12:56:28Z",
+      "updated_at": "2026-10-03T13:09:13Z"
+    }
+  ],
+  "latest_jobs": [
+    {
+      "id": 111206982277,
+      "name": "function-tests",
+      "url": "https://github.com/emee96-ai/Tani/actions/runs/37124506987/job/111206982277",
+      "conclusion": "success",
+      "started_at": "2026-10-03T12:56:31Z",
+      "completed_at": "2026-10-03T12:56:39Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "number": 1,
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "conclusion": "success"
+        },
+        {
+          "name": "Run denoland/setup-deno@v2",
+          "number": 3,
+          "conclusion": "success"
+        },
+        {
+          "name": "Check server functions and test worker security",
+          "number": 4,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run denoland/setup-deno@v2",
+          "number": 7,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "number": 8,
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "number": 9,
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 111206982358,
+      "name": "ui-smoke (API 30, 4096 bytes)",
+      "url": "https://github.com/emee96-ai/Tani/actions/runs/37124506987/job/111206982358",
+      "conclusion": "success",
+      "started_at": "2026-10-03T12:56:33Z",
+      "completed_at": "2026-10-03T13:02:18Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "number": 1,
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout",
+          "number": 2,
+          "conclusion": "success"
+        },
+        {
+          "name": "Set up JDK 17",
+          "number": 3,
+          "conclusion": "success"
+        },
+        {
+          "name": "Validate Gradle wrapper",
+          "number": 4,
+          "conclusion": "success"
+        },
+        {
+          "name": "Set up Gradle cache",
+          "number": 5,
+          "conclusion": "success"
+        },
+        {
+          "name": "Enable KVM",
+          "number": 6,
+          "conclusion": "success"
+        },
+        {
+          "name": "Run customer UI smoke tests",
+          "number": 7,
+          "conclusion": "success"
+        },
+        {
+          "name": "Upload UI test reports",
+          "number": 8,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Set up Gradle cache",
+          "number": 14,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Set up JDK 17",
+          "number": 15,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout",
+          "number": 16,
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "number": 17,
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 111206982378,
+      "name": "ui-smoke (API 36, 4096 bytes)",
+      "url": "https://github.com/emee96-ai/Tani/actions/runs/37124506987/job/111206982378",
+      "conclusion": "success",
+      "started_at": "2026-10-03T12:56:31Z",
+      "completed_at": "2026-10-03T13:03:32Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "number": 1,
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout",
+          "number": 2,
+          "conclusion": "success"
+        },
+        {
+          "name": "Set up JDK 17",
+          "number": 3,
+          "conclusion": "success"
+        },
+        {
+          "name": "Validate Gradle wrapper",
+          "number": 4,
+          "conclusion": "success"
+        },
+        {
+          "name": "Set up Gradle cache",
+          "number": 5,
+          "conclusion": "success"
+        },
+        {
+          "name": "Enable KVM",
+          "number": 6,
+          "conclusion": "success"
+        },
+        {
+          "name": "Run customer UI smoke tests",
+          "number": 7,
+          "conclusion": "success"
+        },
+        {
+          "name": "Upload UI test reports",
+          "number": 8,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Set up Gradle cache",
+          "number": 14,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Set up JDK 17",
+          "number": 15,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout",
+          "number": 16,
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "number": 17,
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 111206982385,
+      "name": "release-check",
+      "url": "https://github.com/emee96-ai/Tani/actions/runs/37124506987/job/111206982385",
+      "conclusion": "success",
+      "started_at": "2026-10-03T12:56:31Z",
+      "completed_at": "2026-10-03T13:09:12Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "number": 1,
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout",
+          "number": 2,
+          "conclusion": "success"
+        },
+        {
+          "name": "Set up JDK 17",
+          "number": 3,
+          "conclusion": "success"
+        },
+        {
+          "name": "Validate Gradle wrapper",
+          "number": 4,
+          "conclusion": "success"
+        },
+        {
+          "name": "Set up Gradle cache",
+          "number": 5,
+          "conclusion": "success"
+        },
+        {
+          "name": "Create throwaway CI signing key",
+          "number": 6,
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify release gate with CI credentials",
+          "number": 7,
+          "conclusion": "success"
+        },
+        {
+          "name": "Build signed minified release candidates",
+          "number": 8,
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify R8, signatures and release outputs",
+          "number": 9,
+          "conclusion": "success"
+        },
+        {
+          "name": "Upload CI-signed customer release candidate",
+          "number": 10,
+          "conclusion": "success"
+        },
+        {
+          "name": "Upload CI-signed admin release candidate",
+          "number": 11,
+          "conclusion": "success"
+        },
+        {
+          "name": "Upload release lint and mapping reports",
+          "number": 12,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Set up Gradle cache",
+          "number": 22,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Set up JDK 17",
+          "number": 23,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout",
+          "number": 24,
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "number": 25,
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 111206982431,
+      "name": "lint",
+      "url": "https://github.com/emee96-ai/Tani/actions/runs/37124506987/job/111206982431",
+      "conclusion": "success",
+      "started_at": "2026-10-03T12:56:32Z",
+      "completed_at": "2026-10-03T13:06:06Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "number": 1,
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout",
+          "number": 2,
+          "conclusion": "success"
+        },
+        {
+          "name": "Set up JDK 17",
+          "number": 3,
+          "conclusion": "success"
+        },
+        {
+          "name": "Set up Gradle cache",
+          "number": 4,
+          "conclusion": "success"
+        },
+        {
+          "name": "Android lint",
+          "number": 5,
+          "conclusion": "success"
+        },
+        {
+          "name": "Upload lint reports",
+          "number": 6,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Set up Gradle cache",
+          "number": 10,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Set up JDK 17",
+          "number": 11,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout",
+          "number": 12,
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "number": 13,
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 111206982434,
+      "name": "ui-smoke (API 35, 16384 bytes)",
+      "url": "https://github.com/emee96-ai/Tani/actions/runs/37124506987/job/111206982434",
+      "conclusion": "success",
+      "started_at": "2026-10-03T12:56:31Z",
+      "completed_at": "2026-10-03T13:02:40Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "number": 1,
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout",
+          "number": 2,
+          "conclusion": "success"
+        },
+        {
+          "name": "Set up JDK 17",
+          "number": 3,
+          "conclusion": "success"
+        },
+        {
+          "name": "Validate Gradle wrapper",
+          "number": 4,
+          "conclusion": "success"
+        },
+        {
+          "name": "Set up Gradle cache",
+          "number": 5,
+          "conclusion": "success"
+        },
+        {
+          "name": "Enable KVM",
+          "number": 6,
+          "conclusion": "success"
+        },
+        {
+          "name": "Run customer UI smoke tests",
+          "number": 7,
+          "conclusion": "success"
+        },
+        {
+          "name": "Upload UI test reports",
+          "number": 8,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Set up Gradle cache",
+          "number": 14,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Set up JDK 17",
+          "number": 15,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout",
+          "number": 16,
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "number": 17,
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 111206982460,
+      "name": "build",
+      "url": "https://github.com/emee96-ai/Tani/actions/runs/37124506987/job/111206982460",
+      "conclusion": "success",
+      "started_at": "2026-10-03T12:56:32Z",
+      "completed_at": "2026-10-03T13:00:13Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "number": 1,
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout",
+          "number": 2,
+          "conclusion": "success"
+        },
+        {
+          "name": "Set up JDK 17",
+          "number": 3,
+          "conclusion": "success"
+        },
+        {
+          "name": "Validate Gradle wrapper",
+          "number": 4,
+          "conclusion": "success"
+        },
+        {
+          "name": "Set up Gradle cache",
+          "number": 5,
+          "conclusion": "success"
+        },
+        {
+          "name": "Prepare Gradle wrapper",
+          "number": 6,
+          "conclusion": "success"
+        },
+        {
+          "name": "Project static QA",
+          "number": 7,
+          "conclusion": "success"
+        },
+        {
+          "name": "Build APKs and run unit tests",
+          "number": 8,
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify Tani Admin APK",
+          "number": 9,
+          "conclusion": "success"
+        },
+        {
+          "name": "Upload Tani APK",
+          "number": 10,
+          "conclusion": "success"
+        },
+        {
+          "name": "Upload Tani Admin APK",
+          "number": 11,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Set up Gradle cache",
+          "number": 20,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Set up JDK 17",
+          "number": 21,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout",
+          "number": 22,
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "number": 23,
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 111206982509,
+      "name": "database-tests",
+      "url": "https://github.com/emee96-ai/Tani/actions/runs/37124506987/job/111206982509",
+      "conclusion": "success",
+      "started_at": "2026-10-03T12:56:32Z",
+      "completed_at": "2026-10-03T12:57:05Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "number": 1,
+          "conclusion": "success"
+        },
+        {
+          "name": "Initialize containers",
+          "number": 2,
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout",
+          "number": 3,
+          "conclusion": "success"
+        },
+        {
+          "name": "Install PostgreSQL client",
+          "number": 4,
+          "conclusion": "success"
+        },
+        {
+          "name": "Run database regression tests",
+          "number": 5,
+          "conclusion": "success"
+        },
+        {
+          "name": "Run launch authorization tests against the full live schema",
+          "number": 6,
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout",
+          "number": 11,
+          "conclusion": "success"
+        },
+        {
+          "name": "Stop containers",
+          "number": 12,
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "number": 13,
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "latest_artifacts": [
+    {
+      "id": 11275370365,
+      "name": "tani-release-candidate-ci-signed-not-production",
+      "size_in_bytes": 4675993,
+      "archive_digest": "sha256:375213e83a5aee359dac6489e9e69c151ab5fa838e7fb6ff2971d6726645ddb9",
+      "expires_at": "2027-01-01T12:56:29Z"
+    },
+    {
+      "id": 11275315488,
+      "name": "tani-admin-release-candidate-ci-signed-not-production",
+      "size_in_bytes": 2877213,
+      "archive_digest": "sha256:b547851df082f6490814a3a2623c9717bf060f5ef5a6c6303cfbdefa697a97c6",
+      "expires_at": "2027-01-01T12:56:29Z"
+    },
+    {
+      "id": 11275120697,
+      "name": "tani-release-check-reports",
+      "size_in_bytes": 3630442,
+      "archive_digest": "sha256:a9d7460c3ba22fc851b58984b6dfd3921e7c3d1e0bf40773be86d3a828502595",
+      "expires_at": "2027-01-01T12:56:29Z"
+    },
+    {
+      "id": 11274925108,
+      "name": "tani-admin-verified-apk",
+      "size_in_bytes": 6553930,
+      "archive_digest": "sha256:c32ffd73303cc4ceffa69f26add6f413e140b0dc961d8c252199af0f276ac254",
+      "expires_at": "2027-01-01T12:56:29Z"
+    },
+    {
+      "id": 11274915044,
+      "name": "tani-ui-smoke-reports-api-35-pages-16384",
+      "size_in_bytes": 98887,
+      "archive_digest": "sha256:b4504b39a0cb9024020bc480ef9fddba19e2ba77818dee87fb3ce91adaea3a96",
+      "expires_at": "2027-01-01T12:56:29Z"
+    },
+    {
+      "id": 11274815811,
+      "name": "tani-lint-reports",
+      "size_in_bytes": 121913,
+      "archive_digest": "sha256:a6800b5da654120e9b6fff7b8e3e0871df049cb7df8b5d8453d4300044691ab5",
+      "expires_at": "2027-01-01T12:56:29Z"
+    },
+    {
+      "id": 11274635803,
+      "name": "tani-ui-smoke-reports-api-30-pages-4096",
+      "size_in_bytes": 45061,
+      "archive_digest": "sha256:61e5a560f6f1e463b9368dfca0f5cf4a2d86995a0a8f90ec265c08ce511e5730",
+      "expires_at": "2027-01-01T12:56:29Z"
+    },
+    {
+      "id": 11274389399,
+      "name": "tani-debug-apk",
+      "size_in_bytes": 9227361,
+      "archive_digest": "sha256:0e96af8b3dedd0c672d78223106a4ae2fdc88d71639a8419cd812891cc8bcb89",
+      "expires_at": "2027-01-01T12:56:29Z"
+    },
+    {
+      "id": 11273833990,
+      "name": "tani-ui-smoke-reports-api-36-pages-4096",
+      "size_in_bytes": 78313,
+      "archive_digest": "sha256:1a36bfcdb2a5f4cabd129c93e89bdd5f090677d2685e32192c092785c5f62a7a",
+      "expires_at": "2027-01-01T12:56:29Z"
+    }
+  ],
+  "log_evidence": {
+    "database": [
+      "2026-10-03T12:57:01.5326719Z psql:/home/runner/work/Tani/Tani/tani/qa/database/concurrency_assertions.sql:5: NOTICE:  PASS: concurrent idempotent retries create one group",
+      "2026-10-03T12:57:01.5334489Z psql:/home/runner/work/Tani/Tani/tani/qa/database/concurrency_assertions.sql:9: NOTICE:  PASS: concurrent idempotent retries decrement stock once",
+      "2026-10-03T12:57:01.5338835Z psql:/home/runner/work/Tani/Tani/tani/qa/database/concurrency_assertions.sql:13: NOTICE:  PASS: concurrent stock race creates one order group",
+      "2026-10-03T12:57:01.5354336Z PASS: database regression suite",
+      "2026-10-03T12:57:03.3782047Z PASS: full-schema launch regression suite",
+      "2026-10-03T12:57:03.6230474Z  2026-10-03 12:56:43.027 UTC [1] LOG:  starting PostgreSQL 17.11 (Debian 17.11-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+      "2026-10-03T12:57:03.6249433Z  waiting for server to start....2026-10-03 12:56:42.785 UTC [48] LOG:  starting PostgreSQL 17.11 (Debian 17.11-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"
+    ],
+    "functions": [
+      "2026-10-03T12:56:35.7471504Z Check file:///home/runner/work/Tani/Tani/tani/supabase/functions/maintenance-worker/index.ts",
+      "2026-10-03T12:56:35.7472233Z Check file:///home/runner/work/Tani/Tani/tani/supabase/functions/delete-account/index.ts",
+      "2026-10-03T12:56:37.4851989Z running 4 tests from ./_shared/security_test.ts",
+      "2026-10-03T12:56:37.8095672Z ok | 4 passed | 0 failed (324ms)"
+    ],
+    "release": [
+      "2026-10-03T12:56:42.8148632Z PASS: CI candidate gate; production readiness remains a separate required gate",
+      "2026-10-03T12:56:56.7949241Z Ran 9 tests in 13.903s",
+      "2026-10-03T12:56:56.7949584Z OK",
+      "2026-10-03T13:06:48.6446535Z BUILD SUCCESSFUL in 9m 51s",
+      "2026-10-03T13:09:06.4277484Z BUILD SUCCESSFUL in 2m 17s",
+      "2026-10-03T13:09:07.8313887Z PASS: app-release.aab:base/lib/arm64-v8a/libdatastore_shared_counter.so 16 KB LOAD/RELRO",
+      "2026-10-03T13:09:07.8314477Z PASS: app-release.aab:base/lib/x86_64/libdatastore_shared_counter.so 16 KB LOAD/RELRO",
+      "2026-10-03T13:09:07.8314999Z PASS: checked 2 64-bit native libraries; runtime device testing remains required"
+    ],
+    "runtime_16kb": [
+      "2026-10-03T12:57:55.8702887Z PASS: device API 35, ABI x86_64, page_size=16384",
+      "2026-10-03T13:02:11.8765354Z Starting 10 tests on emulator-5554 - 15",
+      "2026-10-03T13:02:34.9722485Z Finished 10 tests on emulator-5554 - 15",
+      "2026-10-03T13:02:36.0748524Z BUILD SUCCESSFUL in 4m 40s"
+    ]
+  },
+  "results": {
+    "latest_ci": "PASS",
+    "ci_jobs": 8,
+    "ci_jobs_passed": 8,
+    "database": {
+      "engine": "PostgreSQL 17.11",
+      "concurrency": "PASS",
+      "regressions": "PASS",
+      "full_schema_suites": "PASS",
+      "baseline_public_tables": 75,
+      "launch_migrations": 8
+    },
+    "server_functions": {
+      "strict_typecheck": "PASS",
+      "security_tests": 4,
+      "failures": 0
+    },
+    "unit_test_tasks": {
+      "Debug": "PASS",
+      "Release": "PASS",
+      "local_xml_count_reference": "launch-checks-2026-10-01.json",
+      "local_customer_tests_per_variant": 35,
+      "local_admin_tests_per_variant": 3
+    },
+    "release_gate": {
+      "tests": 9,
+      "passed": true,
+      "production_approval": false
+    },
+    "release_candidates": {
+      "r8": "PASS",
+      "aab_signatures_both_apps": "PASS",
+      "customer_apk_signature": "PASS",
+      "customer_apk_zipalign_16kb": "PASS",
+      "aab_native_load_relro_16kb": "PASS",
+      "production": false,
+      "signing": "throwaway CI key"
+    },
+    "instrumentation": [
+      {
+        "artifact_id": 11274635803,
+        "archive_sha256": "61e5a560f6f1e463b9368dfca0f5cf4a2d86995a0a8f90ec265c08ce511e5730",
+        "device": {
+          "api_level": 30,
+          "page_size_bytes": 4096,
+          "abi": "x86_64",
+          "verified_before_instrumentation": true
+        },
+        "totals": {
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "suites": [
+          {
+            "file": "outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 11-_app-.xml",
+            "tests": 10,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0,
+            "cases": [
+              {
+                "class": "com.tani.app.CheckoutRecoveryTest",
+                "name": "confirmationRetryPreservesExtraItemsAndVariantQuantities"
+              },
+              {
+                "class": "com.tani.app.CheckoutRecoveryTest",
+                "name": "encryptedAttemptSurvivesReinitializationAndSessionClear"
+              },
+              {
+                "class": "com.tani.app.MainActivitySmokeTest",
+                "name": "loginRejectsMalformedEmailBeforeNetworkCall"
+              },
+              {
+                "class": "com.tani.app.MainActivitySmokeTest",
+                "name": "signupRejectsPasswordMismatchBeforeNetworkCall"
+              },
+              {
+                "class": "com.tani.app.MainActivitySmokeTest",
+                "name": "guestCanNavigateStoresAndCart"
+              },
+              {
+                "class": "com.tani.app.MainActivitySmokeTest",
+                "name": "forgotPasswordRejectsMalformedEmailBeforeNetworkCall"
+              },
+              {
+                "class": "com.tani.app.MainActivitySmokeTest",
+                "name": "protectedOrdersRouteGuestToLoginAndGuestCanReturn"
+              },
+              {
+                "class": "com.tani.app.MainActivitySmokeTest",
+                "name": "guestLaunchShowsPrimaryNavigation"
+              },
+              {
+                "class": "com.tani.app.PrivateUserDataIsolationTest",
+                "name": "draftsAreIsolatedAndClearedOnLogout"
+              },
+              {
+                "class": "com.tani.app.PrivateUserDataIsolationTest",
+                "name": "unownedLegacyDraftIsNotImported"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "artifact_id": 11274915044,
+        "archive_sha256": "b4504b39a0cb9024020bc480ef9fddba19e2ba77818dee87fb3ce91adaea3a96",
+        "device": {
+          "api_level": 35,
+          "page_size_bytes": 16384,
+          "abi": "x86_64",
+          "verified_before_instrumentation": true
+        },
+        "totals": {
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "suites": [
+          {
+            "file": "outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 15-_app-.xml",
+            "tests": 10,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0,
+            "cases": [
+              {
+                "class": "com.tani.app.CheckoutRecoveryTest",
+                "name": "confirmationRetryPreservesExtraItemsAndVariantQuantities"
+              },
+              {
+                "class": "com.tani.app.CheckoutRecoveryTest",
+                "name": "encryptedAttemptSurvivesReinitializationAndSessionClear"
+              },
+              {
+                "class": "com.tani.app.MainActivitySmokeTest",
+                "name": "loginRejectsMalformedEmailBeforeNetworkCall"
+              },
+              {
+                "class": "com.tani.app.MainActivitySmokeTest",
+                "name": "signupRejectsPasswordMismatchBeforeNetworkCall"
+              },
+              {
+                "class": "com.tani.app.MainActivitySmokeTest",
+                "name": "guestCanNavigateStoresAndCart"
+              },
+              {
+                "class": "com.tani.app.MainActivitySmokeTest",
+                "name": "forgotPasswordRejectsMalformedEmailBeforeNetworkCall"
+              },
+              {
+                "class": "com.tani.app.MainActivitySmokeTest",
+                "name": "protectedOrdersRouteGuestToLoginAndGuestCanReturn"
+              },
+              {
+                "class": "com.tani.app.MainActivitySmokeTest",
+                "name": "guestLaunchShowsPrimaryNavigation"
+              },
+              {
+                "class": "com.tani.app.PrivateUserDataIsolationTest",
+                "name": "draftsAreIsolatedAndClearedOnLogout"
+              },
+              {
+                "class": "com.tani.app.PrivateUserDataIsolationTest",
+                "name": "unownedLegacyDraftIsNotImported"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "artifact_id": 11273833990,
+        "archive_sha256": "1a36bfcdb2a5f4cabd129c93e89bdd5f090677d2685e32192c092785c5f62a7a",
+        "device": {
+          "api_level": 36,
+          "page_size_bytes": 4096,
+          "abi": "x86_64",
+          "verified_before_instrumentation": true
+        },
+        "totals": {
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "suites": [
+          {
+            "file": "outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 16-_app-.xml",
+            "tests": 10,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0,
+            "cases": [
+              {
+                "class": "com.tani.app.CheckoutRecoveryTest",
+                "name": "confirmationRetryPreservesExtraItemsAndVariantQuantities"
+              },
+              {
+                "class": "com.tani.app.CheckoutRecoveryTest",
+                "name": "encryptedAttemptSurvivesReinitializationAndSessionClear"
+              },
+              {
+                "class": "com.tani.app.MainActivitySmokeTest",
+                "name": "loginRejectsMalformedEmailBeforeNetworkCall"
+              },
+              {
+                "class": "com.tani.app.MainActivitySmokeTest",
+                "name": "signupRejectsPasswordMismatchBeforeNetworkCall"
+              },
+              {
+                "class": "com.tani.app.MainActivitySmokeTest",
+                "name": "guestCanNavigateStoresAndCart"
+              },
+              {
+                "class": "com.tani.app.MainActivitySmokeTest",
+                "name": "forgotPasswordRejectsMalformedEmailBeforeNetworkCall"
+              },
+              {
+                "class": "com.tani.app.MainActivitySmokeTest",
+                "name": "protectedOrdersRouteGuestToLoginAndGuestCanReturn"
+              },
+              {
+                "class": "com.tani.app.MainActivitySmokeTest",
+                "name": "guestLaunchShowsPrimaryNavigation"
+              },
+              {
+                "class": "com.tani.app.PrivateUserDataIsolationTest",
+                "name": "draftsAreIsolatedAndClearedOnLogout"
+              },
+              {
+                "class": "com.tani.app.PrivateUserDataIsolationTest",
+                "name": "unownedLegacyDraftIsNotImported"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "lint": [
+      {
+        "artifact_id": 11275120697,
+        "archive_sha256": "a9d7460c3ba22fc851b58984b6dfd3921e7c3d1e0bf40773be86d3a828502595",
+        "reports": [
+          {
+            "file": "app/build/reports/lint-results-release.xml",
+            "issues": {
+              "Fatal": 0,
+              "Error": 0,
+              "Warning": 319,
+              "Hint": 0
+            },
+            "warnings_by_id": {
+              "UnusedAttribute": 2,
+              "IntentFilterUniqueDataAttributes": 4,
+              "GradleDependency": 10,
+              "UseCompatLoadingForDrawables": 22,
+              "DataExtractionRules": 1,
+              "NotifyDataSetChanged": 2,
+              "StaticFieldLeak": 2,
+              "VectorPath": 1,
+              "Overdraw": 20,
+              "UnusedResources": 7,
+              "IconXmlAndPng": 1,
+              "IconLauncherShape": 5,
+              "MonochromeLauncherIcon": 1,
+              "IconDipSize": 1,
+              "IconDuplicatesConfig": 1,
+              "ButtonStyle": 1,
+              "TextFields": 5,
+              "Autofill": 11,
+              "UseKtx": 35,
+              "LabelFor": 3,
+              "SetTextI18n": 30,
+              "HardcodedText": 154
+            }
+          },
+          {
+            "file": "adminApp/build/reports/lint-results-release.xml",
+            "issues": {
+              "Fatal": 0,
+              "Error": 0,
+              "Warning": 36,
+              "Hint": 1
+            },
+            "warnings_by_id": {
+              "AndroidGradlePluginVersion": 1,
+              "GradleDependency": 7,
+              "DiscouragedApi": 1,
+              "DataExtractionRules": 1,
+              "VectorPath": 1,
+              "Overdraw": 2,
+              "UnusedResources": 4,
+              "UseKtx": 3,
+              "SetTextI18n": 1,
+              "HardcodedText": 15
+            }
+          }
+        ]
+      },
+      {
+        "artifact_id": 11274815811,
+        "archive_sha256": "a6800b5da654120e9b6fff7b8e3e0871df049cb7df8b5d8453d4300044691ab5",
+        "reports": [
+          {
+            "file": "app/build/reports/lint-results-debug.xml",
+            "issues": {
+              "Fatal": 0,
+              "Error": 0,
+              "Warning": 318,
+              "Hint": 0
+            },
+            "warnings_by_id": {
+              "UnusedAttribute": 2,
+              "IntentFilterUniqueDataAttributes": 4,
+              "GradleDependency": 10,
+              "UseCompatLoadingForDrawables": 22,
+              "DataExtractionRules": 1,
+              "NotifyDataSetChanged": 2,
+              "StaticFieldLeak": 2,
+              "VectorPath": 1,
+              "Overdraw": 20,
+              "UnusedResources": 7,
+              "IconXmlAndPng": 1,
+              "IconLauncherShape": 5,
+              "IconDipSize": 1,
+              "IconDuplicatesConfig": 1,
+              "ButtonStyle": 1,
+              "TextFields": 5,
+              "Autofill": 11,
+              "UseKtx": 35,
+              "LabelFor": 3,
+              "SetTextI18n": 30,
+              "HardcodedText": 154
+            }
+          },
+          {
+            "file": "adminApp/build/reports/lint-results-debug.xml",
+            "issues": {
+              "Fatal": 0,
+              "Error": 0,
+              "Warning": 36,
+              "Hint": 1
+            },
+            "warnings_by_id": {
+              "AndroidGradlePluginVersion": 1,
+              "GradleDependency": 7,
+              "DiscouragedApi": 1,
+              "DataExtractionRules": 1,
+              "VectorPath": 1,
+              "Overdraw": 2,
+              "UnusedResources": 4,
+              "UseKtx": 3,
+              "SetTextI18n": 1,
+              "HardcodedText": 15
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "live_production_snapshot": {
+    "checked_at": "2026-10-03T12:59:46.718883+00:00",
+    "postgres_version": "17.6",
+    "launch_gate": {
+      "ready": false,
+      "checks": {
+        "active_admin": false,
+        "live_catalog": true,
+        "queues_healthy": true,
+        "launch_evidence": false,
+        "worker_and_push": false,
+        "merchant_records_verified": false
+      }
+    },
+    "auth_users": 10,
+    "profiles": 10,
+    "active_admins": 0,
+    "active_support": 0,
+    "approved_merchants": 7,
+    "approved_merchants_without_stored_identity": 6,
+    "launch_approval_dates": [
+      {
+        "name": "account_erasure",
+        "approved_at": "2026-10-01T06:07:21.292292+00:00"
+      }
+    ],
+    "worker_health": {
+      "error_count": 0,
+      "last_run_at": "2026-10-03T12:58:00.829174+00:00",
+      "push_configured": false
+    },
+    "security_advisors": [
+      {
+        "name": "rls_enabled_no_policy",
+        "level": "INFO",
+        "count": 7,
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy"
+      },
+      {
+        "name": "authenticated_security_definer_function_executable",
+        "level": "WARN",
+        "count": 25,
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable"
+      },
+      {
+        "name": "auth_leaked_password_protection",
+        "level": "WARN",
+        "count": 1,
+        "remediation": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection"
+      }
+    ]
+  },
+  "remaining_release_requirements": [
+    "Owner-identified active administrator and staffed support",
+    "Genuine merchant identity, current phone and policy verification",
+    "Production Firebase Android configuration and sender secret, with real push evidence",
+    "Production signing, verified domain, app links and version history",
+    "Auth email/recovery and leaked-password protection configuration",
+    "Isolated backup restore and genuine COD delivery/support/legal operational evidence",
+    "Manual production-release checks on ARM64, weak networks, and complete signed-app journeys",
+    "All six current private launch approvals and maintenance_launch_gate ready=true",
+    "Separate store publication approval when production is ready"
+  ],
+  "launch_decision": "NO-GO",
+  "supersedes_unexecuted_device_and_ci_gaps_in": "launch-checks-2026-10-01.json"
+}
