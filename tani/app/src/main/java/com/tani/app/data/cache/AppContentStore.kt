@@ -355,6 +355,10 @@ object AppContentStore {
         ordersLoaded = true
     }
 
+    fun invalidateOrders() {
+        ordersLoaded = false
+    }
+
     fun updateProducts(value: List<ProductCard>) {
         products = value
         productsLoaded = true

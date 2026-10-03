@@ -1,5 +1,7 @@
 package com.tani.app.ui.commerce
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.app.AlertDialog
 import android.content.res.ColorStateList
 import android.graphics.Typeface
@@ -52,7 +54,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
     private fun load(groupId: String) {
         progress.visibility = View.VISIBLE
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching { repository.orderGroupDetails(groupId) }
+            runCatchingCancellable { repository.orderGroupDetails(groupId) }
                 .onSuccess {
                     details = it
                     render(it)
@@ -374,11 +376,9 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
             .setView(container)
             .setPositiveButton("إرسال") { _, _ ->
                 viewLifecycleOwner.lifecycleScope.launch {
-                    runCatching {
+                    runCatchingCancellable {
                         trustRepository.submitDeliveredOrderReviews(
                             orderId = order.id,
-                            sellerId = order.seller_id ?: error("التاجر غير متاح"),
-                            productIds = items.map { it.product_id },
                             rating = rating.rating.toInt().coerceIn(1, 5),
                             comment = comment.text.toString()
                         )
@@ -406,7 +406,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
             .setPositiveButton("إلغاء الطلب") { _, _ ->
                 viewLifecycleOwner.lifecycleScope.launch {
                     progress.visibility = View.VISIBLE
-                    runCatching { repository.cancelOrderGroup(groupId) }
+                    runCatchingCancellable { repository.cancelOrderGroup(groupId) }
                         .onSuccess {
                             Toast.makeText(requireContext(), "تم إلغاء الطلب", Toast.LENGTH_SHORT).show()
                             load(groupId)

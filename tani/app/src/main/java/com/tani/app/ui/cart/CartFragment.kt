@@ -1,5 +1,7 @@
 package com.tani.app.ui.cart
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
@@ -35,7 +37,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
     private fun restoreOrSync() {
         viewLifecycleOwner.lifecycleScope.launch {
             if (Cart.all().isEmpty()) {
-                runCatching { repository.remoteCart() }
+                runCatchingCancellable { repository.remoteCart() }
                     .onSuccess { remote ->
                         if (remote.isNotEmpty()) {
                             Cart.replace(remote.map { it.toCartItem() })
@@ -43,7 +45,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
                         }
                     }
             } else {
-                runCatching { repository.syncCart(Cart.all()) }
+                runCatchingCancellable { repository.syncCart(Cart.all()) }
             }
         }
     }
@@ -274,6 +276,6 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
 
     private fun syncSilent() {
         (activity as? MainActivity)?.refreshCartBadge()
-        viewLifecycleOwner.lifecycleScope.launch { runCatching { repository.syncCart(Cart.all()) } }
+        viewLifecycleOwner.lifecycleScope.launch { runCatchingCancellable { repository.syncCart(Cart.all()) } }
     }
 }

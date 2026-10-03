@@ -1,5 +1,7 @@
 package com.tani.app.ui.seller
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -29,7 +31,9 @@ import com.tani.app.R
 import com.tani.app.data.Category
 import com.tani.app.data.MerchantDeliveryZoneInput
 import com.tani.app.data.MerchantProfile
+import com.tani.app.data.PrivateUserData
 import com.tani.app.data.Repository
+import com.tani.app.data.Supabase
 import com.tani.app.data.network.CustomerErrorMessages
 import com.tani.app.ui.legal.PoliciesFragment
 import java.io.ByteArrayOutputStream
@@ -67,7 +71,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
     private var whatsappSameCheck: MaterialCheckBox? = null
 
     private val prefs by lazy {
-        requireContext().getSharedPreferences("merchant_onboarding_draft", android.content.Context.MODE_PRIVATE)
+        PrivateUserData.merchantDraft(Supabase.userId ?: error("تسجيل الدخول مطلوب"))
     }
 
     private val draft = MerchantDraft()
@@ -107,14 +111,14 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         content.removeAllViews()
         addInfoText("جاري تجهيز تسجيل التاجر…")
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching {
+            runCatchingCancellable {
                 coroutineScope {
                     val profileRequest = async { repository.merchantProfile() }
                     val categoriesRequest = async {
-                        runCatching { repository.categories() }.getOrDefault(emptyList())
+                        runCatchingCancellable { repository.categories() }.getOrDefault(emptyList())
                     }
                     val documentsRequest = async {
-                        runCatching { repository.merchantIdentityDocuments() }.getOrDefault(emptyList())
+                        runCatchingCancellable { repository.merchantIdentityDocuments() }.getOrDefault(emptyList())
                     }
                     Triple(
                         profileRequest.await(),
@@ -558,7 +562,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         setBusy(true)
         submitStatus.text = "جاري إرسال طلب التسجيل… لا تغلقي الصفحة"
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching {
+            runCatchingCancellable {
                 repository.submitMerchantApplication(
                     businessName = draft.businessName,
                     description = draft.description,
@@ -637,7 +641,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         setBusy(true)
         identityStatus?.text = "جاري رفع المستند…"
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching {
+            runCatchingCancellable {
                 val pair = withContext(Dispatchers.IO) { identityBytes(uri) }
                 repository.uploadMerchantIdentity(pair.first, pair.second)
             }.onSuccess { path ->
@@ -885,7 +889,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
     private fun restoreDeliveryZones(): MutableList<DeliveryZoneDraft> {
         val raw = prefs.getString("delivery_zones", null)
         if (!raw.isNullOrBlank()) {
-            val restored = runCatching {
+            val restored = runCatchingCancellable {
                 val array = JSONArray(raw)
                 MutableList(array.length()) { index ->
                     val item = array.getJSONObject(index)

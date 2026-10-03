@@ -1,5 +1,7 @@
 package com.tani.app.ui.marketplace
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -28,7 +30,7 @@ class StoreDetailsFragment : Fragment(R.layout.fragment_store_details) {
         val content = view.findViewById<LinearLayout>(R.id.store_details_content)
 
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching {
+            runCatchingCancellable {
                 val store = repository.store(storeId)
                 val products = repository.storeProductPage(store.seller_id, pageSize = STORE_PREVIEW_SIZE)
                 store to products

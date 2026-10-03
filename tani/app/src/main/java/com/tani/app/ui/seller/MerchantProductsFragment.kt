@@ -1,5 +1,7 @@
 package com.tani.app.ui.seller
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.content.DialogInterface
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -82,13 +84,13 @@ class MerchantProductsFragment : Fragment() {
         })
 
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching {
+            runCatchingCancellable {
                 val seller = repository.seller() ?: error("حساب التاجر غير مكتمل")
                 coroutineScope {
-                    val categoriesRequest = async { runCatching { repository.categories() }.getOrDefault(emptyList()) }
+                    val categoriesRequest = async { runCatchingCancellable { repository.categories() }.getOrDefault(emptyList()) }
                     val products = repository.sellerProducts(seller.id)
                     val variantProducts = products.filter { it.has_variants }.map { it.id }
-                    val variants = runCatching {
+                    val variants = runCatchingCancellable {
                         repository.merchantProductVariantsForProducts(variantProducts)
                     }.getOrDefault(emptyList())
                     CatalogData(seller.id, products, categoriesRequest.await(), variants)
@@ -312,7 +314,7 @@ class MerchantProductsFragment : Fragment() {
                 toast(if (isCreating) "جاري حفظ المنتج ورفع الصور…" else "جاري حفظ التعديلات…")
 
                 viewLifecycleOwner.lifecycleScope.launch {
-                    runCatching {
+                    runCatchingCancellable {
                         if (isCreating) {
                             val preparedImages = selectedImages.map { uri ->
                                 withContext(Dispatchers.IO) { imageBytes(uri, 1600, 84) }
@@ -401,7 +403,7 @@ class MerchantProductsFragment : Fragment() {
     private fun toggle(product: Product) {
         if (!busyProductIds.add(product.id)) return
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching {
+            runCatchingCancellable {
                 if (!product.is_active) {
                     val imagesRequest = async { repository.productImages(product.id) }
                     val variantsRequest = async { repository.merchantProductVariants(product.id) }
@@ -430,7 +432,7 @@ class MerchantProductsFragment : Fragment() {
             .setPositiveButton("حذف") { _, _ ->
                 if (!busyProductIds.add(product.id)) return@setPositiveButton
                 viewLifecycleOwner.lifecycleScope.launch {
-                    runCatching { repository.deleteMerchantProduct(product.id) }
+                    runCatchingCancellable { repository.deleteMerchantProduct(product.id) }
                         .onSuccess {
                             toast("تم حذف المنتج")
                             load()
@@ -447,7 +449,7 @@ class MerchantProductsFragment : Fragment() {
 
     private fun imageManager(product: Product) {
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching { repository.productImages(product.id) }
+            runCatchingCancellable { repository.productImages(product.id) }
                 .onSuccess { images ->
                     val context = requireContext()
                     val content = LinearLayout(context).apply {
@@ -481,7 +483,7 @@ class MerchantProductsFragment : Fragment() {
                                 if (!image.is_primary) {
                                     addView(MerchantUi.compactButton(context, "اجعلها الرئيسية") {
                                         viewLifecycleOwner.lifecycleScope.launch {
-                                            runCatching { repository.setPrimaryProductImage(product.id, image.id) }
+                                            runCatchingCancellable { repository.setPrimaryProductImage(product.id, image.id) }
                                                 .onSuccess {
                                                     toast("تم تغيير الصورة الرئيسية ✓")
                                                     managerDialog?.dismiss()
@@ -498,7 +500,7 @@ class MerchantProductsFragment : Fragment() {
                                     return@compactButton
                                 }
                                 viewLifecycleOwner.lifecycleScope.launch {
-                                    runCatching {
+                                    runCatchingCancellable {
                                         repository.deleteProductImage(image)
                                         if (image.is_primary) {
                                             val remaining = images.firstOrNull { it.id != image.id }
@@ -527,7 +529,7 @@ class MerchantProductsFragment : Fragment() {
     private fun uploadProductImage(uri: Uri, product: Product) {
         toast("جاري رفع الصورة…")
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching {
+            runCatchingCancellable {
                 val current = repository.productImages(product.id)
                 require(current.size < MAX_PRODUCT_IMAGES) { "الحد الأقصى $MAX_PRODUCT_IMAGES صور للمنتج" }
                 val bytes = withContext(Dispatchers.IO) { imageBytes(uri, 1600, 84) }
@@ -549,7 +551,7 @@ class MerchantProductsFragment : Fragment() {
 
     private fun variantManager(product: Product) {
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching { repository.merchantProductVariants(product.id) }
+            runCatchingCancellable { repository.merchantProductVariants(product.id) }
                 .onSuccess { variants -> renderVariants(product, variants) }
                 .onFailure { error -> toast(CustomerErrorMessages.from(error, "تعذر تحميل الخيارات")) }
         }
@@ -593,7 +595,7 @@ class MerchantProductsFragment : Fragment() {
                     })
                     addView(MerchantUi.compactButton(context, "حذف") {
                         viewLifecycleOwner.lifecycleScope.launch {
-                            runCatching { repository.deleteProductVariant(variant.id) }
+                            runCatchingCancellable { repository.deleteProductVariant(variant.id) }
                                 .onSuccess {
                                     toast("تم حذف الخيار")
                                     managerDialog?.dismiss()
@@ -653,7 +655,7 @@ class MerchantProductsFragment : Fragment() {
 
                 save.isEnabled = false
                 viewLifecycleOwner.lifecycleScope.launch {
-                    runCatching {
+                    runCatchingCancellable {
                         if (variant == null) {
                             val created = repository.addProductVariant(product.id, cleanName, cleanSku, priceValue, stockValue)
                             if (!active.isChecked) {

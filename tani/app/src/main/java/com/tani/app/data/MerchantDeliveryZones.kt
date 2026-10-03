@@ -62,6 +62,8 @@ suspend fun Repository.checkoutWithDeliveryZones(
     expectedGrandTotal: Double,
     quoteToken: String
 ): String {
+    val uid = Supabase.userId ?: error("تسجيل الدخول مطلوب")
+    check(PendingCheckoutStore.begin(uid).key == idempotencyKey)
     require(items.isNotEmpty()) { "السلة فارغة" }
     require(phone.trim().length in 7..30) { "رقم الهاتف غير صحيح" }
     require(idempotencyKey.length in 16..100) { "تعذر تجهيز الطلب. حاولي مرة أخرى" }
@@ -100,7 +102,8 @@ suspend fun Repository.checkoutWithDeliveryZones(
             put("p_quote_token", quoteToken)
         }.toString()
     )
-    Analytics.track(
+    PendingCheckoutStore.resolve(uid, idempotencyKey, groupId)
+    Analytics.trackLater(
         "order_group_created",
         screen = "checkout",
         entityType = "order_group",

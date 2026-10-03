@@ -34,6 +34,8 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.put
 import java.io.File
 import java.net.URLConnection
@@ -74,7 +76,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
     private fun restoreSession() {
         showLogin(loading = true)
         lifecycleScope.launch {
-            runCatching { AdminApi.getMyRole() }
+            runCatchingCancellable { AdminApi.getMyRole() }
                 .onSuccess { enterDashboard(it) }
                 .onFailure {
                     AdminApi.clearSession()
@@ -106,7 +108,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
             progress.visibility = View.VISIBLE
             button.isEnabled = false
             lifecycleScope.launch {
-                runCatching {
+                runCatchingCancellable {
                     AdminApi.signIn(mail, pass)
                     AdminApi.getMyRole()
                 }.onSuccess { enterDashboard(it) }
@@ -262,7 +264,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
         clearStatus()
         val requested = currentSection
         loadJob = lifecycleScope.launch {
-            runCatching {
+            runCatchingCancellable {
                 when (requested) {
                     AdminSection.DASHBOARD -> loadDashboard()
                     AdminSection.ORDERS -> loadOrders()
@@ -323,7 +325,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
         val status = if (selected == "all") "" else "verification_status=eq.${AdminApi.enc(selected)}"
         val rows = AdminApi.rows(
             "merchant_profiles",
-            query("select=id,user_id,seller_id,business_name,store_name,phone,city,category_id,requested_category,delivery_zones,verification_status,review_note,submitted_at,created_at", status)
+            query("select=id,user_id,seller_id,business_name,store_name,phone,phone_verified_at,city,category_id,requested_category,delivery_zones,verification_status,review_note,submitted_at,created_at", status)
         ).matching("business_name", "store_name", "phone", "city", "requested_category")
         renderer.renderMerchants(rows.pageItems(), selected, page, rows.size > PAGE_SIZE)
     }
@@ -427,7 +429,11 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
                     async { "open_tickets" to safeCount("support_tickets", "status=in.(open,in_progress)") }
                 ).awaitAll().toMap()
             }
-            renderer.renderSystem(mode, JsonArray(emptyList()), stats)
+            val health = AdminApi.rpc("launch_operational_health", buildJsonObject { })?.jsonObject
+                ?: error("تعذر تحميل حالة عامل الصيانة")
+            val workerStats = listOf("worker_missing", "push_configuration_missing", "failed_push", "failed_erasure")
+                .associateWith { key -> health[key]?.jsonPrimitive?.intOrNull ?: error("بيانات حالة الصيانة غير مكتملة") }
+            renderer.renderSystem(mode, JsonArray(emptyList()), stats + workerStats)
             return
         }
         val (table, query) = when (mode) {
@@ -450,6 +456,19 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
 
     override fun nextPage() { page += 1; loadSection() }
     override fun previousPage() { if (page > 0) { page -= 1; loadSection() } }
+
+    override fun verifyMerchantPhone(row: JsonObject) {
+        val id = row.string("id") ?: return
+        val phone = row.string("phone") ?: return
+        prompt("توثيق تحقق الهاتف", "بعد التواصل مع التاجر على $phone، سجّلي طريقة التحقق وتاريخه ونتيجته") { note ->
+            mutate("تم توثيق تحقق الهاتف") {
+                require(note.trim().length in 10..1000) { "اكتبي تفاصيل تحقق واضحة بين 10 و1000 حرف" }
+                AdminApi.rpc("admin_verify_merchant_phone", buildJsonObject {
+                    put("p_merchant_id", id); put("p_phone", phone); put("p_note", note.trim())
+                })
+            }
+        }
+    }
 
     override fun reviewMerchant(row: JsonObject, status: String) {
         val id = row.string("id") ?: return
@@ -609,7 +628,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
         if (merchantId.isBlank()) return
         setLoading(true)
         lifecycleScope.launch {
-            runCatching {
+            runCatchingCancellable {
                 val docs = AdminApi.rows("merchant_identity_documents", "select=storage_path,document_type,created_at&merchant_id=eq.${AdminApi.enc(merchantId)}&order=created_at.desc&limit=1")
                 val path = docs.firstOrNull()?.jsonObject?.string("storage_path") ?: error("لا يوجد مستند هوية")
                 val bytes = AdminApi.downloadPrivateObject(path)
@@ -630,7 +649,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
         setLoading(true)
         clearStatus()
         lifecycleScope.launch {
-            runCatching { block() }
+            runCatchingCancellable { block() }
                 .onSuccess {
                     Toast.makeText(this@MainActivity, success, Toast.LENGTH_SHORT).show()
                     loadSection()
@@ -644,7 +663,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
 
     private fun signOut() {
         lifecycleScope.launch {
-            runCatching { AdminApi.signOut() }
+            runCatchingCancellable { AdminApi.signOut() }
             role = null
             showLogin()
         }
@@ -683,14 +702,14 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
 
     private suspend fun rpcObject(name: String, body: JsonObject = buildJsonObject { }): JsonObject {
         val value = AdminApi.rpc(name, body) ?: return JsonObject(emptyMap())
-        return runCatching { value.jsonObject }.getOrDefault(JsonObject(emptyMap()))
+        return runCatchingCancellable { value.jsonObject }.getOrDefault(JsonObject(emptyMap()))
     }
 
     private suspend fun safeRows(table: String, query: String): JsonArray =
-        runCatching { AdminApi.rows(table, query) }.getOrDefault(JsonArray(emptyList()))
+        AdminApi.rows(table, query)
 
     private suspend fun safeCount(table: String, filter: String = ""): Int =
-        runCatching { AdminApi.exactCount(table, filter) }.getOrDefault(0)
+        AdminApi.exactCount(table, filter)
 
     private fun query(select: String, filter: String, limit: Int = PAGE_SIZE + 1): String = buildString {
         append(select)

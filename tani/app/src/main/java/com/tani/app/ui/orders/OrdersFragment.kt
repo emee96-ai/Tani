@@ -1,5 +1,7 @@
 package com.tani.app.ui.orders
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.content.res.ColorStateList
 import android.graphics.Typeface
 import android.os.Bundle
@@ -63,7 +65,7 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
         progress.visibility = View.VISIBLE
         summary.text = "جاري تحميل طلباتك…"
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching { repository.orderGroups() }
+            runCatchingCancellable { repository.orderGroups() }
                 .onSuccess {
                     groups = it
                     AppContentStore.updateOrders(it)

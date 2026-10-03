@@ -42,6 +42,7 @@ class DashboardRenderer(
         fun previousPage()
         fun openMerchantDocument(merchantId: String)
         fun reviewMerchant(row: JsonObject, status: String)
+        fun verifyMerchantPhone(row: JsonObject)
         fun transitionOrder(row: JsonObject, status: String)
         fun updateComplaint(id: String, status: String)
         fun resolveComplaint(id: String)
@@ -141,6 +142,7 @@ class DashboardRenderer(
                 addTitle(row.string("store_name") ?: row.string("business_name") ?: "تاجر")
                 addMeta(row.string("business_name") ?: "—")
                 addMeta("${row.string("phone") ?: "بلا رقم"} • ${row.string("city") ?: "—"}")
+                row.string("phone_verified_at")?.let { addMeta("آخر تحقق من الهاتف: ${formatDate(it)}") }
                 row.string("requested_category")?.takeIf { it.isNotBlank() }?.let {
                     addNote("فئة جديدة مطلوبة: $it — تُراجع وتُفعّل من قسم الإعدادات")
                 }
@@ -155,6 +157,9 @@ class DashboardRenderer(
                 row.string("review_note")?.takeIf { it.isNotBlank() }?.let { addNote("ملاحظة: $it") }
                 addActions(Action("فتح مستند الهوية") { actions.openMerchantDocument(row.string("id").orEmpty()) })
                 if (role() == "admin") {
+                    if (row.string("verification_status") in setOf("pending", "changes_requested", "rejected", "approved", "suspended")) {
+                        addActions(Action("توثيق تحقق الهاتف", secondary = true) { actions.verifyMerchantPhone(row) })
+                    }
                     when (row.string("verification_status")) {
                         "pending", "changes_requested", "rejected" -> addActions(
                             Action("اعتماد") { actions.reviewMerchant(row, "approved") },
@@ -319,7 +324,11 @@ class DashboardRenderer(
                     Metric("أخطاء آخر 24 ساعة", (stats["errors_24h"] ?: 0).toString()),
                     Metric("تنبيهات مفتوحة", (stats["open_alerts"] ?: 0).toString()),
                     Metric("طلبات معلقة", (stats["pending_orders"] ?: 0).toString()),
-                    Metric("تذاكر مفتوحة", (stats["open_tickets"] ?: 0).toString())
+                    Metric("تذاكر مفتوحة", (stats["open_tickets"] ?: 0).toString()),
+                    Metric("عامل الصيانة", if (stats["worker_missing"] == 0) "يعمل" else "يحتاج متابعة"),
+                    Metric("إعداد الإشعارات", if (stats["push_configuration_missing"] == 0) "مكتمل" else "غير مكتمل"),
+                    Metric("إشعارات فشلت", (stats["failed_push"] ?: 0).toString()),
+                    Metric("حذف حسابات يحتاج متابعة", (stats["failed_erasure"] ?: 0).toString())
                 )
             )
             val healthy = stats.values.all { it == 0 }

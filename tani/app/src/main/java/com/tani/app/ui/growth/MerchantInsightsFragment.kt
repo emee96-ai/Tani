@@ -1,5 +1,7 @@
 package com.tani.app.ui.growth
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.os.Bundle
 import android.view.View
 import android.widget.LinearLayout
@@ -52,7 +54,7 @@ class MerchantInsightsFragment : Fragment() {
         })
 
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching {
+            runCatchingCancellable {
                 coroutineScope {
                     async { growth.merchantMetrics(sellerId) }.await() to async { scale.inventoryHealth() }.await()
                 }

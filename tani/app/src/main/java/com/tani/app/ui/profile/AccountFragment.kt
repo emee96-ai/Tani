@@ -1,5 +1,7 @@
 package com.tani.app.ui.profile
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -88,7 +90,7 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
         }
         setLoading(true)
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching { repository.accountProfile() }
+            runCatchingCancellable { repository.accountProfile() }
                 .onSuccess { account ->
                     AppContentStore.updateAccount(account)
                     renderAccount(account)
@@ -116,7 +118,7 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
     private fun saveProfile() {
         setActionsEnabled(false)
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching {
+            runCatchingCancellable {
                 val uploadedAvatar = selectedAvatarBytes?.let { repository.uploadAvatar(it) }
                 repository.updateProfile(
                     name = name.text.toString(),
@@ -171,7 +173,7 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
     private fun prepareAvatar(uri: Uri) {
         setActionsEnabled(false)
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching {
+            runCatchingCancellable {
                 withContext(Dispatchers.IO) {
                     val bitmap = requireContext().contentResolver.openInputStream(uri)?.use {
                         BitmapFactory.decodeStream(it)
@@ -206,7 +208,7 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
     private fun loadRemoteAvatar(url: String) {
         viewLifecycleOwner.lifecycleScope.launch {
             val bitmap = withContext(Dispatchers.IO) {
-                runCatching {
+                runCatchingCancellable {
                     URL(url).openStream().use { BitmapFactory.decodeStream(it) }
                 }.getOrNull()
             }

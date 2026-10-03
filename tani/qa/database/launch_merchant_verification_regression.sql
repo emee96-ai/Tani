@@ -1,0 +1,53 @@
+BEGIN;
+INSERT INTO auth.users(id,email,raw_user_meta_data) SELECT ('d1000000-0000-4000-8000-'||lpad(n::text,12,'0'))::uuid,'phone-'||n||'@tani.invalid',jsonb_build_object('name','Phone test '||n,'phone','06123456'||n) FROM generate_series(1,3)n;
+INSERT INTO public.profiles(id,name,phone,role) SELECT ('d1000000-0000-4000-8000-'||lpad(n::text,12,'0'))::uuid,'Phone test '||n,'06123456'||n,CASE n WHEN 2 THEN 'admin' WHEN 3 THEN 'support' ELSE 'seller' END FROM generate_series(1,3)n ON CONFLICT(id) DO UPDATE SET role=EXCLUDED.role;
+INSERT INTO public.categories(id,name) VALUES('d2000000-0000-4000-8000-000000000001','Phone test category');
+INSERT INTO public.merchant_profiles(id,user_id,business_name,store_name,phone,category_id,policies_accepted_at,delivery_area,phone_verified_at) VALUES('d3000000-0000-4000-8000-000000000001','d1000000-0000-4000-8000-000000000001','Phone test merchant','Phone test store','+249911111111','d2000000-0000-4000-8000-000000000001',now(),'Phone test area',now());
+INSERT INTO storage.objects(bucket_id,name,owner_id) VALUES('merchant-private','d1000000-0000-4000-8000-000000000001/test.png','d1000000-0000-4000-8000-000000000001');
+INSERT INTO public.merchant_identity_documents(merchant_id,user_id,storage_path) VALUES('d3000000-0000-4000-8000-000000000001','d1000000-0000-4000-8000-000000000001','d1000000-0000-4000-8000-000000000001/test.png');
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub','d1000000-0000-4000-8000-000000000001',true);
+SELECT tests.expect_denied($q$SELECT public.admin_verify_merchant_phone('d3000000-0000-4000-8000-000000000001','+249911111111','Self certification attempt')$q$,'merchant cannot certify own phone');
+SELECT set_config('request.jwt.claim.sub','d1000000-0000-4000-8000-000000000003',true);
+SELECT tests.expect_denied($q$SELECT public.admin_verify_merchant_phone('d3000000-0000-4000-8000-000000000001','+249911111111','Support certification attempt')$q$,'support cannot replace admin phone verification');
+SELECT set_config('request.jwt.claim.sub','d1000000-0000-4000-8000-000000000002',true);
+DO $$ BEGIN
+ BEGIN PERFORM public.admin_review_merchant_application('d3000000-0000-4000-8000-000000000001','approved');
+ EXCEPTION WHEN check_violation THEN RAISE NOTICE 'PASS: legacy timestamp is not phone evidence'; RETURN; END;
+ RAISE EXCEPTION 'Legacy timestamp incorrectly allowed approval';
+END $$;
+DO $$ BEGIN
+ BEGIN PERFORM public.admin_verify_merchant_phone('d3000000-0000-4000-8000-000000000001','+249911111111','short');
+ EXCEPTION WHEN check_violation THEN RAISE NOTICE 'PASS: verification requires descriptive evidence'; RETURN; END;
+ RAISE EXCEPTION 'Short evidence was accepted';
+END $$;
+SELECT tests.assert_true(public.admin_verify_merchant_phone('d3000000-0000-4000-8000-000000000001','+249911111111','Test staff call confirmed merchant phone') IS NOT NULL,'admin records explicit manual phone evidence');
+SELECT public.admin_review_merchant_application('d3000000-0000-4000-8000-000000000001','approved');
+SELECT tests.assert_true((SELECT verification_status='approved' AND phone_verified_at IS NOT NULL FROM public.merchant_profiles WHERE id='d3000000-0000-4000-8000-000000000001'),'manual evidence supports existing merchant onboarding');
+RESET ROLE;
+SELECT set_config('request.jwt.claim.sub','',true);
+SELECT tests.assert_true((SELECT count(*) FROM private.merchant_phone_verifications WHERE merchant_id='d3000000-0000-4000-8000-000000000001' AND verified_by='d1000000-0000-4000-8000-000000000002')=1,'private evidence records verifying admin');
+SELECT tests.assert_true(NOT EXISTS(SELECT 1 FROM public.audit_logs WHERE action='merchant_phone_verified' AND entity_id='d3000000-0000-4000-8000-000000000001' AND (new_values::text LIKE '%249911111111%' OR new_values::text LIKE '%Test staff call%')),'audit does not duplicate private verification details');
+UPDATE public.merchant_profiles SET phone='+249922222222' WHERE id='d3000000-0000-4000-8000-000000000001';
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub','d1000000-0000-4000-8000-000000000002',true);
+DO $$ BEGIN
+ BEGIN PERFORM public.admin_review_merchant_application('d3000000-0000-4000-8000-000000000001','approved');
+ EXCEPTION WHEN check_violation THEN RAISE NOTICE 'PASS: changed phone invalidates manual evidence'; RETURN; END;
+ RAISE EXCEPTION 'Stale evidence incorrectly approved changed phone';
+END $$;
+DO $$ BEGIN
+ BEGIN PERFORM public.admin_verify_merchant_phone('d3000000-0000-4000-8000-000000000001','+249911111111','Test stale review screen evidence');
+ EXCEPTION WHEN check_violation THEN RAISE NOTICE 'PASS: stale review screen cannot verify a new phone'; RETURN; END;
+ RAISE EXCEPTION 'Stale phone screen was accepted';
+END $$;
+RESET ROLE;
+SELECT set_config('request.jwt.claim.sub','',true);
+DELETE FROM private.merchant_phone_verifications WHERE merchant_id='d3000000-0000-4000-8000-000000000001';
+UPDATE auth.users SET phone='249922222222',phone_confirmed_at=now()-interval '1 hour' WHERE id='d1000000-0000-4000-8000-000000000001';
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub','d1000000-0000-4000-8000-000000000002',true);
+SELECT public.admin_review_merchant_application('d3000000-0000-4000-8000-000000000001','approved');
+RESET ROLE;
+SELECT tests.assert_true((SELECT mp.phone_verified_at=u.phone_confirmed_at FROM public.merchant_profiles mp JOIN auth.users u ON u.id=mp.user_id WHERE mp.id='d3000000-0000-4000-8000-000000000001'),'approval uses actual Auth phone confirmation timestamp');
+ROLLBACK;

@@ -1,5 +1,7 @@
 package com.tani.app.ui.common
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.app.Activity
 import android.app.Application
 import android.content.ContentProvider
@@ -75,7 +77,7 @@ object NotificationBadgeController {
         if (!shouldLoad) return
 
         activity.lifecycleScope.launch {
-            runCatching { NotificationGatewayProvider.gateway.inbox() }
+            runCatchingCancellable { NotificationGatewayProvider.gateway.inbox() }
                 .onSuccess { updateFromItems(activity, it) }
         }
     }

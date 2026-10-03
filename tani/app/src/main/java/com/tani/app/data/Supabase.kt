@@ -1,9 +1,12 @@
 package com.tani.app.data
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.content.Context
 import android.util.Base64
 import com.tani.app.BuildConfig
 import com.tani.app.security.SecureTokenStorage
+import com.tani.app.data.notifications.PushMessaging
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.engine.android.Android
@@ -63,6 +66,8 @@ object Supabase {
 
     fun init(context: Context) {
         val appContext = context.applicationContext
+        PrivateUserData.init(appContext)
+        PendingCheckoutStore.init(appContext)
         secureStorage = SecureTokenStorage(appContext)
 
         // One-time migration from the legacy plaintext preferences used by older builds.
@@ -103,13 +108,21 @@ object Supabase {
 
     fun saveSession(accessToken: String, refreshToken: String, id: String?) {
         val resolvedUserId = id ?: jwtStringClaim(accessToken, "sub")
+        val changedOwner = userId != resolvedUserId
+        if (changedOwner) {
+            PrivateUserData.clearSessionData(userId)
+            Cart.clear()
+        }
         secureStorage.putString(ACCESS_TOKEN_KEY, accessToken)
         secureStorage.putString(REFRESH_TOKEN_KEY, refreshToken)
         secureStorage.putString(USER_ID_KEY, resolvedUserId)
+        if (changedOwner) PushMessaging.onSessionChanged()
     }
 
     fun clearSession() {
+        PrivateUserData.clearSessionData(userId)
         secureStorage.clear()
+        PushMessaging.onSessionChanged()
     }
 
     @PublishedApi
@@ -137,7 +150,7 @@ object Supabase {
 
         val currentRefreshToken = refreshToken ?: return@withLock false
 
-        return@withLock runCatching {
+        return@withLock runCatchingCancellable {
             val response: AuthResponse = authPost(
                 "token?grant_type=refresh_token",
                 buildJsonObject {
@@ -172,12 +185,12 @@ object Supabase {
         jwtPayload(accessToken)?.get(claim)?.jsonPrimitive?.longOrNull
 
     private fun jwtStringClaim(accessToken: String, claim: String): String? =
-        runCatching { jwtPayload(accessToken)?.get(claim)?.jsonPrimitive?.content }
+        runCatchingCancellable { jwtPayload(accessToken)?.get(claim)?.jsonPrimitive?.content }
             .getOrNull()
             ?.takeIf { it.isNotBlank() }
 
-    private fun jwtPayload(accessToken: String) = runCatching {
-        val payloadPart = accessToken.split('.').getOrNull(1) ?: return@runCatching null
+    private fun jwtPayload(accessToken: String) = runCatchingCancellable {
+        val payloadPart = accessToken.split('.').getOrNull(1) ?: return@runCatchingCancellable null
         val decoded = Base64.decode(
             payloadPart,
             Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
@@ -327,7 +340,7 @@ object Supabase {
 
         val text = response.bodyAsText()
         if (response.status.value !in 200..299) {
-            val message = runCatching {
+            val message = runCatchingCancellable {
                 val obj = json.parseToJsonElement(text).jsonObject
                 sequenceOf("message", "msg", "error_description", "error")
                     .mapNotNull { key -> obj[key]?.toString()?.trim('\"') }
@@ -359,7 +372,7 @@ object Supabase {
 
         val text = response.bodyAsText()
         if (response.status.value !in 200..299) {
-            val message = runCatching {
+            val message = runCatchingCancellable {
                 val obj = json.parseToJsonElement(text).jsonObject
                 sequenceOf("message", "error", "error_description")
                     .mapNotNull { key -> obj[key]?.toString()?.trim('"') }
@@ -376,8 +389,8 @@ object Supabase {
      * إرسال Analytics/Error telemetry بدون رمي خطأ للمستخدم.
      * لا نستخدم parse() هنا حتى لا يدخل تسجيل الخطأ في حلقة عند فشل شبكة المراقبة نفسها.
      */
-    suspend fun telemetryInsert(path: String, body: String): Boolean = runCatching {
-        if (token != null && !ensureFreshSession()) return@runCatching false
+    suspend fun telemetryInsert(path: String, body: String): Boolean = runCatchingCancellable {
+        if (token != null && !ensureFreshSession()) return@runCatchingCancellable false
 
         val response = client.post("$URL/rest/v1/$path") {
             authHeaders(this)
@@ -404,16 +417,29 @@ object Supabase {
         return parse(response)
     }
 
-    suspend fun downloadPublicBytes(url: String): ByteArray? = runCatching {
+    suspend fun downloadPublicBytes(url: String): ByteArray? = runCatchingCancellable {
         val response = client.get(url)
-        if (response.status.value !in 200..299) return@runCatching null
+        if (response.status.value !in 200..299) return@runCatchingCancellable null
         response.body<ByteArray>()
     }.getOrNull()
+
+    suspend inline fun <reified T> invokeFunction(name: String, body: String): T {
+        require(name.matches(Regex("^[a-z][a-z0-9-]+$")))
+        check(ensureFreshSession()) { "تعذر تجديد جلسة الدخول" }
+        val response = client.post("$URL/functions/v1/$name") {
+            authHeaders(this)
+            headers { append(HttpHeaders.ContentType, ContentType.Application.Json.toString()) }
+            setBody(body)
+        }
+        val text = response.bodyAsText()
+        check(response.status.value in 200..299) { "تعذر تنفيذ العملية (${response.status.value})" }
+        return json.decodeFromString<T>(text)
+    }
 
     suspend fun signOut() {
         val access = token
         if (!access.isNullOrBlank()) {
-            runCatching {
+            runCatchingCancellable {
                 val response = client.post("$URL/auth/v1/logout") {
                     headers {
                         append("apikey", KEY)
@@ -502,7 +528,7 @@ object Supabase {
         }
         val text = response.bodyAsText()
         if (response.status.value !in 200..299) {
-            val message = runCatching {
+            val message = runCatchingCancellable {
                 val obj = json.parseToJsonElement(text).jsonObject
                 sequenceOf("message", "error", "error_description")
                     .mapNotNull { key -> obj[key]?.toString()?.trim('"') }
@@ -522,7 +548,7 @@ object Supabase {
         }
         val text = response.bodyAsText()
         if (response.status.value !in 200..299) {
-            val message = runCatching {
+            val message = runCatchingCancellable {
                 val obj = json.parseToJsonElement(text).jsonObject
                 sequenceOf("message", "error", "error_description")
                     .mapNotNull { key -> obj[key]?.toString()?.trim('"') }
@@ -537,7 +563,7 @@ object Supabase {
         val text = response.bodyAsText()
 
         if (response.status.value !in 200..299) {
-            val message = runCatching {
+            val message = runCatchingCancellable {
                 val obj = json.parseToJsonElement(text).jsonObject
                 sequenceOf("message", "msg", "error_description", "error")
                     .mapNotNull { key -> obj[key]?.toString()?.trim('"') }

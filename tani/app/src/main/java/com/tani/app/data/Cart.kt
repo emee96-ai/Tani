@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * سلة محلية خفيفة تعمل حتى مع ضعف الشبكة.
@@ -81,6 +82,30 @@ object Cart {
     fun clear() {
         map.clear()
         persist()
+    }
+
+    /** Cart and receipt marker commit together, so confirmation retries cannot remove new items. */
+    @Synchronized
+    fun completeCheckout(userId: String, details: OrderGroupDetails) {
+        if (PendingCheckoutStore.pending(userId)?.groupId != details.group.id) return
+        check(details.group.customer_id == userId && details.orders.isNotEmpty())
+        val storage = checkNotNull(prefs)
+        val marker = "completed_${userId}_${details.group.id}"
+        if (!storage.getBoolean(marker, false)) {
+            val purchased = details.itemsByOrder.values.flatten().groupBy {
+                key(it.product_id, it.variant_snapshot?.get("id")?.jsonPrimitive?.content)
+            }.mapValues { (_, items) -> items.sumOf { it.quantity } }
+            check(purchased.isNotEmpty()) { "تعذر تحميل أصناف الطلب المؤكد" }
+            val remaining = map.mapNotNull { (key, item) ->
+                val quantity = item.quantity - (purchased[key] ?: 0)
+                item.copy(quantity = quantity).takeIf { quantity > 0 }
+            }
+            check(storage.edit().putString(ITEMS_KEY, Supabase.json.encodeToString(remaining))
+                .putBoolean(marker, true).commit()) { "تعذر حفظ السلة بعد الطلب" }
+            map.clear()
+            remaining.forEach { map[it.key] = it }
+        }
+        PendingCheckoutStore.finish(userId, details.group.id)
     }
 
     @Synchronized

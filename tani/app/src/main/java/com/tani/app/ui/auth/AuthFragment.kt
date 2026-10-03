@@ -1,5 +1,7 @@
 package com.tani.app.ui.auth
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -174,7 +176,7 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
         action.setOnClickListener {
             viewLifecycleOwner.lifecycleScope.launch {
                 setBusy(true)
-                runCatching {
+                runCatchingCancellable {
                     when (mode) {
                         Mode.LOGIN -> {
                             repository.login(email.text.toString(), password.text.toString())

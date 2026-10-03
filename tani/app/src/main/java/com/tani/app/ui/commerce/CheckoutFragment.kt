@@ -1,5 +1,7 @@
 package com.tani.app.ui.commerce
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.app.AlertDialog
 import android.graphics.Typeface
 import android.os.Bundle
@@ -26,7 +28,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.util.UUID
 
 class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
     private val repository = Repository()
@@ -44,29 +45,12 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
     private var zonesBySeller: Map<String, List<MerchantDeliveryZone>> = emptyMap()
     private val selectedZones = linkedMapOf<String, MerchantDeliveryZone>()
     private var selectedAddressId: String? = null
-    private var checkoutKey: String = UUID.randomUUID().toString()
     private var dataLoaded = false
     private var latestQuote: CartQuote? = null
     private var latestQuoteSignature: String? = null
     private var quoteJob: Job? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        checkoutKey = savedInstanceState?.getString(STATE_KEY) ?: UUID.randomUUID().toString()
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        outState.putString(STATE_KEY, checkoutKey)
-        super.onSaveInstanceState(outState)
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        if (Cart.all().isEmpty()) {
-            Toast.makeText(requireContext(), "السلة فارغة", Toast.LENGTH_SHORT).show()
-            parentFragmentManager.popBackStack()
-            return
-        }
-
         addressGroup = view.findViewById(R.id.checkout_addresses)
         deliveryZonesBox = view.findViewById(R.id.checkout_delivery_zones)
         deliveryHint = view.findViewById(R.id.checkout_delivery_hint)
@@ -81,7 +65,33 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
         confirm.setOnClickListener { submit() }
         confirm.isEnabled = false
         renderSummary()
-        loadCheckoutData()
+        recoverCheckout()
+    }
+
+    private fun recoverCheckout() {
+        confirm.isEnabled = false
+        progress.visibility = View.VISIBLE
+        viewLifecycleOwner.lifecycleScope.launch {
+            runCatchingCancellable {
+                repository.recoverPendingCheckout()
+            }.onSuccess { groupId ->
+                if (groupId != null) {
+                    (activity as? MainActivity)?.show(OrderConfirmationFragment.newInstance(groupId))
+                } else if (Cart.all().isEmpty()) {
+                    Toast.makeText(requireContext(), "السلة فارغة", Toast.LENGTH_SHORT).show()
+                    parentFragmentManager.popBackStack()
+                } else {
+                    confirm.setOnClickListener { submit() }
+                    loadCheckoutData()
+                }
+            }.onFailure {
+                progress.visibility = View.GONE
+                confirm.text = "إعادة التحقق من محاولة الطلب"
+                confirm.isEnabled = true
+                confirm.setOnClickListener { recoverCheckout() }
+                Toast.makeText(requireContext(), it.message ?: "تعذر التحقق من الطلب السابق", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     override fun onDestroyView() {
@@ -98,7 +108,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
         val sellerIds = Cart.groupedBySeller().keys.toList()
 
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching {
+            runCatchingCancellable {
                 coroutineScope {
                     val addressesDeferred = async { repository.addresses() }
                     val profileDeferred = async { repository.accountProfile() }
@@ -377,7 +387,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 viewLifecycleOwner.lifecycleScope.launch {
-                    runCatching {
+                    runCatchingCancellable {
                         repository.addAddress(
                             label.text.toString(),
                             description.text.toString(),
@@ -437,7 +447,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
         progress.visibility = View.VISIBLE
         total.text = "جاري التحقق من السعر والتوصيل…"
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching {
+            runCatchingCancellable {
                 repository.quoteCart(Cart.all(), selectedZones.toMap())
             }.onSuccess { quote ->
                 latestQuote = quote
@@ -474,7 +484,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
         total.text = "جاري حساب الإجمالي النهائي…"
         quoteJob = viewLifecycleOwner.lifecycleScope.launch {
             delay(180)
-            val result = runCatching { repository.quoteCart(Cart.all(), selectedZones.toMap()) }
+            val result = runCatchingCancellable { repository.quoteCart(Cart.all(), selectedZones.toMap()) }
             if (!isAdded || signature != currentQuoteSignature()) return@launch
 
             result.onSuccess { quote ->
@@ -533,20 +543,20 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
         confirm.isEnabled = false
         progress.visibility = View.VISIBLE
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching {
+            runCatchingCancellable {
+                val uid = Supabase.userId ?: error("تسجيل الدخول مطلوب")
+                val attempt = PendingCheckoutStore.begin(uid)
                 repository.checkoutWithDeliveryZones(
                     addressId = addressId,
                     phone = phone.text.toString().trim(),
                     notes = notes.text.toString().trim(),
                     items = Cart.all(),
-                    idempotencyKey = checkoutKey,
+                    idempotencyKey = attempt.key,
                     deliveryZones = selectedZones.toMap(),
                     expectedGrandTotal = quote.grand_total,
                     quoteToken = quote.quote_token
                 )
             }.onSuccess { groupId ->
-                Cart.clear()
-                (activity as? MainActivity)?.refreshCartBadge()
                 (activity as? MainActivity)?.show(OrderConfirmationFragment.newInstance(groupId))
             }.onFailure {
                 clearQuote()
@@ -617,7 +627,4 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
-    companion object {
-        private const val STATE_KEY = "checkout_key"
-    }
 }

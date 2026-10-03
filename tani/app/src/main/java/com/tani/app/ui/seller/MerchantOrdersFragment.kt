@@ -1,5 +1,7 @@
 package com.tani.app.ui.seller
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -68,7 +70,7 @@ class MerchantOrdersFragment : Fragment() {
             }
         )
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching {
+            runCatchingCancellable {
                 val seller = repository.seller() ?: error("حساب التاجر غير مكتمل")
                 repository.merchantOrders(seller.id)
             }.onSuccess { orders ->
@@ -317,7 +319,7 @@ class MerchantOrdersFragment : Fragment() {
 
     private fun showItems(order: Order) {
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching { repository.merchantOrderItems(order.id) }
+            runCatchingCancellable { repository.merchantOrderItems(order.id) }
                 .onSuccess { items ->
                     if (!isAdded) return@onSuccess
                     val context = requireContext()
@@ -363,7 +365,7 @@ class MerchantOrdersFragment : Fragment() {
 
     private fun showHistory(order: Order) {
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching { repository.merchantOrderHistory(order.id) }
+            runCatchingCancellable { repository.merchantOrderHistory(order.id) }
                 .onSuccess { history ->
                     if (!isAdded) return@onSuccess
                     val context = requireContext()
@@ -498,7 +500,7 @@ class MerchantOrdersFragment : Fragment() {
                 positive.isEnabled = false
                 negative.isEnabled = false
                 viewLifecycleOwner.lifecycleScope.launch {
-                    runCatching {
+                    runCatchingCancellable {
                         repository.transitionMerchantOrderOperational(
                             orderId = order.id,
                             status = status,
@@ -552,7 +554,7 @@ class MerchantOrdersFragment : Fragment() {
             toast("رقم العميل غير متاح")
             return
         }
-        runCatching {
+        runCatchingCancellable {
             startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:${Uri.encode(clean)}")))
         }.onFailure { toast("تعذر فتح الاتصال") }
     }

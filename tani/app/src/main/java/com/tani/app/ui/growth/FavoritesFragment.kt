@@ -1,5 +1,7 @@
 package com.tani.app.ui.growth
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -35,7 +37,7 @@ class FavoritesFragment : Fragment() {
             return
         }
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching { repository.favoriteProducts() }.onSuccess { products ->
+            runCatchingCancellable { repository.favoriteProducts() }.onSuccess { products ->
                 AppContentStore.updateFavorites(products)
                 renderProducts(products)
             }.onFailure { root.addView(ScreenUi.muted(c,it.message?:"تعذر تحميل المفضلة")) }

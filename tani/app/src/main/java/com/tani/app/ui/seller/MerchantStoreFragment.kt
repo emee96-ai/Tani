@@ -1,5 +1,7 @@
 package com.tani.app.ui.seller
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -65,7 +67,7 @@ class MerchantStoreFragment : Fragment() {
     private fun load() {
         loading("جاري تحميل بيانات المتجر…")
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching { repository.merchantStore() ?: error("لم يتم إنشاء المتجر بعد") }
+            runCatchingCancellable { repository.merchantStore() ?: error("لم يتم إنشاء المتجر بعد") }
                 .onSuccess(::render)
                 .onFailure { error ->
                     showError(CustomerErrorMessages.from(error, "تعذر تحميل بيانات المتجر. حاولي مرة أخرى."))
@@ -184,7 +186,7 @@ class MerchantStoreFragment : Fragment() {
         saveInFlight = true
         toast("جاري حفظ المتجر…")
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching {
+            runCatchingCancellable {
                 repository.updateMerchantStore(
                     store.id,
                     cleanName,
@@ -217,7 +219,7 @@ class MerchantStoreFragment : Fragment() {
         if (kind == "logo") logoStatus?.text = "الشعار: جاري الرفع…" else coverStatus?.text = "الغلاف: جاري الرفع…"
 
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching {
+            runCatchingCancellable {
                 val bytes = withContext(Dispatchers.IO) { imageBytes(uri, 1600, 85) }
                 val path = repository.uploadStoreAsset(bytes, kind)
                 val nextLogo = if (kind == "logo") path else store.logo_url

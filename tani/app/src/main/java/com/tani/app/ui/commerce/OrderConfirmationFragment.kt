@@ -1,5 +1,7 @@
 package com.tani.app.ui.commerce
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -10,6 +12,9 @@ import androidx.lifecycle.lifecycleScope
 import com.tani.app.MainActivity
 import com.tani.app.R
 import com.tani.app.data.Repository
+import com.tani.app.data.Cart
+import com.tani.app.data.Supabase
+import com.tani.app.data.cache.AppContentStore
 import com.tani.app.ui.marketplace.MarketplaceUi
 import kotlinx.coroutines.launch
 
@@ -29,8 +34,14 @@ class OrderConfirmationFragment : Fragment(R.layout.fragment_order_confirmation)
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching { repository.orderGroupDetails(groupId) }
+            runCatchingCancellable {
+                repository.orderGroupDetails(groupId).also { details ->
+                    Supabase.userId?.let { Cart.completeCheckout(it, details) }
+                }
+            }
                 .onSuccess { details ->
+                    AppContentStore.invalidateOrders()
+                    (activity as? MainActivity)?.refreshCartBadge()
                     message.text = buildString {
                         append("رقم العملية: ${groupId.take(8).uppercase()}\n")
                         append("${details.orders.size} طلب للتجار\n")

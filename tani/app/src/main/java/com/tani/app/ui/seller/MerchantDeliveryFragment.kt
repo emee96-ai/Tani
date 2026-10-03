@@ -1,5 +1,7 @@
 package com.tani.app.ui.seller
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.os.Bundle
 import android.text.InputType
 import android.view.View
@@ -46,7 +48,7 @@ class MerchantDeliveryFragment : Fragment() {
         })
 
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching {
+            runCatchingCancellable {
                 val seller = repository.seller() ?: error("حساب التاجر غير مكتمل")
                 coroutineScope {
                     val zones = async { repository.merchantDeliveryZones(seller.id) }
@@ -192,7 +194,7 @@ class MerchantDeliveryFragment : Fragment() {
     private fun save(zones: List<MerchantDeliveryZoneUpdateInput>, notes: String, active: Boolean) {
         toast("جاري حفظ التوصيل…")
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching {
+            runCatchingCancellable {
                 repository.saveMerchantDeliveryConfiguration(zones, notes, active)
             }.onSuccess {
                 toast(if (active) "تم حفظ إعدادات التوصيل ✓" else "تم إيقاف التوصيل مع حفظ المناطق ✓")

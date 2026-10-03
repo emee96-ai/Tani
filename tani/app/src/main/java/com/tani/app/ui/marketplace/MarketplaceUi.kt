@@ -1,5 +1,7 @@
 package com.tani.app.ui.marketplace
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.content.Context
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -112,7 +114,7 @@ object MarketplaceUi {
 
         if (!Supabase.userId.isNullOrBlank()) {
             scope.launch {
-                runCatching { favoriteState(product.id) }.onSuccess { state ->
+                runCatchingCancellable { favoriteState(product.id) }.onSuccess { state ->
                     favoriteActive = state
                     updateFavoriteButton(favoriteButton, state, product.name)
                 }
@@ -126,7 +128,7 @@ object MarketplaceUi {
             val target = !favoriteActive
             favoriteButton.isEnabled = false
             scope.launch {
-                runCatching {
+                runCatchingCancellable {
                     growthRepository.setFavorite(product.id, target)
                     updateFavoriteCache(product.id, target)
                     target

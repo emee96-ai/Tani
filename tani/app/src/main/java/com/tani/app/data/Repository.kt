@@ -1,5 +1,11 @@
 package com.tani.app.data
 
+import com.tani.app.util.runCatchingCancellable
+import com.tani.app.data.notifications.PushMessaging
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
+
 import com.tani.app.data.catalog.CatalogPage
 import com.tani.app.data.catalog.CatalogPagination
 import com.tani.app.data.commerce.CartQuote
@@ -128,9 +134,21 @@ class Repository {
     }
 
     suspend fun logout() {
-        Analytics.track("logout", screen = "profile")
+        PrivateUserData.clearSessionData(Supabase.userId)
         Cart.clear()
+        PushMessaging.beforeSignOut()
         Supabase.signOut()
+    }
+
+    suspend fun recoverPendingCheckout(): String? {
+        val uid = Supabase.userId ?: error("تسجيل الدخول مطلوب")
+        val attempt = PendingCheckoutStore.pending(uid) ?: return null
+        attempt.groupId?.let { return it }
+        val group = Supabase.get<List<OrderGroup>>("order_groups",
+            "select=*&customer_id=eq.$uid&idempotency_key=eq.${attempt.key}&limit=1").firstOrNull()
+            ?: return null
+        PendingCheckoutStore.resolve(uid, attempt.key, group.id)
+        return group.id
     }
 
     private fun validateEmail(email: String): String {
@@ -363,10 +381,10 @@ class Repository {
         val now = java.time.Instant.now()
         val ids = placements.filter { placement ->
             val startsOk = placement.starts_at?.let { value ->
-                runCatching { !java.time.Instant.parse(value).isAfter(now) }.getOrDefault(true)
+                runCatchingCancellable { !java.time.Instant.parse(value).isAfter(now) }.getOrDefault(true)
             } ?: true
             val endsOk = placement.ends_at?.let { value ->
-                runCatching { java.time.Instant.parse(value).isAfter(now) }.getOrDefault(true)
+                runCatchingCancellable { java.time.Instant.parse(value).isAfter(now) }.getOrDefault(true)
             } ?: true
             startsOk && endsOk
         }.mapNotNull { it.product_id }.distinct().take(limit.coerceIn(1, 20))
@@ -1053,7 +1071,7 @@ class Repository {
             "rpc/merchant_delete_product",
             buildJsonObject { put("p_product_id", productId) }.toString()
         )
-        paths.forEach { path -> runCatching { Supabase.deleteStorageObject("product-images", path) } }
+        paths.forEach { path -> runCatchingCancellable { Supabase.deleteStorageObject("product-images", path) } }
         Analytics.track("merchant_product_deleted", screen = "merchant_products", entityType = "product", entityId = productId)
     }
 
@@ -1087,7 +1105,7 @@ class Repository {
 
     suspend fun deleteProductImage(image: ProductImage) {
         Supabase.delete("product_images", "id=eq.${image.id}")
-        runCatching { Supabase.deleteStorageObject("product-images", image.storage_path) }
+        runCatchingCancellable { Supabase.deleteStorageObject("product-images", image.storage_path) }
     }
 
     suspend fun addProductVariant(
@@ -1170,10 +1188,11 @@ class Repository {
     )
 
     suspend fun softDeleteAccount(): Boolean {
-        val result: Boolean = Supabase.post("rpc/soft_delete_my_account", "{}")
+        val receipt: JsonObject = Supabase.invokeFunction("delete-account", "{}")
+        val result = receipt["deleted"]?.jsonPrimitive?.booleanOrNull == true
         if (result) {
-            Analytics.track("account_soft_deleted", screen = "profile")
             Cart.clear()
+            PushMessaging.beforeSignOut()
             Supabase.clearSession()
         }
         return result

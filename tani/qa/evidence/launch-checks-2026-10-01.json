@@ -1,0 +1,325 @@
+{
+  "generated_at_utc": "2026-10-01T10:37:36.410043+00:00",
+  "branch": "maintenance/launch-20260930",
+  "android_source_commit": "3a0cc788d4891aeea8f03151f7cee52a11bb8347",
+  "release_gate_source_commit": "7f1513035304b7662e8f21dd3bdeaa17ea376df9",
+  "candidate": {
+    "production": false,
+    "app_link_host": "ci.example.com",
+    "version_code": 7,
+    "firebase_configured": false,
+    "signing_key": "disposable QA key, not the production key"
+  },
+  "results": {
+    "debug_and_release_build": "PASS",
+    "unit_tests": {
+      "app": {
+        "Debug": {
+          "tests": 35,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "Release": {
+          "tests": 35,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      },
+      "adminApp": {
+        "Debug": {
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "Release": {
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      }
+    },
+    "release_lint": {
+      "app": {
+        "Fatal": 0,
+        "Error": 0,
+        "Warning": 309
+      },
+      "adminApp": {
+        "Fatal": 0,
+        "Error": 0,
+        "Warning": 28
+      }
+    },
+    "r8_both_apps": "PASS",
+    "aab_signatures_both_apps": "PASS",
+    "customer_apk_signature_v2_v3": "PASS",
+    "customer_apk_zipalign_16kb": "PASS",
+    "static_qa": "PASS",
+    "workflow_yaml_and_bash_syntax": "PASS",
+    "release_version_gate_tests": {
+      "tests": 9,
+      "passed": true,
+      "http_disabled": true
+    },
+    "server_function_typecheck": "PASS",
+    "server_security_unit_tests": {
+      "tests": 4,
+      "passed": true
+    },
+    "full_schema_sql": {
+      "engine": "PostgreSQL 18.3 via PGlite 0.5.8",
+      "public_tables": 75,
+      "launch_migrations": 8,
+      "suites": [
+        "launch_security_regression.sql",
+        "launch_commerce_regression.sql",
+        "launch_worker_regression.sql",
+        "launch_merchant_verification_regression.sql"
+      ],
+      "passed": true
+    },
+    "real_account_erasure": {
+      "checks": 8,
+      "passed": true,
+      "durable_evidence": "private.launch_approvals:account_erasure"
+    }
+  },
+  "native_page_size": {
+    "passed": true,
+    "libraries": [
+      {
+        "archive": "app/build/outputs/apk/debug/app-debug.apk",
+        "library": "lib/arm64-v8a/libdatastore_shared_counter.so",
+        "sha256": "deed4546c8dafad0e68ea2c25e4c0a62ca97343614ae386b7ed2af6abb7fa999",
+        "load_segments": [
+          {
+            "alignment": 16384,
+            "congruent": true
+          },
+          {
+            "alignment": 16384,
+            "congruent": true
+          },
+          {
+            "alignment": 16384,
+            "congruent": true
+          },
+          {
+            "alignment": 16384,
+            "congruent": true
+          }
+        ],
+        "relro_segments": [
+          {
+            "end_mod_16kb": 0
+          }
+        ],
+        "passed": true
+      },
+      {
+        "archive": "app/build/outputs/apk/debug/app-debug.apk",
+        "library": "lib/x86_64/libdatastore_shared_counter.so",
+        "sha256": "c3973140a0e6144a83e7dd7ee3c4e161f42181591feda254e12c8395d3bbacd0",
+        "load_segments": [
+          {
+            "alignment": 16384,
+            "congruent": true
+          },
+          {
+            "alignment": 16384,
+            "congruent": true
+          },
+          {
+            "alignment": 16384,
+            "congruent": true
+          },
+          {
+            "alignment": 16384,
+            "congruent": true
+          }
+        ],
+        "relro_segments": [
+          {
+            "end_mod_16kb": 0
+          }
+        ],
+        "passed": true
+      },
+      {
+        "archive": "app/build/outputs/apk/release/app-release.apk",
+        "library": "lib/arm64-v8a/libdatastore_shared_counter.so",
+        "sha256": "deed4546c8dafad0e68ea2c25e4c0a62ca97343614ae386b7ed2af6abb7fa999",
+        "load_segments": [
+          {
+            "alignment": 16384,
+            "congruent": true
+          },
+          {
+            "alignment": 16384,
+            "congruent": true
+          },
+          {
+            "alignment": 16384,
+            "congruent": true
+          },
+          {
+            "alignment": 16384,
+            "congruent": true
+          }
+        ],
+        "relro_segments": [
+          {
+            "end_mod_16kb": 0
+          }
+        ],
+        "passed": true
+      },
+      {
+        "archive": "app/build/outputs/apk/release/app-release.apk",
+        "library": "lib/x86_64/libdatastore_shared_counter.so",
+        "sha256": "c3973140a0e6144a83e7dd7ee3c4e161f42181591feda254e12c8395d3bbacd0",
+        "load_segments": [
+          {
+            "alignment": 16384,
+            "congruent": true
+          },
+          {
+            "alignment": 16384,
+            "congruent": true
+          },
+          {
+            "alignment": 16384,
+            "congruent": true
+          },
+          {
+            "alignment": 16384,
+            "congruent": true
+          }
+        ],
+        "relro_segments": [
+          {
+            "end_mod_16kb": 0
+          }
+        ],
+        "passed": true
+      },
+      {
+        "archive": "app/build/outputs/bundle/release/app-release.aab",
+        "library": "base/lib/arm64-v8a/libdatastore_shared_counter.so",
+        "sha256": "deed4546c8dafad0e68ea2c25e4c0a62ca97343614ae386b7ed2af6abb7fa999",
+        "load_segments": [
+          {
+            "alignment": 16384,
+            "congruent": true
+          },
+          {
+            "alignment": 16384,
+            "congruent": true
+          },
+          {
+            "alignment": 16384,
+            "congruent": true
+          },
+          {
+            "alignment": 16384,
+            "congruent": true
+          }
+        ],
+        "relro_segments": [
+          {
+            "end_mod_16kb": 0
+          }
+        ],
+        "passed": true
+      },
+      {
+        "archive": "app/build/outputs/bundle/release/app-release.aab",
+        "library": "base/lib/x86_64/libdatastore_shared_counter.so",
+        "sha256": "c3973140a0e6144a83e7dd7ee3c4e161f42181591feda254e12c8395d3bbacd0",
+        "load_segments": [
+          {
+            "alignment": 16384,
+            "congruent": true
+          },
+          {
+            "alignment": 16384,
+            "congruent": true
+          },
+          {
+            "alignment": 16384,
+            "congruent": true
+          },
+          {
+            "alignment": 16384,
+            "congruent": true
+          }
+        ],
+        "relro_segments": [
+          {
+            "end_mod_16kb": 0
+          }
+        ],
+        "passed": true
+      }
+    ]
+  },
+  "artifacts": [
+    {
+      "path": "tani/app/build/outputs/apk/debug/app-debug.apk",
+      "bytes": 10446736,
+      "sha256": "830b4f3f01ddd9414ab51761750a0262f218ba51e6420922e118c06e4a94a7a9"
+    },
+    {
+      "path": "tani/app/build/outputs/apk/release/app-release.apk",
+      "bytes": 3189398,
+      "sha256": "af483636236fcce6ab618d929257404a229ce501b91736e42eb9546822ccb092"
+    },
+    {
+      "path": "tani/app/build/outputs/bundle/release/app-release.aab",
+      "bytes": 4918790,
+      "sha256": "e227920491eaf75765a6f6681c3611bfde636111ec05bf4f57143ce8528c9e87"
+    },
+    {
+      "path": "tani/adminApp/build/outputs/bundle/release/adminApp-release.aab",
+      "bytes": 3046737,
+      "sha256": "37e2d87990f0e282ae0352785ce1ab86a1f482fb91c9f9e16c2ba8ccb8d40bb5"
+    },
+    {
+      "path": "tani/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+      "bytes": 596457,
+      "sha256": "71d232cb0d8c7b1f0d1f0665b6d20d2590697dd43954647b2ec449ce545d3ffb"
+    }
+  ],
+  "live_server_snapshot": {
+    "ready": false,
+    "checks": {
+      "active_admin": false,
+      "merchant_records_verified": false,
+      "live_catalog": true,
+      "worker_and_push": false,
+      "queues_healthy": true,
+      "launch_evidence": false
+    },
+    "auth_users": 10,
+    "profiles": 10,
+    "approved_merchants": 7,
+    "approved_without_identity_record": 6
+  },
+  "not_verified": [
+    "instrumentation runtime: 10 cases on API30 and API36",
+    "16 KB device runtime",
+    "native PostgreSQL 17 concurrent checkout suite",
+    "real background push delivery",
+    "production auth email and recovery",
+    "isolated backup restore",
+    "real COD delivery/support lifecycle",
+    "approved production policies",
+    "external CI run on final commit"
+  ],
+  "public_repo_upload_authorized": false,
+  "launch_decision": "NO-GO"
+}

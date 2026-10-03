@@ -1,5 +1,7 @@
 package com.tani.app.ui.monetization
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.os.Bundle
 import android.view.View
 import android.widget.LinearLayout
@@ -43,7 +45,7 @@ class MonetizationFragment : Fragment() {
         })
 
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching {
+            runCatchingCancellable {
                 Triple(repository.plans(), repository.mySubscriptions(), repository.featuredRequests(sellerId))
             }.onSuccess { (plans, subscriptions, featured) ->
                 root.removeAllViews()
@@ -70,7 +72,7 @@ class MonetizationFragment : Fragment() {
                             })
                             addView(MerchantUi.primaryButton(context, "طلب الاشتراك") {
                                 viewLifecycleOwner.lifecycleScope.launch {
-                                    runCatching { repository.requestSubscription(sellerId, plan.id, "") }
+                                    runCatchingCancellable { repository.requestSubscription(sellerId, plan.id, "") }
                                         .onSuccess { Toast.makeText(context, "تم إرسال طلب الاشتراك", Toast.LENGTH_SHORT).show(); load() }
                                         .onFailure { Toast.makeText(context, it.message ?: "تعذر إرسال الطلب", Toast.LENGTH_LONG).show() }
                                 }
@@ -106,7 +108,7 @@ class MonetizationFragment : Fragment() {
                     })
                     addView(MerchantUi.primaryButton(context, "طلب ظهور ممول") {
                         viewLifecycleOwner.lifecycleScope.launch {
-                            runCatching { repository.requestFeatured(sellerId = sellerId, productId = null, placement = "home", note = "طلب ظهور مميز") }
+                            runCatchingCancellable { repository.requestFeatured(sellerId = sellerId, productId = null, placement = "home", note = "طلب ظهور مميز") }
                                 .onSuccess { Toast.makeText(context, "تم إرسال الطلب للمراجعة", Toast.LENGTH_LONG).show(); load() }
                                 .onFailure { Toast.makeText(context, it.message ?: "تعذر إرسال الطلب", Toast.LENGTH_LONG).show() }
                         }
@@ -136,7 +138,7 @@ class MonetizationFragment : Fragment() {
                     })
                     addView(MerchantUi.secondaryButton(context, "إنشاء حملة للمراجعة") {
                         viewLifecycleOwner.lifecycleScope.launch {
-                            runCatching { repository.createAdCampaign(sellerId = sellerId, name = "حملة المتجر", placement = "home", productId = null, budget = null) }
+                            runCatchingCancellable { repository.createAdCampaign(sellerId = sellerId, name = "حملة المتجر", placement = "home", productId = null, budget = null) }
                                 .onSuccess { Toast.makeText(context, "تم إنشاء الحملة وإرسالها للمراجعة", Toast.LENGTH_SHORT).show() }
                                 .onFailure { Toast.makeText(context, it.message ?: "تعذر إنشاء الحملة", Toast.LENGTH_LONG).show() }
                         }

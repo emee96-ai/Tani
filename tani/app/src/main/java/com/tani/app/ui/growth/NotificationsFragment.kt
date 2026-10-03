@@ -1,5 +1,7 @@
 package com.tani.app.ui.growth
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.graphics.Typeface
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -75,7 +77,7 @@ class NotificationsFragment : Fragment() {
         root.addView(ScreenUi.muted(context, "جاري تحميل الإشعارات..."))
 
         viewLifecycleOwner.lifecycleScope.launch {
-            val notificationsResult = runCatching {
+            val notificationsResult = runCatchingCancellable {
                 if (notificationsReady) {
                     AppContentStore.notificationPreferences to AppContentStore.notifications
                 } else {
@@ -92,7 +94,7 @@ class NotificationsFragment : Fragment() {
                     val merchant = if (merchantReady) {
                         AppContentStore.merchant
                     } else {
-                        runCatching { Repository().merchantProfile() }.getOrNull()
+                        runCatchingCancellable { Repository().merchantProfile() }.getOrNull()
                     }
                     AppContentStore.updateMerchant(merchant)
                     hasMerchantAccount = merchant != null
@@ -355,7 +357,7 @@ class NotificationsFragment : Fragment() {
     ) {
         val context = requireContext()
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching {
+            runCatchingCancellable {
                 gateway.savePreferences(
                     NotificationPreferences(
                         user_id = prefs.user_id,
@@ -379,7 +381,7 @@ class NotificationsFragment : Fragment() {
         val main = activity as? MainActivity ?: return
         viewLifecycleOwner.lifecycleScope.launch {
             if (notification.read_at == null) {
-                runCatching { gateway.markRead(notification.id) }
+                runCatchingCancellable { gateway.markRead(notification.id) }
                     .onSuccess {
                         items = items.map { item ->
                             if (item.id == notification.id) item.copy(read_at = "read") else item
@@ -414,7 +416,7 @@ class NotificationsFragment : Fragment() {
     private fun markRead(id: String) {
         val context = requireContext()
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching { gateway.markRead(id) }
+            runCatchingCancellable { gateway.markRead(id) }
                 .onSuccess {
                     items = items.map { item -> if (item.id == id) item.copy(read_at = "read") else item }
                     AppContentStore.updateNotifications(items, preferences)
@@ -433,7 +435,7 @@ class NotificationsFragment : Fragment() {
         if (unreadIds.isEmpty()) return
 
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching {
+            runCatchingCancellable {
                 if (!hasMerchantAccount) {
                     gateway.markAllRead()
                 } else {

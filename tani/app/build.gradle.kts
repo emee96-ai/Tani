@@ -12,9 +12,9 @@ val taniAppLinkHost = providers.gradleProperty("TANI_APP_LINK_HOST")
     .orElse("tani.invalid")
     .get()
 val taniVersionCode = providers.gradleProperty("TANI_VERSION_CODE")
-    .orNull?.toIntOrNull() ?: 4
+    .orNull?.toIntOrNull() ?: 5
 val taniVersionName = providers.gradleProperty("TANI_VERSION_NAME")
-    .orElse("3.1.0")
+    .orElse("3.2.0")
     .get()
 val taniReleaseStoreFile = providers.gradleProperty("TANI_RELEASE_STORE_FILE").orNull
 val taniReleaseStorePassword = providers.gradleProperty("TANI_RELEASE_STORE_PASSWORD").orNull
@@ -62,12 +62,12 @@ android {
     }
 
     namespace = "com.tani.app"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.tani.app"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = taniVersionCode
         versionName = taniVersionName
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -75,6 +75,11 @@ android {
 
         buildConfigField("String", "PASSWORD_RESET_REDIRECT", "\"$taniResetRedirect\"")
         buildConfigField("String", "APP_LINK_HOST", "\"$taniAppLinkHost\"")
+        listOf("API_KEY", "APPLICATION_ID", "PROJECT_ID", "SENDER_ID").forEach { field ->
+            val value = providers.gradleProperty("TANI_FIREBASE_$field").orElse("").get()
+                .replace("\\", "\\\\").replace("\"", "\\\"")
+            buildConfigField("String", "FIREBASE_$field", "\"$value\"")
+        }
         manifestPlaceholders["taniAppLinkHost"] = taniAppLinkHost
     }
 
@@ -90,6 +95,15 @@ android {
 }
 
 dependencies {
+    constraints {
+        listOf("datastore", "datastore-core", "datastore-core-android", "datastore-preferences",
+            "datastore-preferences-android", "datastore-preferences-core", "datastore-preferences-core-android").forEach { module ->
+            implementation("androidx.datastore:$module:1.2.1") {
+                because("The stable native counter must satisfy 16 KB LOAD and RELRO alignment")
+            }
+        }
+    }
+    implementation("com.google.firebase:firebase-messaging:25.1.2")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
     implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.appcompat:appcompat:1.7.0")

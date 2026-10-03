@@ -1,5 +1,7 @@
 package com.tani.app.ui.seller
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.os.Bundle
 import android.view.View
 import android.widget.LinearLayout
@@ -37,7 +39,7 @@ class MerchantAnalyticsFragment : Fragment() {
         root.addView(MerchantUi.title(context, "أداء المتجر"))
         root.addView(MerchantUi.card(context, soft = true).apply { addView(MerchantUi.text(context, "جاري حساب المؤشرات…", 14f, true)) })
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching { repository.merchantDashboardSummary() }
+            runCatchingCancellable { repository.merchantDashboardSummary() }
                 .onSuccess(::render)
                 .onFailure { showError(it.message ?: "تعذر تحميل المؤشرات") }
         }

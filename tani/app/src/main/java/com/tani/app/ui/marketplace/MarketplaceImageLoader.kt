@@ -1,5 +1,7 @@
 package com.tani.app.ui.marketplace
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -104,18 +106,18 @@ object MarketplaceImageLoader {
         return File(dir, sha256(url) + ".img")
     }
 
-    private fun readDisk(context: Context, url: String): ByteArray? = runCatching {
+    private fun readDisk(context: Context, url: String): ByteArray? = runCatchingCancellable {
         val file = cacheFile(context, url)
         if (!file.isFile || file.length() <= 0L || file.length() > MAX_SINGLE_IMAGE_BYTES) {
             if (file.exists() && file.length() > MAX_SINGLE_IMAGE_BYTES) file.delete()
-            return@runCatching null
+            return@runCatchingCancellable null
         }
         file.setLastModified(System.currentTimeMillis())
         file.readBytes()
     }.getOrNull()
 
     private fun writeDisk(context: Context, url: String, bytes: ByteArray) {
-        runCatching {
+        runCatchingCancellable {
             val target = cacheFile(context, url)
             val tmp = File(target.parentFile, target.name + ".tmp")
             tmp.writeBytes(bytes)
@@ -124,7 +126,7 @@ object MarketplaceImageLoader {
                 tmp.delete()
             }
             target.setLastModified(System.currentTimeMillis())
-            trimDiskCache(target.parentFile ?: return@runCatching)
+            trimDiskCache(target.parentFile ?: return@runCatchingCancellable)
         }
     }
 

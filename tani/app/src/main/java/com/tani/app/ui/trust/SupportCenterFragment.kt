@@ -1,5 +1,7 @@
 package com.tani.app.ui.trust
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -14,6 +16,10 @@ import androidx.lifecycle.lifecycleScope
 import com.tani.app.R
 import com.tani.app.data.repository.TrustRepository
 import com.tani.app.ui.common.ScreenUi
+import com.tani.app.data.Supabase
+import com.tani.app.data.trust.SupportTicket
+import com.tani.app.data.trust.TicketMessage
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class SupportCenterFragment : Fragment() {
@@ -21,6 +27,7 @@ class SupportCenterFragment : Fragment() {
     private lateinit var root: LinearLayout
     private var linkedOrderId: String? = null
     private var linkedSellerId: String? = null
+    private var loadJob: Job? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, state: Bundle?): View {
         val context = requireContext()
@@ -38,6 +45,7 @@ class SupportCenterFragment : Fragment() {
     }
 
     private fun renderHome() {
+        loadJob?.cancel()
         val context = requireContext()
         root.removeAllViews()
         root.addView(ScreenUi.title(context, "الدعم والثقة"))
@@ -54,8 +62,8 @@ class SupportCenterFragment : Fragment() {
     }
 
     private fun loadExisting() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            runCatching { repository.tickets() to repository.complaints() }
+        loadJob = viewLifecycleOwner.lifecycleScope.launch {
+            runCatchingCancellable { repository.tickets() to repository.complaints() }
                 .onSuccess { (tickets, complaints) ->
                     val context = requireContext()
                     root.addView(ScreenUi.text(context, "تذاكر الدعم", 19f, true))
@@ -65,6 +73,7 @@ class SupportCenterFragment : Fragment() {
                             addView(ScreenUi.text(context, ticket.subject, 16f, true))
                             addView(ScreenUi.muted(context, "${status(ticket.status)} • ${ticket.priority} • ${ticket.created_at ?: ""}"))
                             addView(ScreenUi.text(context, ticket.description.take(300), 14f))
+                            addView(ScreenUi.button(context, "فتح المحادثة") { renderConversation(ticket) })
                         })
                     }
                     root.addView(ScreenUi.spacer(context, 10))
@@ -84,6 +93,7 @@ class SupportCenterFragment : Fragment() {
     }
 
     private fun renderTicketForm() {
+        loadJob?.cancel()
         val context = requireContext()
         root.removeAllViews()
         root.addView(ScreenUi.title(context, "تذكرة دعم جديدة"))
@@ -93,7 +103,7 @@ class SupportCenterFragment : Fragment() {
         root.addView(body)
         root.addView(ScreenUi.button(context, "إرسال") {
             viewLifecycleOwner.lifecycleScope.launch {
-                runCatching { repository.createTicket(subject.text.toString(), body.text.toString()) }
+                runCatchingCancellable { repository.createTicket(subject.text.toString(), body.text.toString()) }
                     .onSuccess { toast("تم إنشاء التذكرة"); renderHome() }
                     .onFailure { toast(it.message ?: "تعذر إنشاء التذكرة") }
             }
@@ -102,6 +112,7 @@ class SupportCenterFragment : Fragment() {
     }
 
     private fun renderComplaintForm() {
+        loadJob?.cancel()
         val context = requireContext()
         root.removeAllViews()
         root.addView(ScreenUi.title(context, "شكوى جديدة"))
@@ -132,7 +143,7 @@ class SupportCenterFragment : Fragment() {
         root.addView(ScreenUi.button(context, "إرسال الشكوى") {
             viewLifecycleOwner.lifecycleScope.launch {
                 val category = categories[spinner.selectedItemPosition.coerceIn(categories.indices)]
-                runCatching {
+                runCatchingCancellable {
                     repository.createComplaint(
                         subject.text.toString(),
                         body.text.toString(),
@@ -153,6 +164,71 @@ class SupportCenterFragment : Fragment() {
         "closed" -> "مغلقة"
         "resolved" -> "تم الحل"
         else -> value
+    }
+
+    private fun renderConversation(ticket: SupportTicket) {
+        loadJob?.cancel()
+        val context = requireContext()
+        root.removeAllViews()
+        root.addView(ScreenUi.title(context, ticket.subject))
+        root.addView(ScreenUi.subtitle(context, ticket.description))
+        root.addView(ScreenUi.button(context, "رجوع للتذاكر") { renderHome() })
+        root.addView(ScreenUi.button(context, "تحديث المحادثة") { renderConversation(ticket) })
+        val messagesBox = ScreenUi.root(context)
+        root.addView(messagesBox)
+        val reply = ScreenUi.input(context, "ردك على فريق الدعم", true)
+        val send = ScreenUi.button(context, "إرسال الرد") { }
+        send.isEnabled = false
+        root.addView(reply)
+        root.addView(send)
+        val messages = mutableListOf<TicketMessage>()
+        val older = ScreenUi.button(context, "تحميل الرسائل الأقدم") { }
+        root.addView(older)
+        older.visibility = View.GONE
+
+        fun showMessages() {
+            messagesBox.removeAllViews()
+            if (messages.isEmpty()) messagesBox.addView(ScreenUi.muted(context, "لا توجد ردود بعد."))
+            messages.distinctBy { it.id }.sortedWith(compareBy({ it.created_at }, { it.id })).forEach { item ->
+                messagesBox.addView(ScreenUi.card(context).apply {
+                    addView(ScreenUi.text(context, if (item.sender_id == Supabase.userId) "أنتِ" else "فريق الدعم", 14f, true))
+                    addView(ScreenUi.text(context, item.body, 15f))
+                    addView(ScreenUi.muted(context, item.created_at.orEmpty()))
+                })
+            }
+        }
+        older.setOnClickListener {
+            older.isEnabled = false
+            loadJob = viewLifecycleOwner.lifecycleScope.launch {
+                runCatchingCancellable { repository.ticketMessages(ticket.id, messages.lastOrNull()) }
+                    .onSuccess { page ->
+                        messages.addAll(page)
+                        showMessages()
+                        older.visibility = if (page.size == 100) View.VISIBLE else View.GONE
+                    }.onFailure { toast(it.message ?: "تعذر تحميل الرسائل") }
+                older.isEnabled = true
+            }
+        }
+        loadJob = viewLifecycleOwner.lifecycleScope.launch {
+            runCatchingCancellable { repository.ticket(ticket.id) to repository.ticketMessages(ticket.id) }
+                .onSuccess { (current, page) ->
+                    messages.addAll(page)
+                    showMessages()
+                    older.visibility = if (page.size == 100) View.VISIBLE else View.GONE
+                    val open = current.status in listOf("open", "in_progress")
+                    send.isEnabled = open
+                    reply.isEnabled = open
+                    if (!open) root.addView(ScreenUi.muted(context, "التذكرة ${status(current.status)}. يمكنك فتح تذكرة جديدة."))
+                }.onFailure { toast(it.message ?: "تعذر تحميل المحادثة") }
+        }
+        send.setOnClickListener {
+            send.isEnabled = false
+            viewLifecycleOwner.lifecycleScope.launch {
+                runCatchingCancellable { repository.sendTicketMessage(ticket.id, reply.text.toString()) }
+                    .onSuccess { renderConversation(ticket) }
+                    .onFailure { toast(it.message ?: "تعذر إرسال الرد"); send.isEnabled = true }
+            }
+        }
     }
 
     private fun categoryLabel(value: String) = when (value) {

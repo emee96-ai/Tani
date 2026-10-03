@@ -1,5 +1,7 @@
 package com.tani.app.ui.commerce
 
+import com.tani.app.util.runCatchingCancellable
+
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -22,7 +24,7 @@ object CommerceUi {
 
     fun formatDate(value: String?): String {
         if (value.isNullOrBlank()) return ""
-        return runCatching {
+        return runCatchingCancellable {
             val instant = Instant.parse(value)
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
                 .withZone(ZoneId.systemDefault())

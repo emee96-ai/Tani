@@ -1,5 +1,7 @@
 package com.tani.app.ui.marketplace
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.content.res.ColorStateList
 import android.net.Uri
 import android.os.Bundle
@@ -50,7 +52,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
         val content = view.findViewById<LinearLayout>(R.id.product_details_content)
 
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching { repository.productDetails(productId) }
+            runCatchingCancellable { repository.productDetails(productId) }
                 .onSuccess { details ->
                     loading.visibility = View.GONE
                     content.visibility = View.VISIBLE
@@ -61,7 +63,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
     }
 
     override fun onDestroyView() {
-        runCatching { activeVideo?.stopPlayback() }
+        runCatchingCancellable { activeVideo?.stopPlayback() }
         activeVideo = null
         mediaItems = emptyList()
         selectedVariant = null
@@ -131,7 +133,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
         if (mediaItems.isNotEmpty()) counter.text = "${selectedMediaIndex + 1} / ${mediaItems.size}"
 
         if (mediaItems.isEmpty()) {
-            runCatching { video.stopPlayback() }
+            runCatchingCancellable { video.stopPlayback() }
             video.visibility = View.GONE
             play.visibility = View.GONE
             image.visibility = View.VISIBLE
@@ -142,7 +144,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
         val item = mediaItems[selectedMediaIndex.coerceIn(mediaItems.indices)]
         val url = repository.productImageUrl(item.path)
         if (item.kind == MediaKind.IMAGE) {
-            runCatching { video.stopPlayback() }
+            runCatchingCancellable { video.stopPlayback() }
             video.visibility = View.GONE
             play.visibility = View.GONE
             image.visibility = View.VISIBLE
@@ -164,7 +166,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
         video.setVideoURI(Uri.parse(url))
         video.setOnPreparedListener { player ->
             player.isLooping = false
-            runCatching { video.seekTo(1) }
+            runCatchingCancellable { video.seekTo(1) }
             play.visibility = View.VISIBLE
         }
         video.setOnCompletionListener { play.visibility = View.VISIBLE }
@@ -254,7 +256,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
 
         if (!Supabase.userId.isNullOrBlank()) {
             viewLifecycleOwner.lifecycleScope.launch {
-                runCatching { growthRepository.isFavorite(productId) }.onSuccess { value ->
+                runCatchingCancellable { growthRepository.isFavorite(productId) }.onSuccess { value ->
                     favoriteState = value
                     renderFavorite()
                 }
@@ -269,7 +271,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
             favoriteButton.isEnabled = false
             viewLifecycleOwner.lifecycleScope.launch {
                 val target = !favoriteState
-                runCatching { growthRepository.setFavorite(productId, target) }
+                runCatchingCancellable { growthRepository.setFavorite(productId, target) }
                     .onSuccess {
                         favoriteState = target
                         renderFavorite()
@@ -382,7 +384,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
         val trustText = view.findViewById<TextView>(R.id.product_details_trust)
         trustText.text = "جاري حساب مستوى الثقة…"
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching { trustRepository.merchantTrust(product.seller_id) }.onSuccess { trust ->
+            runCatchingCancellable { trustRepository.merchantTrust(product.seller_id) }.onSuccess { trust ->
                 trustText.text = if (trust == null) {
                     verification?.let { "حالة المتجر: $it" } ?: "لا توجد بيانات ثقة إضافية"
                 } else {

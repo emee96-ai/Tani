@@ -1,9 +1,12 @@
 package com.tani.app.data.repository
 
+import com.tani.app.util.runCatchingCancellable
+
 import com.tani.app.data.Supabase
 import com.tani.app.data.trust.*
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import java.net.URLEncoder
 
 class TrustRepository {
     suspend fun merchantTrust(sellerId: String): MerchantTrustScore? = Supabase.get<List<MerchantTrustScore>>(
@@ -30,19 +33,26 @@ class TrustRepository {
         return rows.firstOrNull() ?: error("تعذر إنشاء التذكرة")
     }
 
-    suspend fun ticketMessages(ticketId: String): List<TicketMessage> = Supabase.get(
+    suspend fun ticket(ticketId: String): SupportTicket = Supabase.get<List<SupportTicket>>(
+        "support_tickets", "select=*&id=eq.$ticketId&limit=1"
+    ).firstOrNull() ?: error("التذكرة غير متاحة")
+
+    suspend fun ticketMessages(ticketId: String, before: TicketMessage? = null): List<TicketMessage> = Supabase.get(
         "ticket_messages",
-        "select=*&ticket_id=eq.$ticketId&order=created_at.asc&limit=100"
+        "select=*&ticket_id=eq.$ticketId&order=created_at.desc,id.desc&limit=100" +
+            (before?.created_at?.let { time ->
+                val encoded = URLEncoder.encode(time, "UTF-8")
+                "&or=(created_at.lt.$encoded,and(created_at.eq.$encoded,id.lt.${before.id}))"
+            } ?: "")
     )
 
     suspend fun sendTicketMessage(ticketId: String, body: String): TicketMessage {
-        val uid = Supabase.userId ?: error("تسجيل الدخول مطلوب")
+        check(Supabase.userId != null) { "تسجيل الدخول مطلوب" }
         require(body.trim().length in 1..2000) { "الرسالة غير صالحة" }
-        val rows: List<TicketMessage> = Supabase.post(
-            "ticket_messages",
-            buildJsonObject { put("ticket_id", ticketId); put("sender_id", uid); put("body", body.trim()) }.toString()
+        return Supabase.post(
+            "rpc/send_support_ticket_message",
+            buildJsonObject { put("p_ticket_id", ticketId); put("p_body", body.trim()) }.toString()
         )
-        return rows.firstOrNull() ?: error("تعذر إرسال الرسالة")
     }
 
     suspend fun complaints(): List<Complaint> = Supabase.get(
@@ -73,41 +83,14 @@ class TrustRepository {
 
     suspend fun submitDeliveredOrderReviews(
         orderId: String,
-        sellerId: String,
-        productIds: List<String>,
         rating: Int,
         comment: String
     ) {
-        val uid = Supabase.userId ?: error("تسجيل الدخول مطلوب")
+        check(Supabase.userId != null) { "تسجيل الدخول مطلوب" }
         require(rating in 1..5) { "التقييم يجب أن يكون من 1 إلى 5" }
-        val clean = comment.trim().take(1000)
-        if (productIds.isNotEmpty()) {
-            productIds.distinct().forEach { productId ->
-                runCatching {
-                    Supabase.post<List<kotlinx.serialization.json.JsonObject>>(
-                        "reviews",
-                        buildJsonObject {
-                            put("product_id", productId); put("customer_id", uid); put("order_id", orderId)
-                            put("rating", rating); put("comment", clean); put("status", "published")
-                        }.toString()
-                    )
-                }
-            }
-        }
-        runCatching {
-            Supabase.post<List<MerchantReview>>(
-                "merchant_reviews",
-                buildJsonObject {
-                    put("order_id", orderId); put("seller_id", sellerId); put("customer_id", uid)
-                    put("rating", rating); put("comment", clean); put("status", "published")
-                }.toString()
-            )
-        }.getOrThrow()
-        runCatching {
-            Supabase.post<List<kotlinx.serialization.json.JsonObject>>(
-                "order_reviews",
-                buildJsonObject { put("order_id", orderId); put("customer_id", uid); put("rating", rating); put("comment", clean) }.toString()
-            )
-        }.getOrThrow()
+        require(comment.trim().length <= 1000) { "التعليق طويل جداً" }
+        Supabase.post<Boolean>("rpc/submit_delivered_order_reviews", buildJsonObject {
+            put("p_order_id", orderId); put("p_rating", rating); put("p_comment", comment.trim())
+        }.toString())
     }
 }

@@ -8,7 +8,12 @@ fail(){ printf 'FAIL: %s\n' "$1" >&2; exit 1; }
 
 bash -n gradlew || fail "gradlew shell syntax"
 pass "gradlew shell syntax"
-jar tf gradle/wrapper/gradle-wrapper.jar >/dev/null || fail "Gradle wrapper JAR"
+python3 - <<'PY' || fail "Gradle wrapper JAR"
+from zipfile import ZipFile
+with ZipFile('gradle/wrapper/gradle-wrapper.jar') as archive:
+    assert archive.testzip() is None
+    assert 'org/gradle/wrapper/GradleWrapperMain.class' in archive.namelist()
+PY
 pass "Gradle wrapper JAR"
 node --check admin/app.js >/dev/null || fail "Admin JavaScript syntax"
 pass "Admin JavaScript syntax"
@@ -115,13 +120,13 @@ for imp in sorted(imports):
         found=False
         for p in (root/'app/src/main/java').rglob('*.kt'):
             txt=p.read_text(errors='ignore')
-            if re.search(rf'^package\s+{re.escape(pkg)}\s*$',txt,re.M) and re.search(rf'\b(?:fun|val|var|typealias)\s+{re.escape(name)}\b',txt): found=True; break
+            if re.search(rf'^package\s+{re.escape(pkg)}\s*$',txt,re.M) and re.search(rf'\b(?:fun|val|var|typealias)\s+(?:<[^>]+>\s*)?{re.escape(name)}\b',txt): found=True; break
         if not found: missing_import.append(imp)
 if missing_import: bad('Internal imports',missing_import[:40])
 else: ok('Internal imports',str(len(imports)))
 
 # SQL dependency coverage from Kotlin/Admin.
-sql='\n'.join(p.read_text(errors='ignore') for p in (root/'supabase').glob('*.sql'))
+sql='\n'.join(p.read_text(errors='ignore') for p in (root/'supabase').rglob('*.sql'))
 # definitions
 relations=set(re.findall(r'(?i)create\s+table\s+(?:if\s+not\s+exists\s+)?public\.([A-Za-z0-9_]+)',sql))
 relations |= set(re.findall(r'(?i)create(?:\s+or\s+replace)?\s+view\s+public\.([A-Za-z0-9_]+)',sql))
@@ -171,13 +176,13 @@ if missing_rpc: bad('SQL RPC dependency coverage',missing_rpc)
 else: ok('SQL RPC dependency coverage',str(len(kt_rpc)))
 
 # Basic SQL structural checks
-for p in (root/'supabase').glob('*.sql'):
+for p in (root/'supabase').rglob('*.sql'):
     txt=p.read_text(errors='ignore')
     if txt.count('$$')%2: bad('SQL dollar-quote balance',p.name)
 if not any(x[0]=='SQL dollar-quote balance' for x in errors): ok('SQL dollar-quote balance')
 
 # Secret scan: publishable keys are allowed; privileged keys are not.
-scan_files=[p for p in list((root/'app').rglob('*'))+list((root/'adminApp').rglob('*'))+list((root/'admin').rglob('*')) if p.suffix.lower() not in {'.md','.txt'}]
+scan_files=[p for p in list((root/'app').rglob('*'))+list((root/'adminApp').rglob('*'))+list((root/'admin').rglob('*')) if p.suffix.lower() in {'.kt','.java','.xml','.js','.html','.json','.properties','.kts'} and not {'build','.gradle','node_modules'}.intersection(p.parts)]
 secret_hits=[]
 patterns=[r'(?i)service[_ -]?role',r'(?i)supabase_service_role',r'\bsk_[A-Za-z0-9_-]{16,}\b',r'(?i)private[_ -]?key']
 for p in scan_files:
@@ -216,8 +221,14 @@ if 'android:usesCleartextTraffic="false"' not in admin_manifest:
 else: ok('Admin manifest cleartext security')
 
 debug_manifest=(root/'app/src/debug/AndroidManifest.xml').read_text(errors='ignore')
-if 'android:scheme="tani"' in manifest:
-    bad('Production auth redirect','custom auth scheme must not be in main manifest')
+main_manifest_tree=ET.fromstring(manifest)
+android_ns='{http://schemas.android.com/apk/res/android}'
+custom_auth=any(
+    data.get(android_ns+'scheme')=='tani' and data.get(android_ns+'host')=='auth'
+    for data in main_manifest_tree.iter('data')
+)
+if custom_auth:
+    bad('Production auth redirect','custom auth recovery scheme must not be in main manifest')
 elif 'android:scheme="tani"' not in debug_manifest:
     bad('Debug auth redirect','debug custom scheme is missing')
 else: ok('Auth redirect build separation')

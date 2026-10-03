@@ -1,5 +1,7 @@
 package com.tani.app.ui.seller
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.os.Bundle
 import android.view.View
 import android.widget.LinearLayout
@@ -56,15 +58,15 @@ class SellerFragment : Fragment() {
         })
 
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching {
+            runCatchingCancellable {
                 val profile = repository.merchantProfile()
                 val seller = repository.seller()
                 if (profile?.verification_status == "approved" && seller != null) {
                     coroutineScope {
-                        val storeRequest = async { runCatching { repository.merchantStore() }.getOrNull() }
-                        val summaryRequest = async { runCatching { repository.merchantDashboardSummary() }.getOrNull() }
-                        val zonesRequest = async { runCatching { repository.merchantDeliveryZones(seller.id) }.getOrDefault(emptyList()) }
-                        val deliveryRequest = async { runCatching { repository.merchantDeliverySettings(seller.id) }.getOrNull() }
+                        val storeRequest = async { runCatchingCancellable { repository.merchantStore() }.getOrNull() }
+                        val summaryRequest = async { runCatchingCancellable { repository.merchantDashboardSummary() }.getOrNull() }
+                        val zonesRequest = async { runCatchingCancellable { repository.merchantDeliveryZones(seller.id) }.getOrDefault(emptyList()) }
+                        val deliveryRequest = async { runCatchingCancellable { repository.merchantDeliverySettings(seller.id) }.getOrNull() }
                         val zones = zonesRequest.await()
                         DashboardData(
                             profile = profile,
@@ -275,7 +277,7 @@ class SellerFragment : Fragment() {
         val newOpen = !store.is_open
         Toast.makeText(requireContext(), if (newOpen) "جاري فتح المتجر…" else "جاري إغلاق المتجر مؤقتاً…", Toast.LENGTH_SHORT).show()
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching { repository.setMerchantStoreOpen(store.id, newOpen) }
+            runCatchingCancellable { repository.setMerchantStoreOpen(store.id, newOpen) }
                 .onSuccess {
                     storeToggleInFlight = false
                     Toast.makeText(requireContext(), if (newOpen) "المتجر مفتوح الآن ✓" else "تم إغلاق المتجر مؤقتاً", Toast.LENGTH_SHORT).show()

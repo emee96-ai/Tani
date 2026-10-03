@@ -1,5 +1,7 @@
 package com.tani.app.ui.categories
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.os.Bundle
 import android.view.View
 import android.view.inputmethod.EditorInfo
@@ -52,7 +54,7 @@ class CategoriesFragment : Fragment(R.layout.fragment_stores) {
                     if (stores.isEmpty()) loading.text = "لا توجد متاجر مطابقة حالياً"
                     return@launch
                 }
-                runCatching { repository.stores(search.text.toString(), limit = 100) }
+                runCatchingCancellable { repository.stores(search.text.toString(), limit = 100) }
                     .onSuccess { stores ->
                         if (search.text.isBlank()) {
                             AppContentStore.updateStores(stores)

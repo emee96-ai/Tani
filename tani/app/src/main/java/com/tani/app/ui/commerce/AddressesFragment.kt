@@ -1,5 +1,7 @@
 package com.tani.app.ui.commerce
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.app.AlertDialog
 import android.os.Bundle
 import android.text.InputType
@@ -43,7 +45,7 @@ class AddressesFragment : Fragment(R.layout.fragment_addresses) {
         }
         progress.visibility = View.VISIBLE
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching { repository.addresses() }
+            runCatchingCancellable { repository.addresses() }
                 .onSuccess {
                     addresses = it
                     AppContentStore.updateAddresses(it)
@@ -148,7 +150,7 @@ class AddressesFragment : Fragment(R.layout.fragment_addresses) {
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 viewLifecycleOwner.lifecycleScope.launch {
-                    runCatching {
+                    runCatchingCancellable {
                         if (existing == null) {
                             repository.addAddress(
                                 label.text.toString(), description.text.toString(), area.text.toString(),
@@ -178,7 +180,7 @@ class AddressesFragment : Fragment(R.layout.fragment_addresses) {
             .setMessage("هل تريدين حذف ${address.label}؟")
             .setPositiveButton("حذف") { _, _ ->
                 viewLifecycleOwner.lifecycleScope.launch {
-                    runCatching { repository.deleteAddress(address.id) }
+                    runCatchingCancellable { repository.deleteAddress(address.id) }
                         .onSuccess { load(forceRefresh = true) }
                         .onFailure { Toast.makeText(requireContext(), it.message ?: "تعذر الحذف", Toast.LENGTH_LONG).show() }
                 }

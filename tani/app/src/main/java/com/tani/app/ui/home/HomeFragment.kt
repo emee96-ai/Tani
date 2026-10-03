@@ -1,5 +1,7 @@
 package com.tani.app.ui.home
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
@@ -163,7 +165,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     return@launch
                 }
 
-                runCatching { repository.homeFeed() }
+                runCatchingCancellable { repository.homeFeed() }
                     .onSuccess { feed ->
                         cache.saveHomeFeed(feed)
                         renderFeed(feed)
@@ -209,7 +211,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 return@launch
             }
 
-            runCatching { scaleRepository.recommendations(8) }
+            runCatchingCancellable { scaleRepository.recommendations(8) }
                 .onSuccess { products ->
                     if (Supabase.userId != userId || !Supabase.hasStoredSession()) return@onSuccess
                     AppContentStore.updateRecommendations(userId, products)

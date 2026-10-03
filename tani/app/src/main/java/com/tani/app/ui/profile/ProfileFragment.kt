@@ -1,5 +1,7 @@
 package com.tani.app.ui.profile
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.app.AlertDialog
 import android.os.Bundle
 import android.text.InputType
@@ -71,7 +73,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             .setPositiveButton("حفظ") { _, _ ->
                 setActionsEnabled(false)
                 viewLifecycleOwner.lifecycleScope.launch {
-                    runCatching {
+                    runCatchingCancellable {
                         repository.changePassword(
                             currentPassword = current.text.toString(),
                             newPassword = next.text.toString(),
@@ -116,7 +118,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
         val userId = Supabase.userId
         setActionsEnabled(false)
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching { repository.softDeleteAccount() }
+            runCatchingCancellable { repository.softDeleteAccount() }
                 .onSuccess { deleted ->
                     if (deleted) {
                         AppContentStore.clearPrivateData()

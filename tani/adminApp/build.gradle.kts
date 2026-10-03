@@ -5,9 +5,9 @@ plugins {
 }
 
 val taniAdminVersionCode = providers.gradleProperty("TANI_ADMIN_VERSION_CODE")
-    .orNull?.toIntOrNull() ?: 5
+    .orNull?.toIntOrNull() ?: 6
 val taniAdminVersionName = providers.gradleProperty("TANI_ADMIN_VERSION_NAME")
-    .orElse("2.1.0")
+    .orElse("2.2.0")
     .get()
 val taniReleaseStoreFile = providers.gradleProperty("TANI_RELEASE_STORE_FILE").orNull
 val taniReleaseStorePassword = providers.gradleProperty("TANI_RELEASE_STORE_PASSWORD").orNull
@@ -22,12 +22,12 @@ val hasReleaseSigning = listOf(
 
 android {
     namespace = "com.tani.admin"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.tani.admin"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = taniAdminVersionCode
         versionName = taniAdminVersionName
     }

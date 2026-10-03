@@ -6,9 +6,25 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.util.UUID
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import com.tani.app.util.runCatchingCancellable
 
 object Analytics {
     private val sessionId: String = UUID.randomUUID().toString()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    fun trackLater(eventName: String, screen: String? = null, entityType: String? = null,
+                   entityId: String? = null, metadata: JsonObject = buildJsonObject { }) {
+        scope.launch {
+            runCatchingCancellable {
+                withTimeoutOrNull(4_000) { track(eventName, screen, entityType, entityId, metadata) }
+            }
+        }
+    }
 
     suspend fun track(
         eventName: String,

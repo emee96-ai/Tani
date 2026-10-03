@@ -1,34 +1,82 @@
-# Tani Full Product Release Checklist
+# Tani Release Checklist — 1 October 2026
 
-## Code
-- [ ] `qa/run_static_checks.sh` PASS.
-- [ ] `./gradlew assembleDebug` or release build PASS in Codespace/CI.
-- [ ] Install APK on at least one supported Android device and run smoke tests.
+**NO-GO:** technical candidate checks pass as noted below, but device execution and
+production configuration/operational evidence remain incomplete. Check items only
+against actual evidence for the release commit. CI has not run on the repair branch.
 
-## Supabase
-- [ ] All migrations through `final_security_hardening.sql` applied.
-- [ ] All public tables have RLS.
-- [ ] Storage buckets/policies verified.
-- [ ] No Service Role secret in Android/Admin.
-- [ ] Security/Performance Advisors reviewed.
-- [ ] Enable Auth leaked-password protection if available on the production plan/config.
+## Verified technical work
 
-## End-to-end smoke
-- [ ] Signup/login/password recovery.
-- [ ] Merchant application → admin review → approved store.
-- [ ] Product create/edit/image/stock.
-- [ ] Search/store/product/cart.
-- [ ] Multi-merchant COD checkout.
-- [ ] Merchant state transitions → delivered.
-- [ ] Post-delivery review.
-- [ ] Complaint/support lifecycle.
-- [ ] Favorites/notifications/referrals.
-- [ ] Sponsored content labeled «ممول».
-- [ ] Account deletion disables public merchant assets.
+- [x] Static QA, source secret scan, XML/resources and RPC dependency checks.
+- [x] Debug customer/admin builds and compiled customer instrumentation APK.
+- [x] 35 customer + 3 admin unit tests pass in both Debug and Release.
+- [x] Signed, R8-minified candidate AABs for both applications and customer release APK.
+- [x] APK signature v2/v3, AAB signatures and customer APK `zipalign -P 16` verified.
+- [x] All six 64-bit native-library copies in Debug/Release APKs and customer AAB
+      pass LOAD/RELRO 16 KB checks after the DataStore 1.2.1 update.
+- [x] Four full-schema SQL suites pass with all eight launch migrations.
+- [x] Server function strict typecheck and four security tests pass.
+- [x] Real account-erasure evidence covers eight checks and fixture cleanup.
+- [x] Production gate rejects missing, repeated, decreasing and malformed version codes.
+- [x] Full release Lint completed: zero Error/Fatal, 309 customer + 28 admin warnings.
+- [ ] PostgreSQL 17 concurrency regressions and full CI pass on the final commit.
+- [ ] Ten instrumentation tests execute on Android 11/API30 and Android 16/API36.
+- [ ] Real 16 KB runtime and weak-network checkout/recovery verification.
 
-## Launch operations
-- [ ] Real approved merchants/products in Kosti.
-- [ ] Delivery settings verified.
-- [ ] Support channel staffed.
-- [ ] Terms/Privacy/Merchant agreement legally reviewed and published.
-- [ ] Backup/recovery configured and tested.
+The current signing key is disposable and expires after two days. These candidates
+are for validation only and are not production releases.
+
+## Supabase and production operations
+
+- [x] Local migration versions match the eight applied production history entries,
+      from `20260930213526` through `20261001062831`; do not apply them twice.
+- [x] All 75 public tables have account-validity protection in addition to RLS.
+- [x] Deployed worker and account-deletion functions match the restored source.
+- [ ] Explicitly identified owner admin is active and tested; no guessed promotions.
+- [ ] Approved merchants have genuine identity, current phone and policy evidence.
+- [ ] Production catalog, prices, stock and delivery settings validated in Kosti.
+- [ ] Auth leaked-password protection enabled and email settings verified.
+- [ ] Advisor warnings reviewed by function/policy; performance measured at target scale.
+- [ ] All six private launch approvals are current: `backup_restore`, `auth_email`,
+      `live_push`, `merchant_order`, `account_erasure`, `legal_operations`.
+- [ ] `maintenance_launch_gate()` returns `ready=true` with all required checks true.
+
+## Production configuration
+
+| Setting | Required value / storage |
+|---|---|
+| Android Firebase | Four `TANI_FIREBASE_*` values in `PUSH_NOTIFICATIONS_SETUP.md` |
+| Push sender | `FIREBASE_SERVICE_ACCOUNT` in Supabase Edge Function secrets |
+| Signing | Production workflow secrets `TANI_RELEASE_KEYSTORE_B64`, `TANI_RELEASE_STORE_PASSWORD`, `TANI_RELEASE_KEY_ALIAS`, `TANI_RELEASE_KEY_PASSWORD` |
+| Current version | Workflow `version_code`; greater than both applications' latest published codes |
+| Previous versions | `previous_version_code` and `previous_admin_version_code`, from the publishing account; use `0` only for a genuine first release |
+| Domain/recovery | Workflow `app_link_host`, `reset_redirect=https://HOST/auth/reset` |
+| Public pages | Environment variables `TANI_TERMS_URL`, `TANI_PRIVACY_URL`, `TANI_ACCOUNT_DELETION_URL` on the verified host |
+| Distributed certificate | `TANI_APP_SIGNING_SHA256` if different from the upload key; matching public `assetlinks.json` |
+| Server-only gate credential | `TANI_SUPABASE_SERVICE_KEY` in production secrets; never supplied to Android BuildConfig |
+
+The gate compares supplied previous codes; it does not read Google Play automatically.
+The publishing owner must verify those values against the actual release history.
+Locally the gate uses `TANI_PREVIOUS_VERSION_CODE` and
+`TANI_PREVIOUS_ADMIN_VERSION_CODE` environment variables.
+
+## End-to-end evidence
+
+- [ ] Signup, email confirmation, login, recovery, refresh and logout.
+- [ ] Merchant application → evidence review → approval → product/image/stock update.
+- [ ] Search/store/product/cart and multi-merchant COD checkout.
+- [ ] Ambiguous response, process restart and repeated submission produce one order.
+- [ ] Merchant transitions → actual delivery → review with no partial ratings.
+- [ ] Complaint/support lifecycle and staffed escalation channel.
+- [ ] Background push, permission refusal, logout and account-switch isolation.
+- [ ] Links open the intended product/store and complete password recovery.
+- [ ] Favorites/referrals and paid content labeled «ممول».
+- [ ] Backup restored into an isolated project with measured recovery targets.
+- [ ] Terms, Privacy, merchant/delivery/retention policies approved and publicly reachable.
+
+## Publication
+
+- [ ] Explicit authorization to upload the repair branch and full schema to the public repository.
+- [ ] Review CI results on that exact commit, then produce and approve a production-signed release.
+- [ ] Separate authorization for Google Play publication when the release is ready.
+
+Details and limitations: `LAUNCH_REPAIR_STATUS_2026-10-01.md`.

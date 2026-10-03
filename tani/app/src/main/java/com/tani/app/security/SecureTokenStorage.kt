@@ -35,17 +35,26 @@ class SecureTokenStorage(
     }
 
     fun putString(key: String, value: String?) {
-        if (value == null) {
-            prefs.edit().remove(key).apply()
-            return
-        }
+        val edit = prefs.edit()
+        if (value == null) edit.remove(key) else edit.putString(key, encrypt(value))
+        edit.apply()
+    }
+
+    fun contains(key: String): Boolean = prefs.contains(key)
+
+    /** A checkout key must reach disk before its network request is sent. */
+    fun putStringSync(key: String, value: String?): Boolean {
+        val edit = prefs.edit()
+        if (value == null) edit.remove(key) else edit.putString(key, encrypt(value))
+        return edit.commit()
+    }
+
+    private fun encrypt(value: String): String {
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, secretKey())
         val encrypted = cipher.doFinal(value.toByteArray(StandardCharsets.UTF_8))
         val packed = cipher.iv + encrypted
-        prefs.edit()
-            .putString(key, Base64.encodeToString(packed, Base64.NO_WRAP))
-            .apply()
+        return Base64.encodeToString(packed, Base64.NO_WRAP)
     }
 
     fun clear() = prefs.edit().clear().apply()

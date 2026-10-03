@@ -1,6 +1,7 @@
 name: Build Tani APK
 
 on:
+  workflow_call:
   workflow_dispatch:
   push:
     branches: ["main", "develop", "maintenance/**"]
@@ -16,7 +17,7 @@ jobs:
     timeout-minutes: 10
     services:
       postgres:
-        image: postgres:15
+        image: postgres:17
         env:
           POSTGRES_PASSWORD: postgres
         ports:
@@ -35,6 +36,28 @@ jobs:
         env:
           TANI_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
         run: bash tani/qa/run_database_tests.sh
+      - name: Run launch authorization tests against the full live schema
+        env:
+          TANI_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/tani_launch_regression
+        run: |
+          psql postgresql://postgres:postgres@127.0.0.1:5432/postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE tani_launch_regression'
+          bash tani/qa/run_launch_tests.sh
+
+  function-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: tani/supabase/functions
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.2.7
+      - name: Check server functions and test worker security
+        run: |
+          deno check --no-lock --node-modules-dir=auto maintenance-worker/index.ts delete-account/index.ts
+          deno test --no-lock --node-modules-dir=auto _shared/security_test.ts
 
   build:
     runs-on: ubuntu-latest
@@ -82,7 +105,11 @@ jobs:
 
   ui-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: [30, 36]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -104,8 +131,8 @@ jobs:
       - name: Run customer UI smoke tests
         uses: ReactiveCircus/android-emulator-runner@v2.38.0
         with:
-          api-level: 30
-          target: default
+          api-level: ${{ matrix.api-level }}
+          target: google_apis
           arch: x86_64
           profile: pixel_3a
           disable-animations: true
@@ -115,7 +142,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: tani-ui-smoke-reports
+          name: tani-ui-smoke-reports-api-${{ matrix.api-level }}
           path: |
             tani/app/build/reports/androidTests/connected/**
             tani/app/build/outputs/androidTest-results/connected/**
@@ -151,7 +178,7 @@ jobs:
 
   release-check:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 45
     defaults:
       run:
         working-directory: tani
@@ -186,25 +213,29 @@ jobs:
           echo "TANI_RELEASE_KEY_PASSWORD=changeit" >> "$GITHUB_ENV"
           echo "TANI_APP_LINK_HOST=ci.example.com" >> "$GITHUB_ENV"
           echo "TANI_RESET_REDIRECT=https://ci.example.com/auth/reset" >> "$GITHUB_ENV"
+          echo "TANI_VERSION_CODE=7" >> "$GITHUB_ENV"
+          echo "TANI_ADMIN_VERSION_CODE=7" >> "$GITHUB_ENV"
       - name: Verify release gate with CI credentials
-        run: bash qa/run_release_gate.sh
+        run: |
+          bash qa/run_release_gate.sh --ci
+          python3 qa/test_release_gate.py
       - name: Build signed minified release candidates
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon \
-            :app:testReleaseUnitTest \
-            :adminApp:testReleaseUnitTest \
-            :app:lintRelease \
-            :adminApp:lintRelease \
-            :app:bundleRelease \
-            :adminApp:bundleRelease \
-            -PTANI_APP_LINK_HOST="$TANI_APP_LINK_HOST" \
-            -PTANI_RESET_REDIRECT="$TANI_RESET_REDIRECT" \
-            -PTANI_RELEASE_STORE_FILE="$TANI_RELEASE_STORE_FILE" \
-            -PTANI_RELEASE_STORE_PASSWORD="$TANI_RELEASE_STORE_PASSWORD" \
-            -PTANI_RELEASE_KEY_ALIAS="$TANI_RELEASE_KEY_ALIAS" \
-            -PTANI_RELEASE_KEY_PASSWORD="$TANI_RELEASE_KEY_PASSWORD" \
-            --stacktrace
+          TANI_GRADLE_ARGS=(
+            --no-daemon --max-workers=1 --stacktrace
+            -Pkotlin.compiler.execution.strategy=in-process -Dorg.gradle.jvmargs=-Xmx3072m
+            "-PTANI_APP_LINK_HOST=$TANI_APP_LINK_HOST"
+            "-PTANI_RESET_REDIRECT=$TANI_RESET_REDIRECT"
+            "-PTANI_VERSION_CODE=$TANI_VERSION_CODE"
+            "-PTANI_ADMIN_VERSION_CODE=$TANI_ADMIN_VERSION_CODE"
+            "-PTANI_RELEASE_STORE_FILE=$TANI_RELEASE_STORE_FILE"
+            "-PTANI_RELEASE_STORE_PASSWORD=$TANI_RELEASE_STORE_PASSWORD"
+            "-PTANI_RELEASE_KEY_ALIAS=$TANI_RELEASE_KEY_ALIAS"
+            "-PTANI_RELEASE_KEY_PASSWORD=$TANI_RELEASE_KEY_PASSWORD"
+          )
+          ./gradlew "${TANI_GRADLE_ARGS[@]}" :app:testReleaseUnitTest :adminApp:testReleaseUnitTest :app:lintRelease :adminApp:lintRelease
+          ./gradlew "${TANI_GRADLE_ARGS[@]}" :app:bundleRelease :app:assembleRelease :adminApp:bundleRelease
       - name: Verify R8, signatures and release outputs
         run: |
           CUSTOMER_AAB="app/build/outputs/bundle/release/app-release.aab"
@@ -215,6 +246,10 @@ jobs:
           test -s adminApp/build/outputs/mapping/release/mapping.txt
           jarsigner -verify "$CUSTOMER_AAB" >/dev/null
           jarsigner -verify "$ADMIN_AAB" >/dev/null
+          python3 qa/verify_native_page_size.py "$CUSTOMER_AAB" "$ADMIN_AAB"
+          BUILD_TOOLS="$(ls -1 "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+          "$ANDROID_HOME/build-tools/$BUILD_TOOLS/zipalign" -c -P 16 4 app/build/outputs/apk/release/app-release.apk
+          "$ANDROID_HOME/build-tools/$BUILD_TOOLS/apksigner" verify app/build/outputs/apk/release/app-release.apk
       - name: Upload CI-signed customer release candidate
         uses: actions/upload-artifact@v4
         with:

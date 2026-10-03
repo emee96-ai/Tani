@@ -1,6 +1,11 @@
 package com.tani.app
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.content.Intent
+import android.Manifest
+import android.os.Build
+import androidx.activity.result.contract.ActivityResultContracts
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
@@ -34,6 +39,11 @@ import com.tani.app.ui.home.HomeFragment
 import com.tani.app.ui.legal.AboutFragment
 import com.tani.app.ui.legal.PoliciesFragment
 import com.tani.app.ui.marketplace.StoresFragment
+import com.tani.app.ui.marketplace.ProductDetailsFragment
+import com.tani.app.ui.marketplace.StoreDetailsFragment
+import com.tani.app.navigation.PublicLink
+import com.tani.app.data.notifications.PushMessaging
+import com.tani.app.data.notifications.PushMessagePolicy
 import com.tani.app.ui.orders.OrdersFragment
 import com.tani.app.ui.profile.ProfileFragment
 import com.tani.app.ui.seller.MerchantOnboardingFragment
@@ -58,6 +68,10 @@ class MainActivity : AppCompatActivity() {
 
     private var selectedPrimaryItemId: Int = R.id.home
     private var suppressNavCallback = false
+
+    private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) PushMessaging.registerCurrent()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(R.style.Theme_Tani)
@@ -141,6 +155,7 @@ class MainActivity : AppCompatActivity() {
         if (!handleAuthDeepLink(intent)) {
             if (!Supabase.hasStoredSession()) Supabase.clearSession()
             startAppFast(savedInstanceState != null)
+            if (savedInstanceState == null && !handlePushIntent(intent)) handlePublicLink(intent)
         }
     }
 
@@ -162,7 +177,7 @@ class MainActivity : AppCompatActivity() {
 
         if (AppContentStore.hasCoreContent()) {
             lifecycleScope.launch {
-                runCatching { AppContentStore.warmUp(this@MainActivity) }
+                runCatchingCancellable { AppContentStore.warmUp(this@MainActivity) }
             }
         }
     }
@@ -237,7 +252,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
-            runCatching { Repository().accountProfile() }
+            runCatchingCancellable { Repository().accountProfile() }
                 .onSuccess { account ->
                     AppContentStore.updateAccount(account)
                     renderDrawerAccount(account)
@@ -257,7 +272,7 @@ class MainActivity : AppCompatActivity() {
         }
         lifecycleScope.launch {
             val bitmap = withContext(Dispatchers.IO) {
-                runCatching {
+                runCatchingCancellable {
                     URL(avatarUrl).openStream().use { BitmapFactory.decodeStream(it) }
                 }.getOrNull()
             }
@@ -302,12 +317,37 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         if (::nav.isInitialized) refreshCartBadge()
         if (::drawerAccountHeader.isInitialized) refreshDrawerAccount()
+        PushMessaging.registerCurrent()
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        handleAuthDeepLink(intent)
+        if (!handleAuthDeepLink(intent) && !handlePushIntent(intent)) handlePublicLink(intent)
+    }
+
+    private fun handlePushIntent(intent: Intent?): Boolean {
+        if (intent?.action != PushMessagePolicy.ACTION) return false
+        if (!Supabase.hasStoredSession() || !PushMessagePolicy.canDisplay(Supabase.userId,
+                intent.getStringExtra(PushMessagePolicy.USER_ID), intent.getStringExtra(PushMessagePolicy.NOTIFICATION_ID))) return false
+        showProtectedSecondary(NotificationsFragment())
+        return true
+    }
+
+    private fun enableNotifications() {
+        if (!PushMessaging.isConfigured || !Supabase.hasStoredSession()) return
+        if (Build.VERSION.SDK_INT >= 33 && !PushMessaging.hasPermission(this)) {
+            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else PushMessaging.registerCurrent()
+    }
+
+    private fun handlePublicLink(intent: Intent?): Boolean {
+        val link = PublicLink.parse(intent?.data?.toString() ?: return false, BuildConfig.APP_LINK_HOST) ?: return false
+        show(when (link.kind) {
+            PublicLink.Kind.PRODUCT -> ProductDetailsFragment.newInstance(link.id)
+            PublicLink.Kind.STORE -> StoreDetailsFragment.newInstance(link.id)
+        })
+        return true
     }
 
     private fun handleAuthDeepLink(intent: Intent?): Boolean {
@@ -409,7 +449,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
-            runCatching { Repository().merchantProfile() }
+            runCatchingCancellable { Repository().merchantProfile() }
                 .onSuccess { merchant ->
                     AppContentStore.updateMerchant(merchant)
                     refreshMerchantEntryLabel()
@@ -582,6 +622,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showProtectedSecondary(fragment: Fragment) {
         if (Supabase.hasStoredSession()) {
+            if (fragment is NotificationsFragment) enableNotifications()
             show(fragment)
         } else {
             show(AuthFragment())

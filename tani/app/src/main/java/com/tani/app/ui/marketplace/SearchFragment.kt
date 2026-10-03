@@ -1,5 +1,7 @@
 package com.tani.app.ui.marketplace
 
+import com.tani.app.util.runCatchingCancellable
+
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -364,11 +366,11 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         AppContentStore.homeFeed?.categories?.takeIf { it.isNotEmpty() }?.let(::renderSuggestions)
         viewLifecycleOwner.lifecycleScope.launch {
             if (!NetworkStatus.isOnline(requireContext())) return@launch
-            runCatching { repository.categories() }.onSuccess(::renderSuggestions)
+            runCatchingCancellable { repository.categories() }.onSuccess(::renderSuggestions)
         }
         viewLifecycleOwner.lifecycleScope.launch {
             if (!NetworkStatus.isOnline(requireContext())) return@launch
-            runCatching { scaleRepository.activeCities() }.onSuccess { cities -> setCityOptions(cities.map { it.name }) }
+            runCatchingCancellable { scaleRepository.activeCities() }.onSuccess { cities -> setCityOptions(cities.map { it.name }) }
         }
 
         query.addTextChangedListener(object : TextWatcher {

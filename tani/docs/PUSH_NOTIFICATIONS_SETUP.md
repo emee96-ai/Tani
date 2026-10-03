@@ -1,48 +1,74 @@
 # Tani Push Notifications — Production Setup
 
-## Current state
+## Implemented, awaiting real configuration and delivery verification
 
-The app already has a Supabase-backed in-app notification inbox. This foundation adds a separate, secure device registry for real system push notifications.
+The Android app includes pinned Firebase Messaging 25.1.2, manual `FirebaseOptions`,
+notification permission/channel handling and a non-exported `TaniMessagingService`.
+`PushMessaging` registers only a signed-in account with notification permission,
+serializes registration against logout and checks the session generation. Logout
+unregisters the current token and deletes it within a bounded timeout; account
+changes cancel local notifications. A received message must match the current user.
 
-Implemented:
-- `public.push_devices` with RLS.
-- Authenticated users can access only their own registrations.
-- `register_my_push_device(...)` safely reassigns a provider token to the currently authenticated account on account/device changes.
-- `unregister_my_push_device(...)` removes only the caller's registration.
-- Android `PushRegistrationGateway` for provider-token registration.
-- No push-provider secret is stored in Android or committed to GitHub.
+The database contains the RLS-protected `push_devices` registry, preferences,
+notification-to-delivery queue and leased retry/acknowledgment RPCs. The deployed
+`maintenance-worker` sends through FCM HTTP v1, respects current ownership and
+preferences, and disables unregistered tokens. Its payload contains only `user_id`
+and `notification_id`; private details are fetched after authenticated app opening.
 
-Not activated yet:
-- Firebase Cloud Messaging (FCM) Android SDK/configuration.
-- Server-side sender credentials.
-- Notification insert -> push delivery trigger/webhook.
+These code paths are implemented. Real system push is **not approved for launch**:
+the production Firebase configuration and successful delivery evidence are missing.
 
-## Recommended production provider
+## Android configuration
 
-For the current Android app (`com.tani.app`), use Firebase Cloud Messaging (FCM). Keep the Firebase server credential/service-account material outside Android and outside this repository.
+Create or verify the Firebase Android application with package `com.tani.app`.
+Supply these four public Android configuration values as Gradle properties:
 
-## Activation sequence
+| Property | Firebase value |
+|---|---|
+| `TANI_FIREBASE_API_KEY` | Android API key |
+| `TANI_FIREBASE_APPLICATION_ID` | Firebase app ID, `1:SENDER_ID:android:...` |
+| `TANI_FIREBASE_PROJECT_ID` | Project ID |
+| `TANI_FIREBASE_SENDER_ID` | Numeric project number / sender ID |
 
-1. Create/configure the Android app in Firebase for package `com.tani.app`.
-2. Add the Android-side Firebase configuration through the normal Firebase Android setup and pin dependency versions.
-3. Add a `FirebaseMessagingService` that:
-   - receives refreshed FCM tokens;
-   - calls `PushRegistrationGatewayProvider.gateway.register("fcm", token)` when a Tani session exists;
-   - displays incoming notifications using Android notification channels;
-   - routes notification data to the appropriate Tani screen.
-4. Before logout, unregister the current FCM token while the Supabase user session is still valid, then revoke/clear the auth session.
-5. Deploy a server-side sender (recommended: Supabase Edge Function) that reads the target user's active device rows with server-side credentials and sends through FCM HTTP v1.
-6. Store FCM sender credentials in Supabase project secrets, never in Android and never in GitHub.
-7. Trigger the sender when a row is inserted into `notifications`, or invoke it explicitly from trusted server-side order/status workflows.
-8. The sender must honor `notification_preferences` (`push_enabled`, `order_updates`, `promotions`, `messages`) before delivery.
-9. On invalid/unregistered provider tokens, mark the matching `push_devices` row inactive so future sends do not repeatedly fail.
+The project initializes Firebase manually; it does not require the Google Services
+Gradle plugin or commit a `google-services.json` file. Missing configuration leaves
+system push inactive. Supply all four values to the production workflow's named
+secrets; they are passed to Android through `-P` properties.
 
-## Required verification before enabling for users
+## Server configuration
 
-- Customer receives order-status push while app is foreground, background, and fully closed.
-- Merchant receives new-order push while app is background/closed.
-- Logging out stops pushes for the previous account on that device.
-- Switching accounts reassigns the provider token to the current account only.
-- Disabling `push_enabled` prevents push delivery while preserving the in-app inbox.
-- Expired/invalid provider tokens are deactivated.
-- Push payload contains no sensitive customer/order data beyond what is necessary for routing; fetch sensitive details after authenticated app open.
+1. Enable FCM HTTP v1 for the same Firebase project and grant the sender only the
+   permissions needed for messaging.
+2. Store the service account JSON, including `project_id`, `client_email` and
+   `private_key`, in the Supabase Edge Function secret `FIREBASE_SERVICE_ACCOUNT`.
+   Keep this credential on the server; Android receives only the four values above.
+3. The existing minute-by-minute cron calls `maintenance-worker` with the private
+   worker key. Its custom authorization is required even though gateway JWT
+   verification is disabled for this worker. Do not expose or replace that key.
+4. Check System → Health in the admin app: heartbeat must be recent and push
+   configuration must be healthy. Missing Firebase configuration does not consume
+   delivery retry attempts; account cleanup remains operational.
+
+## Required verification
+
+- A customer receives a real order-status message in foreground, background and
+  after ordinary app closing. Separately test Android's explicit force-stop state;
+  do not assume it behaves like ordinary closing.
+- A merchant receives a new-order message in background and after ordinary closing.
+- Permission refusal prevents display and device registration without breaking inbox access.
+- Logout and switching accounts never display the previous account's message.
+- Disabling push preferences prevents delivery while preserving the in-app inbox.
+- Invalid tokens are deactivated, retries are bounded, and failed jobs are visible.
+- Tapping a message opens the authenticated account's notification screen.
+
+Record dated `live_push` evidence only after testing the real sender and device.
+Unit tests and a healthy configuration flag do not prove delivery.
+
+## Maintenance
+
+The pinned SDK's registration-token callbacks remain supported but are deprecated
+in current upstream documentation. Review the Firebase Installation ID migration
+weekly and test actual delivery before changing the client/server protocol.
+
+See [Firebase Android setup](https://firebase.google.com/docs/cloud-messaging/android/get-started)
+and [multiple-project configuration](https://firebase.google.com/docs/projects/multiprojects).
