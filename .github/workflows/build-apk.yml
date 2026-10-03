@@ -104,12 +104,22 @@ jobs:
           if-no-files-found: error
 
   ui-smoke:
+    name: ui-smoke (API ${{ matrix.api-level }}, ${{ matrix.page-size }} bytes)
     runs-on: ubuntu-latest
     timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix:
-        api-level: [30, 36]
+        include:
+          - api-level: 30
+            target: google_apis
+            page-size: 4096
+          - api-level: 36
+            target: google_apis
+            page-size: 4096
+          - api-level: 35
+            target: google_apis_ps16k
+            page-size: 16384
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -132,20 +142,21 @@ jobs:
         uses: ReactiveCircus/android-emulator-runner@v2.38.0
         with:
           api-level: ${{ matrix.api-level }}
-          target: google_apis
+          target: ${{ matrix.target }}
           arch: x86_64
           profile: pixel_3a
           disable-animations: true
           working-directory: tani
-          script: ./gradlew --no-daemon :app:connectedDebugAndroidTest --stacktrace
+          script: bash qa/run_android_device_tests.sh ${{ matrix.page-size }} ${{ matrix.api-level }}
       - name: Upload UI test reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: tani-ui-smoke-reports-api-${{ matrix.api-level }}
+          name: tani-ui-smoke-reports-api-${{ matrix.api-level }}-pages-${{ matrix.page-size }}
           path: |
             tani/app/build/reports/androidTests/connected/**
             tani/app/build/outputs/androidTest-results/connected/**
+            tani/app/build/outputs/androidTest-results/device-environment.json
           if-no-files-found: ignore
 
   lint:
