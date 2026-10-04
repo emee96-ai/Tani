@@ -79,12 +79,14 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:labelFor="@+id/account_name"
                     android:text="@string/account_label_2"
                     android:textColor="@color/text_muted"
                     android:textStyle="bold" />
 
                 <EditText
                     android:id="@+id/account_name"
+                    android:autofillHints="name"
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
                     android:layout_marginTop="4dp"
@@ -101,12 +103,14 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
+                    android:labelFor="@+id/account_email"
                     android:text="@string/account_label_3"
                     android:textColor="@color/text_muted"
                     android:textStyle="bold" />
 
                 <EditText
                     android:id="@+id/account_email"
+                    android:autofillHints="emailAddress"
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
                     android:layout_marginTop="4dp"
@@ -123,12 +127,14 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
+                    android:labelFor="@+id/account_phone"
                     android:text="@string/account_label_4"
                     android:textColor="@color/text_muted"
                     android:textStyle="bold" />
 
                 <EditText
                     android:id="@+id/account_phone"
+                    android:autofillHints="phone"
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
                     android:layout_marginTop="4dp"

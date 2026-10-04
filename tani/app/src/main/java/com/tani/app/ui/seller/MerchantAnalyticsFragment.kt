@@ -74,13 +74,13 @@ class MerchantAnalyticsFragment : Fragment() {
         })
         root.addView(MerchantUi.card(context).apply {
             addView(MerchantUi.text(context, getString(R.string.merchant_analytics_14), 14.5f, true))
-            addView(MerchantUi.text(context, m.average_response_seconds?.let { getString(R.string.checkout_46, ((it / 60.0).roundToInt())) } ?: "—", 21f, true).apply {
+            addView(MerchantUi.text(context, m.average_response_seconds?.let { getString(R.string.checkout_46, ((it / 60.0).roundToInt()).toString()) } ?: "—", 21f, true).apply {
                 setPadding(0, MerchantUi.dp(context, 5), 0, 0)
             })
         })
 
         root.addView(MerchantUi.sectionTitle(context, getString(R.string.main_16)))
-        root.addView(MerchantUi.metricCard(context, getString(R.string.merchant_analytics_15), getString(R.string.merchant_analytics_16, m.active_products, m.products)))
+        root.addView(MerchantUi.metricCard(context, getString(R.string.merchant_analytics_15), getString(R.string.merchant_analytics_16, m.active_products.toString(), m.products.toString())))
         root.addView(MerchantUi.sectionTitle(context, getString(R.string.merchant_analytics_17)))
         if (m.best_sellers.isEmpty()) {
             root.addView(MerchantUi.emptyCard(context, getString(R.string.merchant_analytics_18), getString(R.string.merchant_analytics_19)))
@@ -92,7 +92,7 @@ class MerchantAnalyticsFragment : Fragment() {
                         addView(MerchantUi.pill(context, "${index + 1}", MerchantUi.Tone.BRAND))
                         addView(MerchantUi.text(context, item.name, 15.5f, true), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = MerchantUi.dp(context, 10) })
                     })
-                    addView(MerchantUi.muted(context, getString(R.string.merchant_analytics_20, item.units, (money(item.revenue)), item.views), 12f).apply {
+                    addView(MerchantUi.muted(context, getString(R.string.merchant_analytics_20, item.units.toString(), (money(item.revenue)), item.views.toString()), 12f).apply {
                         setPadding(0, MerchantUi.dp(context, 7), 0, 0)
                     })
                 })

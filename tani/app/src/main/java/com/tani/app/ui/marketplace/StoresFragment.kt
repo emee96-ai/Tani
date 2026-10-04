@@ -61,8 +61,8 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
                 isLoading && loaded.isEmpty() -> getString(R.string.stores_1, cityLabel())
                 isLoading -> getString(R.string.stores_2)
                 loaded.isEmpty() -> getString(R.string.stores_3, cityLabel())
-                hasMore -> getString(R.string.stores_4, loaded.size, cityLabel())
-                else -> getString(R.string.stores_5, loaded.size, cityLabel())
+                hasMore -> getString(R.string.stores_4, loaded.size.toString(), cityLabel())
+                else -> getString(R.string.stores_5, loaded.size.toString(), cityLabel())
             }
             retry.visibility = if (canRetry && !isLoading) View.VISIBLE else View.GONE
             retry.isEnabled = !isLoading
@@ -118,7 +118,7 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
                         adapter.submitList(loaded.toList())
                         renderStatus(
                             if (online) getString(R.string.stores_7, cityLabel())
-                            else getString(R.string.stores_8, loaded.size, cityLabel()),
+                            else getString(R.string.stores_8, loaded.size.toString(), cityLabel()),
                             canRetry = !online
                         )
                     }
@@ -131,7 +131,7 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
                         if (loaded.isEmpty()) {
                             getString(R.string.stores_9, cityLabel())
                         } else {
-                            getString(R.string.stores_8, loaded.size, cityLabel())
+                            getString(R.string.stores_8, loaded.size.toString(), cityLabel())
                         },
                         canRetry = true
                     )
@@ -176,7 +176,7 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
                         adapter.submitList(loaded.toList())
                     }
                     val fallback = if (loaded.isNotEmpty()) {
-                        getString(R.string.stores_10, loaded.size, cityLabel())
+                        getString(R.string.stores_10, loaded.size.toString(), cityLabel())
                     } else {
                         getString(R.string.stores_11)
                     }

@@ -92,10 +92,10 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
         val completedCount = groups.count { it.status == "delivered" }
         val cancelledCount = groups.count(::isCancelledLike)
 
-        allButton.text = getString(R.string.notifications_14, groups.size)
-        activeButton.text = getString(R.string.orders_3, activeCount)
-        completedButton.text = getString(R.string.orders_4, completedCount)
-        cancelledButton.text = getString(R.string.orders_5, cancelledCount)
+        allButton.text = getString(R.string.notifications_14, groups.size.toString())
+        activeButton.text = getString(R.string.orders_3, activeCount.toString())
+        completedButton.text = getString(R.string.orders_4, completedCount.toString())
+        cancelledButton.text = getString(R.string.orders_5, cancelledCount.toString())
         updateFilterStyle()
 
         summary.text = when {

@@ -88,7 +88,7 @@ class MerchantInsightsFragment : Fragment() {
                         orientation = LinearLayout.HORIZONTAL
                         layoutDirection = View.LAYOUT_DIRECTION_RTL
                         addView(MerchantUi.text(context, getString(R.string.merchant_insights_20), 16f, true), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-                        addView(MerchantUi.pill(context, if (alerts == 0) getString(R.string.merchant_insights_21) else getString(R.string.merchant_insights_22, alerts), if (alerts == 0) MerchantUi.Tone.SUCCESS else MerchantUi.Tone.WARNING))
+                        addView(MerchantUi.pill(context, if (alerts == 0) getString(R.string.merchant_insights_21) else getString(R.string.merchant_insights_22, alerts.toString()), if (alerts == 0) MerchantUi.Tone.SUCCESS else MerchantUi.Tone.WARNING))
                     })
                     addView(inventoryLine(getString(R.string.merchant_insights_23), health.out_of_stock, MerchantUi.Tone.ERROR))
                     addView(inventoryLine(getString(R.string.merchant_insights_24), health.low_stock, MerchantUi.Tone.WARNING))

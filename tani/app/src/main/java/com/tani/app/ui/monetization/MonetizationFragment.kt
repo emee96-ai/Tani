@@ -69,7 +69,7 @@ class MonetizationFragment : Fragment() {
                             plan.description.takeIf { it.isNotBlank() }?.let {
                                 addView(MerchantUi.muted(context, it, 12.5f).apply { setPadding(0, MerchantUi.dp(context, 6), 0, 0) })
                             }
-                            addView(MerchantUi.muted(context, getString(R.string.monetization_9, plan.duration_days), 12f).apply {
+                            addView(MerchantUi.muted(context, getString(R.string.monetization_9, plan.duration_days.toString()), 12f).apply {
                                 setPadding(0, MerchantUi.dp(context, 5), 0, MerchantUi.dp(context, 8))
                             })
                             addView(MerchantUi.primaryButton(context, getString(R.string.monetization_10)) {

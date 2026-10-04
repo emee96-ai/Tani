@@ -50,6 +50,8 @@
 
             <EditText
                 android:id="@+id/search_query"
+                    android:inputType="text"
+                    android:importantForAutofill="no"
                 android:layout_width="0dp"
                 android:layout_height="54dp"
                 android:layout_weight="1"

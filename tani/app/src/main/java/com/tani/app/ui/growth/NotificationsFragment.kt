@@ -133,7 +133,7 @@ class NotificationsFragment : Fragment() {
                 context,
                 when {
                     hasMerchantAccount -> getString(R.string.notifications_6)
-                    unread > 0 -> getString(R.string.notifications_7, unread)
+                    unread > 0 -> getString(R.string.notifications_7, unread.toString())
                     else -> getString(R.string.notifications_8)
                 }
             )
@@ -157,8 +157,8 @@ class NotificationsFragment : Fragment() {
                 context,
                 when {
                     sectionItems.isEmpty() -> getString(R.string.notifications_11)
-                    unread > 0 -> getString(R.string.notifications_12, sectionItems.size, unread)
-                    else -> getString(R.string.notifications_13, sectionItems.size)
+                    unread > 0 -> getString(R.string.notifications_12, sectionItems.size.toString(), unread.toString())
+                    else -> getString(R.string.notifications_13, sectionItems.size.toString())
                 }
             )
         )
@@ -168,11 +168,11 @@ class NotificationsFragment : Fragment() {
             gravity = android.view.Gravity.CENTER_VERTICAL
             setPadding(0, ScreenUi.dp(context, 10), 0, 0)
         }
-        val allButton = filterButton(getString(R.string.notifications_14, sectionItems.size), filter == Filter.ALL) {
+        val allButton = filterButton(getString(R.string.notifications_14, sectionItems.size.toString()), filter == Filter.ALL) {
             filter = Filter.ALL
             render()
         }
-        val unreadButton = filterButton(getString(R.string.notifications_15, unread), filter == Filter.UNREAD) {
+        val unreadButton = filterButton(getString(R.string.notifications_15, unread.toString()), filter == Filter.UNREAD) {
             filter = Filter.UNREAD
             render()
         }

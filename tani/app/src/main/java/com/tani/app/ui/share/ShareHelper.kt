@@ -1,5 +1,7 @@
 package com.tani.app.ui.share
 
+import com.tani.app.R
+
 import android.content.Context
 import android.content.Intent
 import com.tani.app.BuildConfig
@@ -23,7 +25,7 @@ object ShareHelper {
     private fun share(context: Context, text: String) {
         context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"; putExtra(Intent.EXTRA_TEXT, text)
-        }, "مشاركة عبر"))
+        }, context.getString(R.string.share_helper_1)))
     }
 
     private fun link(kind: String, id: String): String =

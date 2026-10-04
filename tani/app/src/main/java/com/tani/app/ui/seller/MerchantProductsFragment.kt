@@ -132,7 +132,7 @@ class MerchantProductsFragment : Fragment() {
             orientation = LinearLayout.HORIZONTAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
             addView(MerchantUi.metricCard(context, getString(R.string.merchant_insights_23), out.toString()), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = MerchantUi.dp(context, 4) })
-            addView(MerchantUi.metricCard(context, getString(R.string.merchant_products_8), low.toString(), getString(R.string.merchant_products_9, LOW_STOCK_THRESHOLD)), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = MerchantUi.dp(context, 4) })
+            addView(MerchantUi.metricCard(context, getString(R.string.merchant_products_8), low.toString(), getString(R.string.merchant_products_9, LOW_STOCK_THRESHOLD.toString())), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = MerchantUi.dp(context, 4) })
         })
         root.addView(MerchantUi.primaryButton(context, getString(R.string.merchant_products_10)) {
             productDialog(null, data.sellerId, data.categories)
@@ -178,9 +178,9 @@ class MerchantProductsFragment : Fragment() {
                 })
 
                 val stockLabel = if (product.has_variants) {
-                    getString(R.string.merchant_products_18, availableStock, activeVariants.size)
+                    getString(R.string.merchant_products_18, availableStock.toString(), activeVariants.size.toString())
                 } else {
-                    getString(R.string.merchant_products_19, product.stock)
+                    getString(R.string.merchant_products_19, product.stock.toString())
                 }
                 addView(MerchantUi.muted(context, stockLabel, 12.5f).apply {
                     setPadding(0, MerchantUi.dp(context, 7), 0, MerchantUi.dp(context, 8))
@@ -370,7 +370,7 @@ class MerchantProductsFragment : Fragment() {
                         }
                     }.onSuccess { outcome ->
                         if (outcome.savedAsDraft) {
-                            toast(getString(R.string.merchant_products_42, outcome.uploadedImages, outcome.totalImages, outcome.detail.orEmpty()))
+                            toast(getString(R.string.merchant_products_42, outcome.uploadedImages.toString(), outcome.totalImages.toString(), outcome.detail.orEmpty()))
                         } else {
                             toast(if (isCreating) getString(R.string.merchant_products_43) else getString(R.string.merchant_products_44))
                         }
@@ -465,7 +465,7 @@ class MerchantProductsFragment : Fragment() {
                             pickImage.launch("image/*")
                         })
                     } else {
-                        content.addView(MerchantUi.muted(context, getString(R.string.merchant_products_56, MAX_PRODUCT_IMAGES), 12.5f))
+                        content.addView(MerchantUi.muted(context, getString(R.string.merchant_products_56, MAX_PRODUCT_IMAGES.toString()), 12.5f))
                     }
 
                     if (images.isEmpty()) {
@@ -531,7 +531,7 @@ class MerchantProductsFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             runCatchingCancellable {
                 val current = repository.productImages(product.id)
-                require(current.size < MAX_PRODUCT_IMAGES) { getString(R.string.merchant_products_70, MAX_PRODUCT_IMAGES) }
+                require(current.size < MAX_PRODUCT_IMAGES) { getString(R.string.merchant_products_70, MAX_PRODUCT_IMAGES.toString()) }
                 val bytes = withContext(Dispatchers.IO) { imageBytes(uri, 1600, 84) }
                 repository.uploadAndAttachMerchantProductImage(
                     bytes = bytes,

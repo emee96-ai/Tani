@@ -63,7 +63,7 @@ class StoreDetailsFragment : Fragment(R.layout.fragment_store_details) {
                 view.findViewById<TextView>(R.id.store_details_delivery).text = buildString {
                     append(if (store.delivery_fee > 0) getString(R.string.checkout_8, (MarketplaceUi.formatPrice(store.delivery_fee))) else getString(R.string.store_details_6))
                     store.delivery_area?.let { append(" • $it") }
-                    store.estimated_minutes?.let { append(getString(R.string.store_details_7, it)) }
+                    store.estimated_minutes?.let { append(getString(R.string.store_details_7, it.toString())) }
                 }
                 view.findViewById<Button>(R.id.store_details_share).setOnClickListener {
                     ShareHelper.store(requireContext(), store.id, store.name)

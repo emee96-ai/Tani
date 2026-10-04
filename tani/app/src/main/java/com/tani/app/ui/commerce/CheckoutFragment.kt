@@ -316,7 +316,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
 
     private fun multiMerchantPrefix(): String {
         val count = Cart.groupedBySeller().size
-        return if (count > 1) getString(R.string.checkout_11, count) else ""
+        return if (count > 1) getString(R.string.checkout_11, count.toString()) else ""
     }
 
     private fun renderSummary() {
@@ -341,7 +341,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
             summary.addView(TextView(requireContext()).apply {
                 text = buildString {
                     append(storeName)
-                    append(getString(R.string.checkout_12, (group.sumOf { it.quantity }), (MarketplaceUi.formatPrice(subtotal))))
+                    append(getString(R.string.checkout_12, (group.sumOf { it.quantity }).toString(), (MarketplaceUi.formatPrice(subtotal))))
                     append("\n")
                     when {
                         zones.isEmpty() -> append(getString(R.string.checkout_13))
@@ -652,9 +652,9 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
     }
 
     private fun formatEstimate(minutes: Int): String = when {
-        minutes < 60 -> getString(R.string.checkout_46, minutes)
-        minutes % 60 == 0 -> getString(R.string.checkout_47, (minutes / 60))
-        else -> getString(R.string.checkout_48, (minutes / 60), (minutes % 60))
+        minutes < 60 -> getString(R.string.checkout_46, minutes.toString())
+        minutes % 60 == 0 -> getString(R.string.checkout_47, (minutes / 60).toString())
+        else -> getString(R.string.checkout_48, (minutes / 60).toString(), (minutes % 60).toString())
     }
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()

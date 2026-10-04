@@ -244,7 +244,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                         if (online) {
                             getString(R.string.search_4, citySuffix)
                         } else {
-                            getString(R.string.search_5, citySuffix, cachedProducts.size, cachedStoreResults.size)
+                            getString(R.string.search_5, citySuffix, cachedProducts.size.toString(), cachedStoreResults.size.toString())
                         },
                         canRetry = !online
                     )
@@ -284,7 +284,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                         if (products.isEmpty() && stores.isEmpty()) {
                             getString(R.string.search_8, (term.take(40)), citySuffix)
                         } else {
-                            getString(R.string.search_9, products.size, stores.size, citySuffix)
+                            getString(R.string.search_9, products.size.toString(), stores.size.toString(), citySuffix)
                         }
                     )
 

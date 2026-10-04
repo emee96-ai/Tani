@@ -2,6 +2,11 @@
     <string name="app_name">تاني</string>
     <string name="app_name_en">TANI</string>
     <string name="brand_slogan">من محلاتنا .. لبابك</string>
+    <string name="product_details_quantity_minus" translatable="false">−</string>
+    <string name="product_details_quantity_plus" translatable="false">+</string>
+    <string name="product_details_quantity_default" translatable="false">1</string>
+    <string name="product_details_quantity_minus_desc">تقليل الكمية</string>
+    <string name="product_details_quantity_plus_desc">زيادة الكمية</string>
     <string name="main_launch_loading_text">جاري تجهيز التطبيق…</string>
     <string name="drawer_header_label">حسابي</string>
     <string name="drawer_account_avatar_desc">الصورة الشخصية</string>
@@ -24,11 +29,7 @@
     <string name="auth_back_to_login">الرجوع إلى تسجيل الدخول</string>
     <string name="cart_label">سلة المشتريات</string>
     <string name="cart_label_2">راجع المنتجات قبل الانتقال لإتمام الطلب</string>
-    <string name="categories_label">الفئات</string>
-    <string name="categories_label_2">اختر الفئة المناسبة واكتشف متاجر ومنتجات أكثر</string>
-    <string name="categories_all_products">كل المنتجات</string>
     <string name="categories_stores">المتاجر</string>
-    <string name="categories_loading">جاري تحميل الفئات...</string>
     <string name="checkout_label">إتمام الطلب</string>
     <string name="checkout_label_2">راجع التوصيل وبيانات الاستلام، والإجمالي النهائي سيظهر قبل التأكيد.</string>
     <string name="checkout_label_3">"1  التوصيل"</string>
@@ -39,7 +40,7 @@
     <string name="checkout_label_6">"3  ملخص الطلب"</string>
     <string name="checkout_label_7">الدفع عند الاستلام (COD)</string>
     <string name="checkout_confirm">مراجعة وتأكيد الطلب</string>
-    <string name="home_search_hint">ابحث عن منتج، متجر أو فئة...</string>
+    <string name="home_search_hint">ابحث عن منتج، متجر أو فئة…</string>
     <string name="home_label">اكتشف حاجات بتحبها</string>
     <string name="home_label_2">منتجات سودانية موثوقة—كلها في مكان واحد.</string>
     <string name="home_hero_cta">اكتشف الآن ←</string>
@@ -50,7 +51,7 @@
     <string name="home_label_4">وصل حديثاً</string>
     <string name="home_label_5">الأعلى تقييماً</string>
     <string name="home_label_6">متاجر موثوقة</string>
-    <string name="home_loading">جاري تحميل السوق...</string>
+    <string name="home_loading">جاري تحميل السوق…</string>
     <string name="home_retry">إعادة المحاولة</string>
     <string name="merchant_onboarding_title">ابدأ البيع على تاني</string>
     <string name="merchant_onboarding_step">الخطوة 1 من 4</string>
@@ -58,7 +59,7 @@
     <string name="merchant_onboarding_back">السابق</string>
     <string name="merchant_onboarding_next">التالي</string>
     <string name="order_confirmation_label">تم استلام طلبك ✓</string>
-    <string name="order_confirmation_confirmation_message">جارٍ تحميل تفاصيل الطلب...</string>
+    <string name="order_confirmation_confirmation_message">جارٍ تحميل تفاصيل الطلب…</string>
     <string name="order_confirmation_confirmation_details">تفاصيل الطلب</string>
     <string name="order_confirmation_confirmation_orders">كل طلباتي</string>
     <string name="order_details_label">كل تفاصيل الطلب والتوصيل والتحديثات في مكان واحد</string>
@@ -72,7 +73,7 @@
     <string name="orders_active">النشطة</string>
     <string name="orders_completed">المكتملة</string>
     <string name="orders_cancelled">الملغاة</string>
-    <string name="product_details_loading">جاري تحميل المنتج...</string>
+    <string name="product_details_loading">جاري تحميل المنتج…</string>
     <string name="product_details_image_desc">صورة المنتج</string>
     <string name="product_details_play_desc">تشغيل الفيديو</string>
     <string name="product_details_favorite_desc">إضافة للمفضلة</string>
@@ -94,7 +95,7 @@
     <string name="products_max_price_hint">أعلى سعر</string>
     <string name="products_in_stock">عرض المتوفر فقط</string>
     <string name="products_apply">تطبيق الفلاتر</string>
-    <string name="products_loading">جاري تحميل المنتجات...</string>
+    <string name="products_loading">جاري تحميل المنتجات…</string>
     <string name="products_load_more">عرض المزيد</string>
     <string name="profile_label">بياناتك الشخصية وعناوين التوصيل</string>
     <string name="profile_label_2">الأمان والمشاركة</string>
@@ -111,14 +112,14 @@
     <string name="search_recent_title">آخر عمليات البحث</string>
     <string name="search_label_4">اقتراحات سريعة</string>
     <string name="search_all_stores_button">كل المتاجر</string>
-    <string name="store_details_loading">جاري تحميل المتجر...</string>
+    <string name="store_details_loading">جاري تحميل المتجر…</string>
     <string name="store_details_logo_desc">شعار المتجر</string>
     <string name="store_details_share">مشاركة المتجر</string>
     <string name="store_details_label">منتجات المتجر</string>
     <string name="store_details_all_products">عرض كل منتجات المتجر</string>
     <string name="stores_label">استكشف المتاجر المحلية حسب الاسم أو المنطقة</string>
     <string name="stores_search_hint">اسم المتجر أو المنطقة</string>
-    <string name="stores_loading">جاري تحميل المتاجر...</string>
+    <string name="stores_loading">جاري تحميل المتاجر…</string>
     <string name="bottom_nav_home">الرئيسية</string>
     <string name="bottom_nav_cart">السلة</string>
     <string name="drawer_favorites">المفضلة</string>
@@ -205,7 +206,7 @@
     <string name="cart_13">حذف</string>
 
     <!-- com/tani/app/ui/categories/CategoriesFragment.kt -->
-    <string name="categories_1">جاري تحميل المتاجر...</string>
+    <string name="categories_1">جاري تحميل المتاجر…</string>
     <string name="categories_2">لا توجد متاجر مطابقة حالياً</string>
 
     <!-- com/tani/app/ui/commerce/AddressesFragment.kt -->
@@ -357,7 +358,7 @@
 
     <!-- com/tani/app/ui/growth/NotificationsFragment.kt -->
     <string name="notifications_1">كل تحديثات طلباتك ورسائلك المهمة في مكان واحد.</string>
-    <string name="notifications_2">جاري تحميل الإشعارات...</string>
+    <string name="notifications_2">جاري تحميل الإشعارات…</string>
     <string name="notifications_3">تعذر تحميل الإشعارات حالياً.</string>
     <string name="notifications_4">حاول مرة أخرى</string>
     <string name="notifications_5">إعادة المحاولة</string>
@@ -422,8 +423,8 @@
     <string name="home_1">اكتب حرفين على الأقل</string>
     <string name="home_2">ممول • ظهور مميز</string>
     <string name="home_3">لا توجد متاجر معتمدة حالياً</string>
-    <string name="home_4">نعرض آخر بيانات محفوظة • جاري التحديث...</string>
-    <string name="home_5">جاري تحميل السوق...</string>
+    <string name="home_4">نعرض آخر بيانات محفوظة • جاري التحديث…</string>
+    <string name="home_5">جاري تحميل السوق…</string>
     <string name="home_6">بدون اتصال — نعرض آخر بيانات محفوظة</string>
     <string name="home_7">لا يوجد اتصال بالإنترنت ولا توجد بيانات محفوظة بعد</string>
     <string name="home_8">تعذر تحديث السوق — نعرض آخر بيانات محفوظة</string>
@@ -511,9 +512,9 @@
     <string name="search_1">ما لقينا منتجات مطابقة. جرّب كلمة أبسط أو اختر فئة من الاقتراحات.</string>
     <string name="search_2">لا توجد متاجر مطابقة</string>
     <string name="search_3">اكتب حرفين على الأقل للبحث</string>
-    <string name="search_4">نتائج محفوظة%1$s • جاري التحديث...</string>
+    <string name="search_4">نتائج محفوظة%1$s • جاري التحديث…</string>
     <string name="search_5">بدون اتصال%1$s • %2$s منتج • %3$s متجر محفوظ</string>
-    <string name="search_6">جاري البحث%1$s...</string>
+    <string name="search_6">جاري البحث%1$s…</string>
     <string name="search_7">لا يوجد اتصال ولا توجد نتائج محفوظة لهذا البحث%1$s</string>
     <string name="search_8">ما لقينا نتائج لـ «%1$s»%2$s</string>
     <string name="search_9">%1$s منتج • %2$s متجر%3$s</string>
@@ -533,13 +534,13 @@
     <string name="store_details_8">لا توجد منتجات متاحة في هذا المتجر حالياً</string>
 
     <!-- com/tani/app/ui/marketplace/StoresFragment.kt -->
-    <string name="stores_1">جاري تحميل المتاجر%1$s...</string>
-    <string name="stores_2">جاري تحميل المزيد...</string>
+    <string name="stores_1">جاري تحميل المتاجر%1$s…</string>
+    <string name="stores_2">جاري تحميل المزيد…</string>
     <string name="stores_3">لا توجد متاجر مطابقة%1$s حالياً</string>
     <string name="stores_4">تم عرض %1$s متجر%2$s • مرر لعرض المزيد</string>
     <string name="stores_5">تم عرض %1$s متجر%2$s</string>
     <string name="stores_6">اكتب حرفين على الأقل للبحث، أو امسح النص لعرض كل المتاجر</string>
-    <string name="stores_7">نعرض آخر بيانات محفوظة%1$s • جاري التحديث...</string>
+    <string name="stores_7">نعرض آخر بيانات محفوظة%1$s • جاري التحديث…</string>
     <string name="stores_8">بدون اتصال — نعرض %1$s متجر محفوظ%2$s</string>
     <string name="stores_9">لا يوجد اتصال بالإنترنت ولا توجد متاجر محفوظة مطابقة%1$s</string>
     <string name="stores_10">تعذر التحديث — نعرض %1$s متجر محفوظ%2$s</string>
@@ -623,9 +624,9 @@
     <string name="products_7">من %1$s</string>
     <string name="products_8">حتى %1$s</string>
     <string name="products_9">المتوفر فقط</string>
-    <string name="products_10">جاري تحميل المنتجات...</string>
+    <string name="products_10">جاري تحميل المنتجات…</string>
     <string name="products_11">ما لقينا نتائج مطابقة. جرّب تغيير البحث أو الفلاتر.</string>
-    <string name="products_12">جاري التحميل...</string>
+    <string name="products_12">جاري التحميل…</string>
     <string name="products_13">عرض المزيد</string>
     <string name="products_14">لا يوجد اتصال بالإنترنت ولا توجد نتائج محفوظة لهذه الفلاتر</string>
     <string name="products_15">لا يوجد اتصال ولا توجد بيانات محفوظة لهذه الصفحة</string>
@@ -1162,4 +1163,28 @@
     <string name="support_center_51">استجابة التاجر</string>
     <string name="support_center_52">توصيل</string>
     <string name="support_center_53">رسوم</string>
+
+    <!-- com/tani/app/data/notifications/PushMessaging.kt -->
+    <string name="push_messaging_1">تحديثات تاني</string>
+
+    <!-- com/tani/app/ui/marketplace/MarketplaceUi.kt -->
+    <string name="marketplace_ui_1">جديد</string>
+    <string name="marketplace_ui_2">، %1$s</string>
+    <string name="marketplace_ui_3">إضافة %1$s للمفضلة</string>
+    <string name="marketplace_ui_4">سجل الدخول لإضافة المنتجات للمفضلة</string>
+    <string name="marketplace_ui_5">تمت الإضافة للمفضلة</string>
+    <string name="marketplace_ui_6">تمت الإزالة من المفضلة</string>
+    <string name="marketplace_ui_7">تعذر تحديث المفضلة</string>
+    <string name="marketplace_ui_8">المنتج غير متوفر</string>
+    <string name="marketplace_ui_9">خيارات</string>
+    <string name="marketplace_ui_10">المنتج له خيارات، افتح المنتج للاختيار</string>
+    <string name="marketplace_ui_11">إضافة %1$s للسلة</string>
+    <string name="marketplace_ui_12">فتح متجر %1$s</string>
+    <string name="marketplace_ui_13">مفتوح الآن</string>
+    <string name="marketplace_ui_14">مغلق حالياً</string>
+    <string name="marketplace_ui_15">%1$s منتج</string>
+    <string name="marketplace_ui_16">عرض</string>
+
+    <!-- com/tani/app/ui/share/ShareHelper.kt -->
+    <string name="share_helper_1">مشاركة عبر</string>
 </resources>

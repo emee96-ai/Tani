@@ -42,14 +42,14 @@ class AdminManagementDialog(private val activity: AppCompatActivity) {
         }
 
         root.addView(TextView(activity).apply {
-            text = "أضف أو عدّل صلاحيات المشرفين من الحسابات المسجلة في تاني."
+            text = activity.getString(R.string.admin_management_dialog_1)
             textSize = 13f
             setTextColor(color(R.color.text_muted))
             setPadding(0, 0, 0, dp(10))
         })
 
         root.addView(MaterialButton(activity).apply {
-            text = "إضافة أدمن بالبريد"
+            text = activity.getString(R.string.admin_management_dialog_2)
             isAllCaps = false
             setIconResource(R.drawable.ic_admin_customers)
             iconGravity = MaterialButton.ICON_GRAVITY_TEXT_START
@@ -81,9 +81,9 @@ class AdminManagementDialog(private val activity: AppCompatActivity) {
         }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(390)))
 
         dialog = AlertDialog.Builder(activity)
-            .setTitle("إدارة المشرفين")
+            .setTitle(activity.getString(R.string.admin_management_dialog_3))
             .setView(root)
-            .setNegativeButton("إغلاق", null)
+            .setNegativeButton(activity.getString(R.string.admin_management_dialog_4), null)
             .create()
 
         dialog?.show()
@@ -104,7 +104,7 @@ class AdminManagementDialog(private val activity: AppCompatActivity) {
             }.onSuccess { rows ->
                 if (dialog?.isShowing == true) render(rows)
             }.onFailure { error ->
-                if (dialog?.isShowing == true) showError(error.message ?: "تعذر تحميل المشرفين")
+                if (dialog?.isShowing == true) showError(error.message ?: activity.getString(R.string.admin_management_dialog_5))
             }
             if (dialog?.isShowing == true) setLoading(false)
         }
@@ -114,7 +114,7 @@ class AdminManagementDialog(private val activity: AppCompatActivity) {
         list.removeAllViews()
         if (rows.isEmpty()) {
             list.addView(TextView(activity).apply {
-                text = "لا يوجد مشرفون حالياً"
+                text = activity.getString(R.string.admin_management_dialog_6)
                 gravity = Gravity.CENTER
                 textSize = 14f
                 setTextColor(color(R.color.text_muted))
@@ -144,14 +144,14 @@ class AdminManagementDialog(private val activity: AppCompatActivity) {
             }
 
             body.addView(TextView(activity).apply {
-                text = email.ifBlank { "حساب بلا بريد" }
+                text = email.ifBlank { activity.getString(R.string.admin_management_dialog_7) }
                 textSize = 16f
                 setTextColor(color(R.color.text_dark))
                 setTypeface(typeface, Typeface.BOLD)
             })
             body.addView(TextView(activity).apply {
-                val name = row.string("name") ?: "بدون اسم"
-                val phone = row.string("phone") ?: "بلا رقم"
+                val name = row.string("name") ?: activity.getString(R.string.admin_management_dialog_8)
+                val phone = row.string("phone") ?: activity.getString(R.string.admin_management_dialog_9)
                 text = "$name • $phone"
                 textSize = 13f
                 setTextColor(color(R.color.text_muted))
@@ -161,8 +161,8 @@ class AdminManagementDialog(private val activity: AppCompatActivity) {
                 val roleLabel = AdminUiText.role(currentRole)
                 text = buildString {
                     append(roleLabel)
-                    append(if (active) " • نشط" else " • موقوف")
-                    if (self) append(" • حسابك الحالي")
+                    append(if (active) activity.getString(R.string.admin_management_dialog_10) else activity.getString(R.string.admin_management_dialog_11))
+                    if (self) append(activity.getString(R.string.admin_management_dialog_12))
                 }
                 textSize = 13f
                 setTextColor(color(if (currentRole == "admin") R.color.tani_primary_dark else R.color.text_muted))
@@ -171,7 +171,7 @@ class AdminManagementDialog(private val activity: AppCompatActivity) {
 
             if (email.isNotBlank()) {
                 body.addView(MaterialButton(activity).apply {
-                    text = "تعديل الصلاحية"
+                    text = activity.getString(R.string.admin_management_dialog_13)
                     isAllCaps = false
                     setOnClickListener { showRolePicker(email, currentRole) }
                 }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
@@ -193,21 +193,21 @@ class AdminManagementDialog(private val activity: AppCompatActivity) {
             setPadding(dp(16), dp(12), dp(16), dp(12))
         }
         val prompt = AlertDialog.Builder(activity)
-            .setTitle("إضافة أدمن")
-            .setMessage("لازم يكون البريد مسجلاً في تاني أولاً.")
+            .setTitle(activity.getString(R.string.admin_management_dialog_14))
+            .setMessage(activity.getString(R.string.admin_management_dialog_15))
             .setView(input)
-            .setNegativeButton("إلغاء", null)
-            .setPositiveButton("إضافة", null)
+            .setNegativeButton(activity.getString(R.string.admin_management_dialog_16), null)
+            .setPositiveButton(activity.getString(R.string.admin_management_dialog_17), null)
             .create()
         prompt.setOnShowListener {
             prompt.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val email = input.text.toString().trim().lowercase()
                 if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                    input.error = "أدخل بريداً صحيحاً"
+                    input.error = activity.getString(R.string.admin_management_dialog_18)
                     return@setOnClickListener
                 }
                 prompt.dismiss()
-                changeRole(email, "admin", "تمت إضافة الأدمن")
+                changeRole(email, "admin", activity.getString(R.string.admin_management_dialog_19))
             }
         }
         prompt.show()
@@ -215,27 +215,27 @@ class AdminManagementDialog(private val activity: AppCompatActivity) {
 
     private fun showRolePicker(email: String, currentRole: String) {
         val roles = arrayOf("admin", "support", "customer", "seller")
-        val labels = arrayOf("مدير النظام", "فريق الدعم", "عميل", "تاجر")
+        val labels = arrayOf(activity.getString(R.string.admin_management_dialog_20), activity.getString(R.string.admin_management_dialog_21), activity.getString(R.string.admin_management_dialog_22), activity.getString(R.string.admin_management_dialog_23))
         val checked = roles.indexOf(currentRole).coerceAtLeast(0)
         AlertDialog.Builder(activity)
-            .setTitle("تعديل الصلاحية")
+            .setTitle(activity.getString(R.string.admin_management_dialog_13))
             .setSingleChoiceItems(labels, checked) { picker, which ->
                 picker.dismiss()
                 val target = roles[which]
                 if (target == currentRole) return@setSingleChoiceItems
                 confirmRoleChange(email, target, labels[which])
             }
-            .setNegativeButton("إلغاء", null)
+            .setNegativeButton(activity.getString(R.string.admin_management_dialog_16), null)
             .show()
     }
 
     private fun confirmRoleChange(email: String, targetRole: String, label: String) {
         AlertDialog.Builder(activity)
-            .setTitle("تأكيد تغيير الصلاحية")
-            .setMessage("سيتم تغيير صلاحية $email إلى: $label")
-            .setNegativeButton("إلغاء", null)
-            .setPositiveButton("تغيير") { _, _ ->
-                changeRole(email, targetRole, "تم تحديث الصلاحية")
+            .setTitle(activity.getString(R.string.admin_management_dialog_24))
+            .setMessage(activity.getString(R.string.admin_management_dialog_25, email, label))
+            .setNegativeButton(activity.getString(R.string.admin_management_dialog_16), null)
+            .setPositiveButton(activity.getString(R.string.admin_management_dialog_26)) { _, _ ->
+                changeRole(email, targetRole, activity.getString(R.string.admin_management_dialog_27))
             }
             .show()
     }
@@ -253,7 +253,7 @@ class AdminManagementDialog(private val activity: AppCompatActivity) {
                 Toast.makeText(activity, success, Toast.LENGTH_SHORT).show()
                 reload()
             }.onFailure { error ->
-                showError(error.message ?: "تعذر تحديث الصلاحية")
+                showError(error.message ?: activity.getString(R.string.admin_management_dialog_28))
                 setLoading(false)
             }
         }

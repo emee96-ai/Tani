@@ -349,7 +349,7 @@ class MerchantOrdersFragment : Fragment() {
                             addView(
                                 MerchantUi.muted(
                                     context,
-                                    getString(R.string.merchant_orders_26, item.quantity, (money(item.unit_price)), (money(item.line_total ?: item.unit_price * item.quantity))),
+                                    getString(R.string.merchant_orders_26, item.quantity.toString(), (money(item.unit_price)), (money(item.line_total ?: item.unit_price * item.quantity))),
                                     12f
                                 ).apply { setPadding(0, MerchantUi.dp(context, 4), 0, 0) }
                             )

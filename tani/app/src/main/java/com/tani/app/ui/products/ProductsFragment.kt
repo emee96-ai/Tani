@@ -93,8 +93,8 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
         fun updateSummary() {
             val parts = mutableListOf(sortLabels[sort.selectedItemPosition.coerceIn(sortLabels.indices)])
             selectedCity?.let { parts += it }
-            minPrice.text.toString().toDoubleOrNull()?.let { parts += getString(R.string.products_7, it.toLong()) }
-            maxPrice.text.toString().toDoubleOrNull()?.let { parts += getString(R.string.products_8, it.toLong()) }
+            minPrice.text.toString().toDoubleOrNull()?.let { parts += getString(R.string.products_7, it.toLong().toString()) }
+            maxPrice.text.toString().toDoubleOrNull()?.let { parts += getString(R.string.products_8, it.toLong().toString()) }
             if (inStock.isChecked) parts += getString(R.string.products_9)
             filterSummary.text = parts.joinToString(" • ")
         }

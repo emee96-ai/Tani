@@ -141,7 +141,7 @@ class SellerFragment : Fragment() {
                 context,
                 "الظهور: ${if (store?.is_active == true) "ظاهر" else "غير ظاهر"} • " +
                     "التوصيل: ${if (delivery?.is_active == true) "متاح" else "متوقف"} • " +
-                    getString(R.string.seller_20, data.activeDeliveryZoneCount, data.deliveryZoneCount),
+                    getString(R.string.seller_20, data.activeDeliveryZoneCount.toString(), data.deliveryZoneCount.toString()),
                 12f
             ).apply { setPadding(0, MerchantUi.dp(context, 7), 0, 0) })
             if (store != null && store.is_active) {
@@ -225,7 +225,7 @@ class SellerFragment : Fragment() {
                 orientation = LinearLayout.HORIZONTAL
                 layoutDirection = View.LAYOUT_DIRECTION_RTL
                 addView(MerchantUi.metricCard(context, getString(R.string.seller_43), activeOrders.toString(), getString(R.string.seller_44)), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = MerchantUi.dp(context, 4) })
-                addView(MerchantUi.metricCard(context, getString(R.string.seller_45), summary.active_products.toString(), getString(R.string.seller_46, summary.products)), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = MerchantUi.dp(context, 4) })
+                addView(MerchantUi.metricCard(context, getString(R.string.seller_45), summary.active_products.toString(), getString(R.string.seller_46, summary.products.toString())), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = MerchantUi.dp(context, 4) })
             })
             root.addView(LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
@@ -244,7 +244,7 @@ class SellerFragment : Fragment() {
         val activeOrdersBadge = summary?.let {
             MerchantDashboardPolicy.activeOrderCount(it.orders, it.delivered_orders, it.cancelled_orders)
                 .takeIf { count -> count > 0 }
-                ?.let { count -> getString(R.string.seller_53, count) }
+                ?.let { count -> getString(R.string.seller_53, count.toString()) }
         }
         root.addView(MerchantUi.navCard(context, "📦", getString(R.string.seller_40), getString(R.string.seller_54), activeOrdersBadge) {
             open(MerchantOrdersFragment())

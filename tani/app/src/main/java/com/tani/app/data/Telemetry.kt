@@ -1,5 +1,7 @@
 package com.tani.app.data
 
+import android.annotation.SuppressLint
+
 import android.content.Context
 import com.tani.app.BuildConfig
 import kotlinx.serialization.json.JsonObject
@@ -63,6 +65,7 @@ object ErrorMonitoring {
     private const val PENDING_MESSAGE = "pending_message"
     private const val PENDING_SOURCE = "pending_source"
 
+    @SuppressLint("StaticFieldLeak") // holds only the application context (see init)
     private lateinit var context: Context
     private var installed = false
 

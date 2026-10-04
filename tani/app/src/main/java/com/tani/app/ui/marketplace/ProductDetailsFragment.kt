@@ -88,7 +88,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
             product.description.ifBlank { getString(R.string.product_details_1) }
 
         view.findViewById<TextView>(R.id.product_details_stock).apply {
-            text = if (product.stock > 0) getString(R.string.product_details_2, product.stock) else getString(R.string.product_details_3)
+            text = if (product.stock > 0) getString(R.string.product_details_2, product.stock.toString()) else getString(R.string.product_details_3)
             setTextColor(requireContext().getColor(if (product.stock > 0) R.color.success else R.color.error))
         }
 
@@ -155,7 +155,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
             image.visibility = View.VISIBLE
             image.setImageResource(R.drawable.ic_image_placeholder)
             if (url != null) MarketplaceUi.loadImage(viewLifecycleOwner.lifecycleScope, image, url)
-            image.contentDescription = getString(R.string.product_details_6, (selectedMediaIndex + 1), mediaItems.size)
+            image.contentDescription = getString(R.string.product_details_6, (selectedMediaIndex + 1).toString(), mediaItems.size.toString())
             return
         }
 
@@ -208,7 +208,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
                 strokeColor = ContextCompat.getColor(requireContext(), if (selected) R.color.tani_primary else R.color.border)
                 setCardBackgroundColor(ContextCompat.getColor(requireContext(), R.color.brand_soft))
                 isClickable = true
-                contentDescription = if (item.kind == MediaKind.VIDEO) getString(R.string.product_details_9) else getString(R.string.product_details_10, (index + 1))
+                contentDescription = if (item.kind == MediaKind.VIDEO) getString(R.string.product_details_9) else getString(R.string.product_details_10, (index + 1).toString())
                 setOnClickListener {
                     if (selectedMediaIndex != index) {
                         selectedMediaIndex = index
@@ -331,7 +331,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
             stickyPrice.text = MarketplaceUi.formatPrice(price)
             stockText.text = when {
                 product.has_variants && chosenVariant() == null -> getString(R.string.product_details_18)
-                availableStock() > 0 -> getString(R.string.product_details_2, availableStock())
+                availableStock() > 0 -> getString(R.string.product_details_2, availableStock().toString())
                 else -> getString(R.string.product_details_3)
             }
             stockText.setTextColor(requireContext().getColor(if (availableStock() > 0) R.color.success else R.color.error))
@@ -370,7 +370,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
                 viewLifecycleOwner.lifecycleScope.launch {
                     Analytics.track("add_to_cart", screen = "product_details", entityType = "product", entityId = product.id)
                 }
-                Toast.makeText(requireContext(), getString(R.string.product_details_21, added, product.name), Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), getString(R.string.product_details_21, added.toString(), product.name), Toast.LENGTH_SHORT).show()
                 quantity = 1
             } else {
                 Toast.makeText(requireContext(), getString(R.string.home_29), Toast.LENGTH_SHORT).show()
@@ -409,7 +409,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
         view.findViewById<TextView>(R.id.product_details_delivery).text = buildString {
             append(if (product.delivery_fee > 0) getString(R.string.product_details_30, (MarketplaceUi.formatPrice(product.delivery_fee))) else getString(R.string.product_details_31))
             product.delivery_area?.takeIf { it.isNotBlank() }?.let { append(getString(R.string.product_details_32, it)) }
-            product.estimated_minutes?.let { append(getString(R.string.product_details_33, it)) }
+            product.estimated_minutes?.let { append(getString(R.string.product_details_33, it.toString())) }
         }
     }
 
@@ -442,7 +442,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
             variantsBox.removeAllViews()
             details.variants.forEach { variant ->
                 val price = variant.price?.let { " • ${MarketplaceUi.formatPrice(it)}" }.orEmpty()
-                val availability = if (variant.stock > 0) getString(R.string.product_details_38, variant.stock) else getString(R.string.product_details_39)
+                val availability = if (variant.stock > 0) getString(R.string.product_details_38, variant.stock.toString()) else getString(R.string.product_details_39)
                 val selected = selectedVariant?.id == variant.id
                 val button = MaterialButton(requireContext()).apply {
                     text = "${variant.name}$price • $availability"

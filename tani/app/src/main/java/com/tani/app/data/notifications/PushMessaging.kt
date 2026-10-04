@@ -1,5 +1,7 @@
 package com.tani.app.data.notifications
 
+import com.tani.app.R
+
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -53,7 +55,7 @@ object PushMessaging {
         }.getOrDefault(false)
         if (Build.VERSION.SDK_INT >= 26) {
             appContext.getSystemService(NotificationManager::class.java).createNotificationChannel(
-                NotificationChannel(CHANNEL_ID, "تحديثات تاني", NotificationManager.IMPORTANCE_DEFAULT))
+                NotificationChannel(CHANNEL_ID, context.getString(R.string.push_messaging_1), NotificationManager.IMPORTANCE_DEFAULT))
         }
         onSessionChanged()
     }

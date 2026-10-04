@@ -70,7 +70,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
         }
 
         box.addView(TextView(requireContext()).apply {
-            text = getString(R.string.cart_2, Cart.itemCount(), (Cart.groupedBySeller().size))
+            text = getString(R.string.cart_2, Cart.itemCount().toString(), (Cart.groupedBySeller().size).toString())
             textSize = 15f
             setTextColor(requireContext().getColor(R.color.text_muted))
             setPadding(0, 0, 0, MarketplaceUi.dp(requireContext(), 12))

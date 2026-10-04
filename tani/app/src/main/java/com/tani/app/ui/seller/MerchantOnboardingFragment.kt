@@ -280,7 +280,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         stepText.visibility = View.VISIBLE
         progress.max = 4
         progress.setProgressCompat(step, true)
-        stepText.text = getString(R.string.merchant_onboarding_11, step)
+        stepText.text = getString(R.string.merchant_onboarding_11, step.toString())
         backButton.visibility = View.VISIBLE
         nextButton.visibility = View.VISIBLE
         nextButton.text = if (step == 4) getString(R.string.merchant_onboarding_12) else getString(R.string.merchant_onboarding_13)
@@ -373,7 +373,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         addInfoText(getString(R.string.merchant_onboarding_33))
         draft.deliveryZones.forEachIndexed { index, zone ->
             addCard {
-                addView(sectionText(getString(R.string.merchant_onboarding_34, (index + 1))))
+                addView(sectionText(getString(R.string.merchant_onboarding_34, (index + 1).toString())))
                 addField(this, "zone_area_$index", getString(R.string.merchant_onboarding_35), zone.area)
                 addField(this, "zone_fee_$index", getString(R.string.merchant_onboarding_36), zone.fee, decimal = true)
                 addField(
@@ -551,9 +551,9 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
                     val fee = zone.fee.toDoubleOrNull()
                     val minutes = zone.estimatedMinutes.takeIf { it.isNotBlank() }?.toIntOrNull()
                     when {
-                        zone.area.trim().length < 2 -> return fail(getString(R.string.merchant_onboarding_69, (index + 1)))
-                        fee == null || fee < 0 -> return fail(getString(R.string.merchant_onboarding_70, (index + 1)))
-                        zone.estimatedMinutes.isNotBlank() && (minutes == null || minutes !in 1..1440) -> return fail(getString(R.string.merchant_onboarding_71, (index + 1)))
+                        zone.area.trim().length < 2 -> return fail(getString(R.string.merchant_onboarding_69, (index + 1).toString()))
+                        fee == null || fee < 0 -> return fail(getString(R.string.merchant_onboarding_70, (index + 1).toString()))
+                        zone.estimatedMinutes.isNotBlank() && (minutes == null || minutes !in 1..1440) -> return fail(getString(R.string.merchant_onboarding_71, (index + 1).toString()))
                     }
                 }
                 when {

@@ -117,6 +117,7 @@
 
                 <EditText
                     android:id="@+id/checkout_phone"
+                    android:autofillHints="phone"
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
                     android:layout_marginTop="10dp"
@@ -128,6 +129,8 @@
 
                 <EditText
                     android:id="@+id/checkout_notes"
+                    android:inputType="textMultiLine|textCapSentences"
+                    android:importantForAutofill="no"
                     android:layout_width="match_parent"
                     android:layout_height="88dp"
                     android:layout_marginTop="10dp"

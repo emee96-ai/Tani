@@ -27,6 +27,8 @@
 
     <EditText
         android:id="@+id/products_search"
+                    android:inputType="text"
+                    android:importantForAutofill="no"
         android:layout_width="match_parent"
         android:layout_height="52dp"
         android:layout_marginTop="12dp"
@@ -85,6 +87,7 @@
 
             <EditText
                 android:id="@+id/products_min_price"
+                    android:importantForAutofill="no"
                 android:layout_width="0dp"
                 android:layout_height="48dp"
                 android:layout_weight="1"
@@ -96,6 +99,7 @@
 
             <EditText
                 android:id="@+id/products_max_price"
+                    android:importantForAutofill="no"
                 android:layout_width="0dp"
                 android:layout_height="48dp"
                 android:layout_marginStart="8dp"

@@ -46,7 +46,7 @@ class OrderConfirmationFragment : Fragment(R.layout.fragment_order_confirmation)
                     (activity as? MainActivity)?.refreshCartBadge()
                     message.text = buildString {
                         append(getString(R.string.order_confirmation_1, (groupId.take(8).uppercase())))
-                        append(getString(R.string.order_confirmation_2, details.orders.size))
+                        append(getString(R.string.order_confirmation_2, details.orders.size.toString()))
                         append(getString(R.string.order_confirmation_3, (MarketplaceUi.formatPrice(details.group.grand_total))))
                         append(getString(R.string.order_confirmation_4))
                     }
