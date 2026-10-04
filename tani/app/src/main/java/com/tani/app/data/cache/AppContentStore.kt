@@ -1,5 +1,13 @@
 package com.tani.app.data.cache
 
+import com.tani.app.data.addresses
+import com.tani.app.data.categories
+import com.tani.app.data.featuredProducts
+import com.tani.app.data.marketplaceProducts
+import com.tani.app.data.merchantProfile
+import com.tani.app.data.orderGroups
+import com.tani.app.data.stores
+
 import android.content.Context
 import com.tani.app.data.AccountProfile
 import com.tani.app.data.Address

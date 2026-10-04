@@ -1,5 +1,7 @@
 package com.tani.app
 
+import com.tani.app.data.merchantProfile
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.content.Intent

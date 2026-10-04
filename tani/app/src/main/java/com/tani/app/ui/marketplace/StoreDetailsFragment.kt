@@ -1,5 +1,9 @@
 package com.tani.app.ui.marketplace
 
+import com.tani.app.data.store
+import com.tani.app.data.storeImageUrl
+import com.tani.app.data.storeProductPage
+
 import com.tani.app.data.network.CustomerErrorMessages
 
 import com.tani.app.util.runCatchingCancellable

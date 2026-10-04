@@ -1,5 +1,7 @@
 package com.tani.app.ui.growth
 
+import com.tani.app.data.merchantProfile
+
 import com.tani.app.data.network.CustomerErrorMessages
 
 import com.tani.app.util.runCatchingCancellable

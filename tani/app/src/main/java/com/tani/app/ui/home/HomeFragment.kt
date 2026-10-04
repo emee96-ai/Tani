@@ -1,5 +1,7 @@
 package com.tani.app.ui.home
 
+import com.tani.app.data.homeFeed
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.os.Bundle
