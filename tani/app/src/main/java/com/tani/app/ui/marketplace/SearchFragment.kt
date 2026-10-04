@@ -134,7 +134,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             onOpen = { (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id)) },
             onAdd = {
                 if (product.has_variants) {
-                    Toast.makeText(requireContext(), "اختاري المقاس أو اللون أولاً", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "اختر المقاس أو اللون أولاً", Toast.LENGTH_SHORT).show()
                     (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id))
                 } else if (Cart.add(product.toProduct())) {
                     (activity as? MainActivity)?.refreshCartBadge()
@@ -163,7 +163,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             productBox.removeAllViews()
             if (products.isEmpty()) {
                 productBox.addView(
-                    MarketplaceUi.empty(requireContext(), "ما لقينا منتجات مطابقة. جرّبي كلمة أبسط أو اختاري فئة من الاقتراحات.")
+                    MarketplaceUi.empty(requireContext(), "ما لقينا منتجات مطابقة. جرّب كلمة أبسط أو اختر فئة من الاقتراحات.")
                 )
             } else {
                 MarketplaceUi.addTwoColumnGrid(
@@ -207,13 +207,13 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             productBox.removeAllViews()
             storeBox.removeAllViews()
             status.visibility = View.VISIBLE
-            status.text = "اكتبي حرفين على الأقل للبحث"
+            status.text = "اكتب حرفين على الأقل للبحث"
         }
 
         fun runSearch(remember: Boolean) {
             val term = currentTerm()
             if (term.length < 2) {
-                query.error = "اكتبي حرفين على الأقل"
+                query.error = "اكتب حرفين على الأقل"
                 clearForShortQuery()
                 return
             }
@@ -302,7 +302,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                     val fallback = if (cachedProducts.isNotEmpty() || cachedStoreResults.isNotEmpty()) {
                         "تعذر التحديث$citySuffix • نعرض آخر نتائج محفوظة"
                     } else {
-                        "تعذر البحث. حاولي مرة أخرى."
+                        "تعذر البحث. حاول مرة أخرى."
                     }
                     if (cachedProducts.isNotEmpty() || cachedStoreResults.isNotEmpty()) {
                         renderResults(

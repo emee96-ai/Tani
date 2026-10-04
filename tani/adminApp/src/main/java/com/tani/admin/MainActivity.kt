@@ -101,7 +101,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
             val mail = email.text?.toString()?.trim().orEmpty()
             val pass = password.text?.toString().orEmpty()
             if (mail.isBlank() || pass.isBlank()) {
-                status.text = "أدخلي البريد وكلمة المرور"
+                status.text = "أدخل البريد وكلمة المرور"
                 return@setOnClickListener
             }
             status.text = ""
@@ -182,7 +182,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
                 R.id.drawer_configuration -> AdminSection.CONFIGURATION
                 R.id.drawer_system -> AdminSection.SYSTEM
                 R.id.drawer_logout -> {
-                    confirm("تسجيل الخروج", "هل تريدين إنهاء جلسة الإدارة؟", "خروج", danger = true) { signOut() }
+                    confirm("تسجيل الخروج", "هل تريد إنهاء جلسة الإدارة؟", "خروج", danger = true) { signOut() }
                     drawer.closeDrawer(GravityCompat.START)
                     return@setNavigationItemSelectedListener true
                 }
@@ -460,9 +460,9 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
     override fun verifyMerchantPhone(row: JsonObject) {
         val id = row.string("id") ?: return
         val phone = row.string("phone") ?: return
-        prompt("توثيق تحقق الهاتف", "بعد التواصل مع التاجر على $phone، سجّلي طريقة التحقق وتاريخه ونتيجته") { note ->
+        prompt("توثيق تحقق الهاتف", "بعد التواصل مع التاجر على $phone، سجّل طريقة التحقق وتاريخه ونتيجته") { note ->
             mutate("تم توثيق تحقق الهاتف") {
-                require(note.trim().length in 10..1000) { "اكتبي تفاصيل تحقق واضحة بين 10 و1000 حرف" }
+                require(note.trim().length in 10..1000) { "اكتب تفاصيل تحقق واضحة بين 10 و1000 حرف" }
                 AdminApi.rpc("admin_verify_merchant_phone", buildJsonObject {
                     put("p_merchant_id", id); put("p_phone", phone); put("p_note", note.trim())
                 })
@@ -487,7 +487,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
             "rejected" -> "سبب رفض التاجر"
             else -> "سبب تعليق التاجر"
         }
-        prompt(title, "اكتبي سبباً واضحاً يظهر في سجل الإدارة") { note ->
+        prompt(title, "اكتب سبباً واضحاً يظهر في سجل الإدارة") { note ->
             mutate("تم تحديث حالة التاجر") {
                 AdminApi.rpc("admin_review_merchant_application", buildJsonObject {
                     put("p_merchant_id", id); put("p_status", status); put("p_note", note)
@@ -520,7 +520,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
         })
     }
 
-    override fun resolveComplaint(id: String) = prompt("حل الشكوى", "سجّلي القرار أو الإجراء الذي تم") { resolution ->
+    override fun resolveComplaint(id: String) = prompt("حل الشكوى", "سجّل القرار أو الإجراء الذي تم") { resolution ->
         mutate("تم حل الشكوى") {
             AdminApi.patchRow("complaints", id, buildJsonObject {
                 put("status", "resolved"); put("resolution", resolution)
@@ -538,7 +538,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
 
     override fun reviewRequest(rpc: String, id: String, status: String) {
         val label = if (status == "approved") "اعتماد" else "رفض"
-        confirm("$label الطلب", "هل أنتِ متأكدة من القرار؟", label, danger = status == "rejected") {
+        confirm("$label الطلب", "هل أنت متأكد من القرار؟", label, danger = status == "rejected") {
             mutate("تم تحديث الطلب") {
                 AdminApi.rpc(rpc, buildJsonObject {
                     put("p_request_id", id); put("p_status", status); put("p_note", JsonNull)
@@ -684,7 +684,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val value = input.text.toString().trim()
-                if (value.isBlank()) input.error = "اكتبي السبب أو القرار" else { dialog.dismiss(); submit(value) }
+                if (value.isBlank()) input.error = "اكتب السبب أو القرار" else { dialog.dismiss(); submit(value) }
             }
         }
         dialog.show()

@@ -42,7 +42,7 @@ class AdminManagementDialog(private val activity: AppCompatActivity) {
         }
 
         root.addView(TextView(activity).apply {
-            text = "أضيفي أو عدّلي صلاحيات المشرفين من الحسابات المسجلة في تاني."
+            text = "أضف أو عدّل صلاحيات المشرفين من الحسابات المسجلة في تاني."
             textSize = 13f
             setTextColor(color(R.color.text_muted))
             setPadding(0, 0, 0, dp(10))
@@ -203,7 +203,7 @@ class AdminManagementDialog(private val activity: AppCompatActivity) {
             prompt.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val email = input.text.toString().trim().lowercase()
                 if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                    input.error = "أدخلي بريداً صحيحاً"
+                    input.error = "أدخل بريداً صحيحاً"
                     return@setOnClickListener
                 }
                 prompt.dismiss()

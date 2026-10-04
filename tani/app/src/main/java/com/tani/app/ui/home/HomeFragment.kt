@@ -55,7 +55,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         fun openSearch() {
             val query = search.text.toString().trim()
             if (query.length < 2) {
-                search.error = "اكتبي حرفين على الأقل"
+                search.error = "اكتب حرفين على الأقل"
                 return
             }
             (activity as MainActivity).show(SearchFragment.newInstance(query))
@@ -175,7 +175,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                         val fallback = if (cachedFeed != null) {
                             "تعذر تحديث السوق — نعرض آخر بيانات محفوظة"
                         } else {
-                            "تعذر تحميل السوق. حاولي مرة أخرى."
+                            "تعذر تحميل السوق. حاول مرة أخرى."
                         }
                         setFeedState(CustomerErrorMessages.from(error, fallback), canRetry = true)
                     }

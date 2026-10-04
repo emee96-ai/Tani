@@ -88,7 +88,7 @@ class SellerFragment : Fragment() {
                     renderStatus(data.profile)
                 }
             }.onFailure { error ->
-                showError(CustomerErrorMessages.from(error, "تعذر فتح لوحة المتجر. حاولي مرة أخرى."))
+                showError(CustomerErrorMessages.from(error, "تعذر فتح لوحة المتجر. حاول مرة أخرى."))
             }
         }
     }
@@ -173,26 +173,26 @@ class SellerFragment : Fragment() {
             })
             addView(MerchantUi.muted(
                 context,
-                if (readiness.completed == readiness.total) "الإعداد الأساسي مكتمل. راقبي الطلبات والمخزون يومياً."
-                else "أكملي العناصر الناقصة تحت «يحتاج انتباهك» حتى تكون تجربة العميل مكتملة.",
+                if (readiness.completed == readiness.total) "الإعداد الأساسي مكتمل. راقب الطلبات والمخزون يومياً."
+                else "أكمل العناصر الناقصة تحت «يحتاج انتباهك» حتى تكون تجربة العميل مكتملة.",
                 12.5f
             ).apply { setPadding(0, MerchantUi.dp(context, 6), 0, 0) })
         })
 
         val setupIssues = buildList {
             if (store == null) add("تعذر العثور على سجل المتجر")
-            if (store != null && !store.is_active) add("فعّلي ظهور المتجر للعملاء")
-            if (store?.logo_url.isNullOrBlank()) add("أضيفي شعار المتجر")
-            if (store?.cover_url.isNullOrBlank()) add("أضيفي غلاف المتجر")
-            if (delivery == null) add("أكملي إعدادات التوصيل")
-            else if (!delivery.is_active) add("فعّلي التوصيل عندما تكوني جاهزة لاستقبال الطلبات")
-            if (data.activeDeliveryZoneCount == 0) add("فعّلي منطقة توصيل واحدة على الأقل")
-            if (summary != null && summary.active_products == 0) add("أضيفي أو فعّلي منتجاً واحداً على الأقل")
+            if (store != null && !store.is_active) add("فعّل ظهور المتجر للعملاء")
+            if (store?.logo_url.isNullOrBlank()) add("أضف شعار المتجر")
+            if (store?.cover_url.isNullOrBlank()) add("أضف غلاف المتجر")
+            if (delivery == null) add("أكمل إعدادات التوصيل")
+            else if (!delivery.is_active) add("فعّل التوصيل عندما تكون جاهزاً لاستقبال الطلبات")
+            if (data.activeDeliveryZoneCount == 0) add("فعّل منطقة توصيل واحدة على الأقل")
+            if (summary != null && summary.active_products == 0) add("أضف أو فعّل منتجاً واحداً على الأقل")
         }
         if (setupIssues.isNotEmpty()) {
             root.addView(MerchantUi.sectionTitle(context, "يحتاج انتباهك"))
             root.addView(MerchantUi.card(context).apply {
-                addView(MerchantUi.text(context, "كمّلي إعداد المتجر", 15.5f, true))
+                addView(MerchantUi.text(context, "كمّل إعداد المتجر", 15.5f, true))
                 setupIssues.forEach { issue ->
                     addView(MerchantUi.muted(context, "• $issue", 13f).apply {
                         setPadding(0, MerchantUi.dp(context, 5), 0, 0)
@@ -287,7 +287,7 @@ class SellerFragment : Fragment() {
                     storeToggleInFlight = false
                     Toast.makeText(
                         requireContext(),
-                        CustomerErrorMessages.from(error, "تعذر تحديث حالة المتجر. حاولي مرة أخرى."),
+                        CustomerErrorMessages.from(error, "تعذر تحديث حالة المتجر. حاول مرة أخرى."),
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -299,17 +299,17 @@ class SellerFragment : Fragment() {
         root.removeAllViews()
         root.addView(MerchantUi.title(context, "حساب التاجر"))
         if (profile == null) {
-            root.addView(MerchantUi.emptyCard(context, "لسه ما بدأتي تسجيل التاجر", "ابدئي التسجيل وأكملي بيانات النشاط والمتجر والتوصيل والهوية."))
-            root.addView(MerchantUi.primaryButton(context, "ابدئي التسجيل") { open(MerchantOnboardingFragment()) })
+            root.addView(MerchantUi.emptyCard(context, "لسه ما بدأت تسجيل التاجر", "ابدأ التسجيل وأكمل بيانات النشاط والمتجر والتوصيل والهوية."))
+            root.addView(MerchantUi.primaryButton(context, "ابدأ التسجيل") { open(MerchantOnboardingFragment()) })
             return
         }
 
         val (title, message, tone) = when (profile.verification_status) {
             "pending" -> Triple("طلبك قيد المراجعة", "بنراجع بيانات المتجر والهوية. حتظهر لوحة المتجر كاملة بعد الاعتماد.", MerchantUi.Tone.WARNING)
-            "changes_requested" -> Triple("في تعديلات مطلوبة", profile.review_note ?: "راجعي بيانات الطلب وأعيدي الإرسال.", MerchantUi.Tone.WARNING)
+            "changes_requested" -> Triple("في تعديلات مطلوبة", profile.review_note ?: "راجع بيانات الطلب وأعد الإرسال.", MerchantUi.Tone.WARNING)
             "rejected" -> Triple("الطلب يحتاج مراجعة", profile.review_note ?: "يمكنك تعديل البيانات وإعادة الإرسال.", MerchantUi.Tone.ERROR)
-            "suspended" -> Triple("الحساب موقوف مؤقتاً", profile.review_note ?: "راجعي ملاحظة الإدارة.", MerchantUi.Tone.ERROR)
-            else -> Triple("حالة حساب التاجر", "أكملي بيانات التسجيل.", MerchantUi.Tone.NEUTRAL)
+            "suspended" -> Triple("الحساب موقوف مؤقتاً", profile.review_note ?: "راجع ملاحظة الإدارة.", MerchantUi.Tone.ERROR)
+            else -> Triple("حالة حساب التاجر", "أكمل بيانات التسجيل.", MerchantUi.Tone.NEUTRAL)
         }
         root.addView(MerchantUi.card(context).apply {
             addView(LinearLayout(context).apply {

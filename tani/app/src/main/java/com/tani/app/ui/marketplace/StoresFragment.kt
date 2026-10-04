@@ -61,7 +61,7 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
                 isLoading && loaded.isEmpty() -> "جاري تحميل المتاجر${cityLabel()}..."
                 isLoading -> "جاري تحميل المزيد..."
                 loaded.isEmpty() -> "لا توجد متاجر مطابقة${cityLabel()} حالياً"
-                hasMore -> "تم عرض ${loaded.size} متجر${cityLabel()} • مرري لعرض المزيد"
+                hasMore -> "تم عرض ${loaded.size} متجر${cityLabel()} • مرر لعرض المزيد"
                 else -> "تم عرض ${loaded.size} متجر${cityLabel()}"
             }
             retry.visibility = if (canRetry && !isLoading) View.VISIBLE else View.GONE
@@ -90,7 +90,7 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
                 adapter.submitList(emptyList())
                 hasMore = false
                 isLoading = false
-                renderStatus("اكتبي حرفين على الأقل للبحث، أو امسحي النص لعرض كل المتاجر")
+                renderStatus("اكتب حرفين على الأقل للبحث، أو امسح النص لعرض كل المتاجر")
                 return
             }
 
@@ -178,7 +178,7 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
                     val fallback = if (loaded.isNotEmpty()) {
                         "تعذر التحديث — نعرض ${loaded.size} متجر محفوظ${cityLabel()}"
                     } else {
-                        "تعذر تحميل المتاجر. حاولي مرة أخرى."
+                        "تعذر تحميل المتاجر. حاول مرة أخرى."
                     }
                     renderStatus(CustomerErrorMessages.from(error, fallback), canRetry = true)
                 }

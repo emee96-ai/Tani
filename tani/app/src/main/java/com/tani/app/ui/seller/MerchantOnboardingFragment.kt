@@ -63,6 +63,8 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
     private var identityPath: String? = null
     private var reviewNotice: String? = null
     private var submissionInFlight = false
+    // true فقط أثناء عرض خطوة نموذج؛ يمنع حفظ حقول فارغة فوق المسودة أثناء التحميل أو شاشة الحالة.
+    private var formVisible = false
     private val inputs = mutableMapOf<String, EditText>()
     private var categoryField: MaterialAutoCompleteTextView? = null
     private var documentField: MaterialAutoCompleteTextView? = null
@@ -105,7 +107,17 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         loadEntry()
     }
 
+    override fun onPause() {
+        super.onPause()
+        // يحفظ ما كُتب في الخطوة الحالية قبل تدوير الشاشة أو انتقال التطبيق للخلفية.
+        if (formVisible && !submissionInFlight) {
+            captureCurrentStep()
+            saveDraft()
+        }
+    }
+
     private fun loadEntry() {
+        formVisible = false
         submitStatus.text = "جاري تجهيز تسجيل التاجر…"
         setBusy(true)
         content.removeAllViews()
@@ -142,7 +154,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
                     )
                     "rejected" -> openForReviewChanges(
                         profile,
-                        "الطلب لم يُعتمد بصورته الحالية. عدّلي البيانات المطلوبة ويمكنك إعادة الإرسال."
+                        "الطلب لم يُعتمد بصورته الحالية. عدّل البيانات المطلوبة ويمكنك إعادة الإرسال."
                     )
                     else -> {
                         restoreDraft(profile)
@@ -154,7 +166,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
                 setBusy(false)
                 content.removeAllViews()
                 addSectionTitle("تعذر فتح تسجيل التاجر")
-                addInfoText(merchantError(error, "تعذر تحميل بيانات التسجيل الآن. حاولي مرة أخرى."))
+                addInfoText(merchantError(error, "تعذر تحميل بيانات التسجيل الآن. حاول مرة أخرى."))
                 addPrimaryButton("إعادة المحاولة") { loadEntry() }
             }
         }
@@ -249,6 +261,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
 
     private fun renderStep() {
         setBusy(false)
+        formVisible = true
         content.removeAllViews()
         inputs.clear()
         categoryField = null
@@ -339,7 +352,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
             addField(
                 this,
                 "requested_category",
-                "الفئة غير موجودة؟ اكتبي اسمها هنا",
+                "الفئة غير موجودة؟ اكتب اسمها هنا",
                 draft.requestedCategory,
                 optional = true
             )
@@ -351,7 +364,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
 
     private fun renderDeliveryIdentityStep() {
         title.text = "التوصيل والهوية"
-        addInfoText("أضيفي كل منطقة مع رسومها وزمن الوصول المتوقع بعد تسليم الطلب للمندوب.")
+        addInfoText("أضف كل منطقة مع رسومها وزمن الوصول المتوقع بعد تسليم الطلب للمندوب.")
         draft.deliveryZones.forEachIndexed { index, zone ->
             addCard {
                 addView(sectionText("منطقة التوصيل ${index + 1}"))
@@ -389,8 +402,8 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
     }
 
     private fun renderReviewStep() {
-        title.text = "راجعي البيانات"
-        addInfoText("تأكدي من المعلومات قبل إرسال الطلب للإدارة.")
+        title.text = "راجع البيانات"
+        addInfoText("تأكد من المعلومات قبل إرسال الطلب للإدارة.")
 
         addSummaryCard("النشاط", listOf(
             "اسم النشاط" to draft.businessName,
@@ -516,15 +529,15 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
             1 -> {
                 val cleanPhone = draft.phone.replace(Regex("[\\s()-]"), "")
                 when {
-                    draft.businessName.trim().length < 2 -> fail("أدخلي اسم النشاط")
-                    !Regex("^\\+?[0-9]{7,15}$").matches(cleanPhone) -> fail("راجعي رقم الهاتف")
+                    draft.businessName.trim().length < 2 -> fail("أدخل اسم النشاط")
+                    !Regex("^\\+?[0-9]{7,15}$").matches(cleanPhone) -> fail("راجع رقم الهاتف")
                     else -> true
                 }
             }
             2 -> when {
-                draft.storeName.trim().length < 2 -> fail("أدخلي اسم المتجر")
-                draft.categoryId.isBlank() && draft.requestedCategory.trim().length < 2 -> fail("اختاري فئة أو اكتبي الفئة غير الموجودة")
-                draft.city.trim().length < 2 -> fail("أدخلي المدينة")
+                draft.storeName.trim().length < 2 -> fail("أدخل اسم المتجر")
+                draft.categoryId.isBlank() && draft.requestedCategory.trim().length < 2 -> fail("اختر فئة أو اكتب الفئة غير الموجودة")
+                draft.city.trim().length < 2 -> fail("أدخل المدينة")
                 else -> true
             }
             3 -> {
@@ -532,14 +545,14 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
                     val fee = zone.fee.toDoubleOrNull()
                     val minutes = zone.estimatedMinutes.takeIf { it.isNotBlank() }?.toIntOrNull()
                     when {
-                        zone.area.trim().length < 2 -> return fail("أدخلي اسم منطقة التوصيل ${index + 1}")
-                        fee == null || fee < 0 -> return fail("راجعي رسوم المنطقة ${index + 1}")
-                        zone.estimatedMinutes.isNotBlank() && (minutes == null || minutes !in 1..1440) -> return fail("راجعي زمن الوصول للمنطقة ${index + 1}")
+                        zone.area.trim().length < 2 -> return fail("أدخل اسم منطقة التوصيل ${index + 1}")
+                        fee == null || fee < 0 -> return fail("راجع رسوم المنطقة ${index + 1}")
+                        zone.estimatedMinutes.isNotBlank() && (minutes == null || minutes !in 1..1440) -> return fail("راجع زمن الوصول للمنطقة ${index + 1}")
                     }
                 }
                 when {
-                    draft.deliveryZones.isEmpty() -> fail("أضيفي منطقة توصيل واحدة على الأقل")
-                    identityPath.isNullOrBlank() -> fail("ارفعي مستند الهوية")
+                    draft.deliveryZones.isEmpty() -> fail("أضف منطقة توصيل واحدة على الأقل")
+                    identityPath.isNullOrBlank() -> fail("ارفع مستند الهوية")
                     else -> true
                 }
             }
@@ -560,7 +573,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         }
         submissionInFlight = true
         setBusy(true)
-        submitStatus.text = "جاري إرسال طلب التسجيل… لا تغلقي الصفحة"
+        submitStatus.text = "جاري إرسال طلب التسجيل… لا تغلق الصفحة"
         viewLifecycleOwner.lifecycleScope.launch {
             runCatchingCancellable {
                 repository.submitMerchantApplication(
@@ -591,7 +604,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
                 nextButton.text = "إرسال للمراجعة"
                 Toast.makeText(
                     requireContext(),
-                    merchantError(error, "تعذر إرسال الطلب. راجعي اتصال الإنترنت وحاولي مرة أخرى."),
+                    merchantError(error, "تعذر إرسال الطلب. راجع اتصال الإنترنت وحاول مرة أخرى."),
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -599,6 +612,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
     }
 
     private fun renderSubmittedState() {
+        formVisible = false
         setBusy(false)
         content.removeAllViews()
         progress.visibility = View.GONE
@@ -614,6 +628,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
     }
 
     private fun renderStatus(profile: MerchantProfile, headline: String, approved: Boolean = false) {
+        formVisible = false
         setBusy(false)
         content.removeAllViews()
         progress.visibility = View.GONE
@@ -654,7 +669,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
                 setBusy(false)
                 Toast.makeText(
                     requireContext(),
-                    merchantError(error, localizedFallback(error, "تعذر رفع مستند الهوية")),
+                    merchantError(error, "تعذر رفع مستند الهوية"),
                     Toast.LENGTH_LONG
                 ).show()
                 renderStep()
@@ -695,28 +710,23 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         val specific = when {
             raw.contains("Identity document was not uploaded", ignoreCase = true) ||
                 raw.contains("Identity document is required", ignoreCase = true) ->
-                "مستند الهوية غير متاح. ارفعي المستند مرة أخرى ثم أعيدي الإرسال."
+                "مستند الهوية غير متاح. ارفع المستند مرة أخرى ثم أعد الإرسال."
             raw.contains("Store category is invalid", ignoreCase = true) ->
-                "الفئة المختارة لم تعد متاحة. اختاري فئة أخرى أو اكتبي اسم الفئة المطلوبة."
+                "الفئة المختارة لم تعد متاحة. اختر فئة أخرى أو اكتب اسم الفئة المطلوبة."
             raw.contains("Choose a category", ignoreCase = true) ->
-                "اختاري فئة للمتجر أو اكتبي اسم الفئة غير الموجودة."
+                "اختر فئة للمتجر أو اكتب اسم الفئة غير الموجودة."
             raw.contains("At least one delivery zone", ignoreCase = true) ||
                 raw.contains("Invalid delivery", ignoreCase = true) ->
-                "راجعي مناطق التوصيل والرسوم وزمن الوصول ثم أعيدي المحاولة."
+                "راجع مناطق التوصيل والرسوم وزمن الوصول ثم أعد المحاولة."
             raw.contains("Merchant policies", ignoreCase = true) ->
                 "يجب الموافقة على اتفاقية وسياسات التاجر قبل الإرسال."
             raw.contains("cannot be resubmitted", ignoreCase = true) ->
-                "حالة حساب التاجر لا تسمح بإعادة إرسال الطلب. حدّثي الحالة أولاً."
+                "حالة حساب التاجر لا تسمح بإعادة إرسال الطلب. حدّث الحالة أولاً."
             raw.contains("Authentication required", ignoreCase = true) ->
-                "انتهت جلسة تسجيل الدخول. سجّلي الدخول من جديد لإكمال تسجيل التاجر."
-            else -> localizedFallback(error, fallback)
+                "انتهت جلسة تسجيل الدخول. سجّل الدخول من جديد لإكمال تسجيل التاجر."
+            else -> return CustomerErrorMessages.from(error, fallback)
         }
         return CustomerErrorMessages.from(error, specific)
-    }
-
-    private fun localizedFallback(error: Throwable, fallback: String): String {
-        val raw = error.message.orEmpty()
-        return if (raw.any { it in '\u0600'..'\u06FF' }) raw else fallback
     }
 
     private fun addField(

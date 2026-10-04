@@ -19,7 +19,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:padding="32dp"
-            android:text="جاري تحميل المتجر..."
+            android:text="@string/store_details_loading"
             android:textColor="@color/text_muted" />
 
         <LinearLayout
@@ -49,7 +49,7 @@
                     android:layout_width="72dp"
                     android:layout_height="72dp"
                     android:background="@drawable/bg_avatar"
-                    android:contentDescription="شعار المتجر"
+                    android:contentDescription="@string/store_details_logo_desc"
                     android:padding="3dp"
                     android:scaleType="centerCrop"
                     android:src="@drawable/ic_image_placeholder" />
@@ -151,13 +151,13 @@
                 android:layout_height="44dp"
                 android:layout_gravity="end"
                 android:layout_marginTop="6dp"
-                android:text="مشاركة المتجر" />
+                android:text="@string/store_details_share" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
-                android:text="منتجات المتجر"
+                android:text="@string/store_details_label"
                 android:textColor="@color/text_dark"
                 android:textSize="20sp"
                 android:textStyle="bold" />
@@ -175,7 +175,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:layout_marginTop="10dp"
-                android:text="عرض كل منتجات المتجر"
+                android:text="@string/store_details_all_products"
                 android:visibility="gone" />
         </LinearLayout>
     </LinearLayout>

@@ -1,5 +1,7 @@
 package com.tani.app.ui.commerce
 
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.app.AlertDialog
@@ -61,7 +63,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
                 }
                 .onFailure {
                     summary.removeAllViews()
-                    summary.addView(message(it.message ?: "تعذر تحميل تفاصيل الطلب"))
+                    summary.addView(message(CustomerErrorMessages.from(it, "تعذر تحميل تفاصيل الطلب")))
                 }
             progress.visibility = View.GONE
         }
@@ -237,7 +239,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
 
         if (order.status == "delivered" && !order.seller_id.isNullOrBlank()) {
             addView(Button(context).apply {
-                text = "قيّمي الطلب والمتجر"
+                text = "قيّم الطلب والمتجر"
                 textSize = 15.5f
                 setTypeface(typeface, Typeface.BOLD)
                 setTextColor(context.getColor(R.color.white))
@@ -389,7 +391,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
                         val friendly = if (msg.contains("duplicate", true) || msg.contains("unique", true)) {
                             "تم تقييم هذا الطلب من قبل"
                         } else {
-                            msg.ifBlank { "تعذر إرسال التقييم" }
+                            CustomerErrorMessages.from(it, "تعذر إرسال التقييم")
                         }
                         Toast.makeText(requireContext(), friendly, Toast.LENGTH_LONG).show()
                     }
@@ -402,7 +404,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
     private fun confirmCancel(groupId: String) {
         AlertDialog.Builder(requireContext())
             .setTitle("إلغاء الطلب")
-            .setMessage("يمكن الإلغاء الآن فقط لأن جميع طلبات التجار ما زالت بانتظار القبول. هل تريدين المتابعة؟")
+            .setMessage("يمكن الإلغاء الآن فقط لأن جميع طلبات التجار ما زالت بانتظار القبول. هل تريد المتابعة؟")
             .setPositiveButton("إلغاء الطلب") { _, _ ->
                 viewLifecycleOwner.lifecycleScope.launch {
                     progress.visibility = View.VISIBLE
@@ -412,7 +414,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
                             load(groupId)
                         }
                         .onFailure {
-                            Toast.makeText(requireContext(), it.message ?: "تعذر إلغاء الطلب", Toast.LENGTH_LONG).show()
+                            Toast.makeText(requireContext(), CustomerErrorMessages.from(it, "تعذر إلغاء الطلب"), Toast.LENGTH_LONG).show()
                         }
                     progress.visibility = View.GONE
                 }

@@ -1,5 +1,7 @@
 package com.tani.app.ui.commerce
 
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.app.AlertDialog
@@ -53,7 +55,7 @@ class AddressesFragment : Fragment(R.layout.fragment_addresses) {
                 }
                 .onFailure {
                     box.removeAllViews()
-                    box.addView(message(it.message ?: "تعذر تحميل العناوين"))
+                    box.addView(message(CustomerErrorMessages.from(it, "تعذر تحميل العناوين")))
                 }
             progress.visibility = View.GONE
         }
@@ -133,7 +135,7 @@ class AddressesFragment : Fragment(R.layout.fragment_addresses) {
             setText(existing?.delivery_notes.orEmpty())
         }
         val defaultBox = CheckBox(requireContext()).apply {
-            text = "اجعليه العنوان الافتراضي"
+            text = "اجعله العنوان الافتراضي"
             isChecked = existing?.is_default ?: addresses.isEmpty()
         }
         val form = LinearLayout(requireContext()).apply {
@@ -166,7 +168,7 @@ class AddressesFragment : Fragment(R.layout.fragment_addresses) {
                         dialog.dismiss()
                         load(forceRefresh = true)
                     }.onFailure {
-                        Toast.makeText(requireContext(), it.message ?: "تعذر حفظ العنوان", Toast.LENGTH_LONG).show()
+                        Toast.makeText(requireContext(), CustomerErrorMessages.from(it, "تعذر حفظ العنوان"), Toast.LENGTH_LONG).show()
                     }
                 }
             }
@@ -177,12 +179,12 @@ class AddressesFragment : Fragment(R.layout.fragment_addresses) {
     private fun confirmDelete(address: Address) {
         AlertDialog.Builder(requireContext())
             .setTitle("حذف العنوان")
-            .setMessage("هل تريدين حذف ${address.label}؟")
+            .setMessage("هل تريد حذف ${address.label}؟")
             .setPositiveButton("حذف") { _, _ ->
                 viewLifecycleOwner.lifecycleScope.launch {
                     runCatchingCancellable { repository.deleteAddress(address.id) }
                         .onSuccess { load(forceRefresh = true) }
-                        .onFailure { Toast.makeText(requireContext(), it.message ?: "تعذر الحذف", Toast.LENGTH_LONG).show() }
+                        .onFailure { Toast.makeText(requireContext(), CustomerErrorMessages.from(it, "تعذر الحذف"), Toast.LENGTH_LONG).show() }
                 }
             }
             .setNegativeButton("إلغاء", null)

@@ -14,7 +14,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="البحث"
+            android:text="@string/search_label"
             android:textColor="@color/text_dark"
             android:textSize="26sp"
             android:textStyle="bold" />
@@ -23,14 +23,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="3dp"
-            android:text="ابحثي عن منتج، متجر، أو فئة في السوق المحلي"
+            android:text="@string/search_label_2"
             android:textColor="@color/text_muted" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:text="المدينة"
+            android:text="@string/search_label_3"
             android:textColor="@color/text_dark"
             android:textStyle="bold" />
 
@@ -54,7 +54,7 @@
                 android:layout_height="54dp"
                 android:layout_weight="1"
                 android:background="@drawable/bg_field"
-                android:hint="منتج، متجر، أو فئة"
+                android:hint="@string/search_query_hint"
                 android:imeOptions="actionSearch"
                 android:paddingHorizontal="14dp"
                 android:singleLine="true" />
@@ -64,7 +64,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="54dp"
                 android:layout_marginStart="8dp"
-                android:text="بحث" />
+                android:text="@string/search_button" />
         </LinearLayout>
 
         <TextView
@@ -72,7 +72,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:text="آخر عمليات البحث"
+            android:text="@string/search_recent_title"
             android:textColor="@color/text_dark"
             android:textStyle="bold"
             android:visibility="gone" />
@@ -96,7 +96,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:text="اقتراحات سريعة"
+            android:text="@string/search_label_4"
             android:textColor="@color/text_dark"
             android:textStyle="bold" />
 
@@ -127,7 +127,7 @@
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_marginTop="8dp"
-            android:text="إعادة المحاولة"
+            android:text="@string/home_retry"
             android:visibility="gone" />
 
         <LinearLayout
@@ -142,7 +142,7 @@
                 android:layout_width="0dp"
                 android:layout_height="48dp"
                 android:layout_weight="1"
-                android:text="فلترة وترتيب"
+                android:text="@string/products_filter_toggle"
                 android:visibility="gone" />
 
             <Button
@@ -152,7 +152,7 @@
                 android:layout_height="48dp"
                 android:layout_marginStart="6dp"
                 android:layout_weight="1"
-                android:text="كل المتاجر"
+                android:text="@string/search_all_stores_button"
                 android:visibility="gone" />
         </LinearLayout>
 
@@ -160,7 +160,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
-            android:text="المنتجات"
+            android:text="@string/products_title"
             android:textColor="@color/text_dark"
             android:textSize="20sp"
             android:textStyle="bold" />
@@ -176,7 +176,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
-            android:text="المتاجر"
+            android:text="@string/categories_stores"
             android:textColor="@color/text_dark"
             android:textSize="20sp"
             android:textStyle="bold" />

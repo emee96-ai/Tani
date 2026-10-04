@@ -259,7 +259,7 @@ async function updateComplaint(id,status){
   try{await patchRow("complaints",id,{status,updated_at:new Date().toISOString()});$("dashboardStatus").textContent="تم تحديث الشكوى";await loadDashboard()}catch(e){$("dashboardStatus").textContent=e.message}
 }
 async function resolveComplaint(id){
-  const resolution=(prompt("اكتبي قرار/حل الشكوى")||"").trim();if(!resolution)return;
+  const resolution=(prompt("اكتب قرار/حل الشكوى")||"").trim();if(!resolution)return;
   try{await patchRow("complaints",id,{status:"resolved",resolution,resolved_at:new Date().toISOString(),resolved_by:session?.user?.id,updated_at:new Date().toISOString()});$("dashboardStatus").textContent="تم حل الشكوى";await loadDashboard()}catch(e){$("dashboardStatus").textContent=e.message}
 }
 async function updateTicket(id,status){

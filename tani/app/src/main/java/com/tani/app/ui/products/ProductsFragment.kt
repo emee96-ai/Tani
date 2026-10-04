@@ -104,7 +104,7 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
             status.text = message ?: when {
                 isLoading && loaded.isEmpty() -> "جاري تحميل المنتجات..."
                 isLoading -> "جاري تحميل المزيد..."
-                loaded.isEmpty() -> "ما لقينا نتائج مطابقة. جرّبي تغيير البحث أو الفلاتر."
+                loaded.isEmpty() -> "ما لقينا نتائج مطابقة. جرّب تغيير البحث أو الفلاتر."
                 else -> "تم عرض ${loaded.size} منتج${selectedCity?.let { " • $it" }.orEmpty()}"
             }
             loadMore.visibility = if ((hasMore || retryMode) && !isLoading) View.VISIBLE else View.GONE
@@ -311,7 +311,7 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
                         }
                     }
                     val fallback = if (loaded.isEmpty()) {
-                        "تعذر تحميل المنتجات. حاولي مرة أخرى."
+                        "تعذر تحميل المنتجات. حاول مرة أخرى."
                     } else {
                         "تعذر التحديث — نعرض المنتجات المحفوظة"
                     }
@@ -356,7 +356,7 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
 
     private fun addToCart(product: ProductCard) {
         if (product.has_variants) {
-            Toast.makeText(requireContext(), "اختاري المقاس أو اللون أولاً", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "اختر المقاس أو اللون أولاً", Toast.LENGTH_SHORT).show()
             (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id))
         } else if (Cart.add(product.toProduct())) {
             (activity as? MainActivity)?.refreshCartBadge()

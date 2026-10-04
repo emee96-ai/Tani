@@ -1,5 +1,7 @@
 package com.tani.app.ui.monetization
 
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.os.Bundle
@@ -50,7 +52,7 @@ class MonetizationFragment : Fragment() {
             }.onSuccess { (plans, subscriptions, featured) ->
                 root.removeAllViews()
                 root.addView(MerchantUi.title(context, "النمو والظهور"))
-                root.addView(MerchantUi.subtitle(context, "اختاري فقط ما يخدم متجرك؛ الاشتراك والظهور الممول لا يغيّران المحتوى العضوي بدون وسم."))
+                root.addView(MerchantUi.subtitle(context, "اختر فقط ما يخدم متجرك؛ الاشتراك والظهور الممول لا يغيّران المحتوى العضوي بدون وسم."))
 
                 root.addView(MerchantUi.sectionTitle(context, "الاشتراك"))
                 if (plans.isEmpty()) {
@@ -74,7 +76,7 @@ class MonetizationFragment : Fragment() {
                                 viewLifecycleOwner.lifecycleScope.launch {
                                     runCatchingCancellable { repository.requestSubscription(sellerId, plan.id, "") }
                                         .onSuccess { Toast.makeText(context, "تم إرسال طلب الاشتراك", Toast.LENGTH_SHORT).show(); load() }
-                                        .onFailure { Toast.makeText(context, it.message ?: "تعذر إرسال الطلب", Toast.LENGTH_LONG).show() }
+                                        .onFailure { Toast.makeText(context, CustomerErrorMessages.from(it, "تعذر إرسال الطلب"), Toast.LENGTH_LONG).show() }
                                 }
                             })
                         })
@@ -110,7 +112,7 @@ class MonetizationFragment : Fragment() {
                         viewLifecycleOwner.lifecycleScope.launch {
                             runCatchingCancellable { repository.requestFeatured(sellerId = sellerId, productId = null, placement = "home", note = "طلب ظهور مميز") }
                                 .onSuccess { Toast.makeText(context, "تم إرسال الطلب للمراجعة", Toast.LENGTH_LONG).show(); load() }
-                                .onFailure { Toast.makeText(context, it.message ?: "تعذر إرسال الطلب", Toast.LENGTH_LONG).show() }
+                                .onFailure { Toast.makeText(context, CustomerErrorMessages.from(it, "تعذر إرسال الطلب"), Toast.LENGTH_LONG).show() }
                         }
                     })
                 })
@@ -140,7 +142,7 @@ class MonetizationFragment : Fragment() {
                         viewLifecycleOwner.lifecycleScope.launch {
                             runCatchingCancellable { repository.createAdCampaign(sellerId = sellerId, name = "حملة المتجر", placement = "home", productId = null, budget = null) }
                                 .onSuccess { Toast.makeText(context, "تم إنشاء الحملة وإرسالها للمراجعة", Toast.LENGTH_SHORT).show() }
-                                .onFailure { Toast.makeText(context, it.message ?: "تعذر إنشاء الحملة", Toast.LENGTH_LONG).show() }
+                                .onFailure { Toast.makeText(context, CustomerErrorMessages.from(it, "تعذر إنشاء الحملة"), Toast.LENGTH_LONG).show() }
                         }
                     })
                 })
@@ -149,7 +151,7 @@ class MonetizationFragment : Fragment() {
                 root.addView(MerchantUi.title(context, "النمو والظهور"))
                 root.addView(MerchantUi.card(context).apply {
                     addView(MerchantUi.text(context, "تعذر تحميل خيارات النمو", 16f, true))
-                    addView(MerchantUi.muted(context, it.message ?: "حاولي مرة أخرى لاحقاً").apply { setPadding(0, MerchantUi.dp(context, 5), 0, 0) })
+                    addView(MerchantUi.muted(context, CustomerErrorMessages.from(it, "حاول مرة أخرى لاحقاً")).apply { setPadding(0, MerchantUi.dp(context, 5), 0, 0) })
                 })
             }
         }

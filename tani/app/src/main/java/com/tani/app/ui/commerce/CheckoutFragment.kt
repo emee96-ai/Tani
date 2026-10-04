@@ -1,5 +1,7 @@
 package com.tani.app.ui.commerce
 
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.app.AlertDialog
@@ -50,7 +52,17 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
     private var latestQuoteSignature: String? = null
     private var quoteJob: Job? = null
 
+    // اختيارات العنوان والمنطقة قبل تدوير الشاشة أو إيقاف النظام للتطبيق؛ تُطبق بعد تحميل البيانات.
+    private var restoredAddressId: String? = null
+    private var restoredZoneIds: Map<String, String> = emptyMap()
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        savedInstanceState?.let { state ->
+            restoredAddressId = state.getString(STATE_ADDRESS_ID)
+            restoredZoneIds = state.getStringArrayList(STATE_ZONE_IDS).orEmpty()
+                .mapNotNull { entry -> entry.split('=', limit = 2).takeIf { it.size == 2 } }
+                .associate { (sellerId, zoneId) -> sellerId to zoneId }
+        }
         addressGroup = view.findViewById(R.id.checkout_addresses)
         deliveryZonesBox = view.findViewById(R.id.checkout_delivery_zones)
         deliveryHint = view.findViewById(R.id.checkout_delivery_hint)
@@ -89,9 +101,28 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
                 confirm.text = "إعادة التحقق من محاولة الطلب"
                 confirm.isEnabled = true
                 confirm.setOnClickListener { recoverCheckout() }
-                Toast.makeText(requireContext(), it.message ?: "تعذر التحقق من الطلب السابق", Toast.LENGTH_LONG).show()
+                Toast.makeText(requireContext(), CustomerErrorMessages.from(it, "تعذر التحقق من الطلب السابق"), Toast.LENGTH_LONG).show()
             }
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString(STATE_ADDRESS_ID, selectedAddressId ?: restoredAddressId)
+        val zoneIds = restoredZoneIds + selectedZones.mapValues { (_, zone) -> zone.id }
+        outState.putStringArrayList(
+            STATE_ZONE_IDS,
+            ArrayList(zoneIds.map { (sellerId, zoneId) -> "$sellerId=$zoneId" })
+        )
+    }
+
+    private fun applyRestoredSelections() {
+        restoredAddressId?.takeIf { id -> addresses.any { it.id == id } }?.let { selectedAddressId = it }
+        restoredZoneIds.forEach { (sellerId, zoneId) ->
+            zonesBySeller[sellerId]?.firstOrNull { it.id == zoneId }?.let { selectedZones[sellerId] = it }
+        }
+        restoredAddressId = null
+        restoredZoneIds = emptyMap()
     }
 
     override fun onDestroyView() {
@@ -128,6 +159,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
                 addresses = loadedAddresses
                 zonesBySeller = loadedZones
                 if (phone.text.isBlank()) phone.setText(account.profile.phone)
+                applyRestoredSelections()
                 renderAddresses()
                 renderDeliveryZones()
                 dataLoaded = true
@@ -137,7 +169,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
             }.onFailure {
                 Toast.makeText(
                     requireContext(),
-                    it.message ?: "تعذر تحميل بيانات الطلب والتوصيل",
+                    CustomerErrorMessages.from(it, "تعذر تحميل بيانات الطلب والتوصيل"),
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -150,7 +182,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
         addressGroup.removeAllViews()
         if (addresses.isEmpty()) {
             addressGroup.addView(TextView(requireContext()).apply {
-                text = "أضيفي عنواناً قبل تأكيد الطلب."
+                text = "أضف عنواناً قبل تأكيد الطلب."
                 setPadding(0, dp(12), 0, dp(12))
             })
             selectedAddressId = null
@@ -278,7 +310,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
         deliveryHint.text = if (missing == 0) {
             multiMerchantPrefix() + "تم اختيار التوصيل لكل متجر ✓"
         } else {
-            multiMerchantPrefix() + "اختاري منطقة التوصيل لـ $missing ${if (missing == 1) "متجر" else "متاجر"}."
+            multiMerchantPrefix() + "اختر منطقة التوصيل لـ $missing ${if (missing == 1) "متجر" else "متاجر"}."
         }
     }
 
@@ -313,7 +345,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
                     append("\n")
                     when {
                         zones.isEmpty() -> append("التوصيل: يُحسب تلقائياً")
-                        delivery == null -> append("التوصيل: اختاري المنطقة")
+                        delivery == null -> append("التوصيل: اختر المنطقة")
                         else -> {
                             append("التوصيل: ${MarketplaceUi.formatPrice(delivery)}")
                             chosen?.let { append(" • ${it.area_name}") }
@@ -339,7 +371,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
                     append("\nالإجمالي النهائي: ${MarketplaceUi.formatPrice(validQuote.grand_total)}")
                 }
             }
-            missingZone -> "اختاري منطقة التوصيل لإظهار الإجمالي النهائي."
+            missingZone -> "اختر منطقة التوصيل لإظهار الإجمالي النهائي."
             serverDeliveryNeeded -> "قيمة المنتجات: ${MarketplaceUi.formatPrice(Cart.subtotal())}\nجاري حساب التوصيل والإجمالي النهائي…"
             else -> {
                 val estimated = Cart.subtotal() + selectedDeliveryTotal
@@ -407,7 +439,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
                     }.onFailure {
                         Toast.makeText(
                             requireContext(),
-                            it.message ?: "تعذر حفظ العنوان",
+                            CustomerErrorMessages.from(it, "تعذر حفظ العنوان"),
                             Toast.LENGTH_LONG
                         ).show()
                     }
@@ -420,19 +452,19 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
     private fun submit() {
         val addressId = selectedAddressId
         if (addressId == null) {
-            Toast.makeText(requireContext(), "اختاري عنوان التوصيل", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "اختر عنوان التوصيل", Toast.LENGTH_SHORT).show()
             return
         }
         val phoneValue = phone.text.toString().trim()
         if (phoneValue.length < 7) {
-            phone.error = "أدخلي رقم هاتف صحيح للتوصيل"
+            phone.error = "أدخل رقم هاتف صحيح للتوصيل"
             phone.requestFocus()
             return
         }
         val missingSeller = sellersRequiringZone().firstOrNull { it !in selectedZones }
         if (missingSeller != null) {
             val store = Cart.groupedBySeller()[missingSeller]?.firstOrNull()?.product?.store_name ?: "المتجر"
-            Toast.makeText(requireContext(), "اختاري منطقة التوصيل من $store", Toast.LENGTH_LONG).show()
+            Toast.makeText(requireContext(), "اختر منطقة التوصيل من $store", Toast.LENGTH_LONG).show()
             return
         }
 
@@ -457,7 +489,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
             }.onFailure {
                 Toast.makeText(
                     requireContext(),
-                    it.message ?: "تعذر التحقق من الأسعار ورسوم التوصيل",
+                    CustomerErrorMessages.from(it, "تعذر التحقق من الأسعار ورسوم التوصيل"),
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -507,7 +539,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
         val warnings = quoteWarnings(quote)
         if (warnings.isNotEmpty()) {
             AlertDialog.Builder(requireContext())
-                .setTitle("راجعي السلة")
+                .setTitle("راجع السلة")
                 .setMessage(warnings.joinToString("\n"))
                 .setPositiveButton("حسناً", null)
                 .show()
@@ -564,7 +596,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
                 requestQuoteRefresh()
                 Toast.makeText(
                     requireContext(),
-                    it.message ?: "تعذر إنشاء الطلب",
+                    CustomerErrorMessages.from(it, "تعذر إنشاء الطلب"),
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -627,4 +659,8 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
+    private companion object {
+        const val STATE_ADDRESS_ID = "checkout_selected_address_id"
+        const val STATE_ZONE_IDS = "checkout_selected_zone_ids"
+    }
 }

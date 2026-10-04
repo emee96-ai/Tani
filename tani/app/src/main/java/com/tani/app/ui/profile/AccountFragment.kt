@@ -1,5 +1,7 @@
 package com.tani.app.ui.profile
 
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.graphics.Bitmap
@@ -98,7 +100,7 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
                 .onFailure {
                     Toast.makeText(
                         requireContext(),
-                        it.message ?: "تعذر تحميل بيانات الحساب",
+                        CustomerErrorMessages.from(it, "تعذر تحميل بيانات الحساب"),
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -136,7 +138,7 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
             }.onFailure {
                 Toast.makeText(
                     requireContext(),
-                    it.message ?: "تعذر حفظ التعديلات",
+                    CustomerErrorMessages.from(it, "تعذر حفظ التعديلات"),
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -186,7 +188,7 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
                         output.toByteArray()
                     }.also {
                         require(it.size <= 5 * 1024 * 1024) {
-                            "حجم الصورة كبير جداً. اختاري صورة أصغر"
+                            "حجم الصورة كبير جداً. اختر صورة أصغر"
                         }
                     }
                 }
@@ -197,7 +199,7 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
             }.onFailure {
                 Toast.makeText(
                     requireContext(),
-                    it.message ?: "تعذر تجهيز الصورة",
+                    CustomerErrorMessages.from(it, "تعذر تجهيز الصورة"),
                     Toast.LENGTH_LONG
                 ).show()
             }

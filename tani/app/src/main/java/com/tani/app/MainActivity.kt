@@ -280,7 +280,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun renderGuestDrawerAccount() {
         drawerAccountName.text = "حسابي"
-        drawerAccountEmail.text = "سجلي الدخول لعرض بيانات الحساب"
+        drawerAccountEmail.text = "سجل الدخول لعرض بيانات الحساب"
         refreshMerchantEntryLabel()
         renderDefaultDrawerAvatar()
     }

@@ -1,5 +1,7 @@
 package com.tani.app.ui.marketplace
 
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.os.Bundle
@@ -89,7 +91,7 @@ class StoreDetailsFragment : Fragment(R.layout.fragment_store_details) {
                             onOpen = { (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id)) },
                             onAdd = {
                                 if (product.has_variants) {
-                                    Toast.makeText(requireContext(), "اختاري المقاس أو اللون أولاً", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(requireContext(), "اختر المقاس أو اللون أولاً", Toast.LENGTH_SHORT).show()
                                     (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id))
                                 } else if (Cart.add(product.toProduct())) {
                                     (activity as? MainActivity)?.refreshCartBadge()
@@ -107,7 +109,7 @@ class StoreDetailsFragment : Fragment(R.layout.fragment_store_details) {
                     Analytics.track("store_view", screen = "store_details", entityType = "store", entityId = store.id)
                 }
             }.onFailure {
-                loading.text = "تعذر تحميل المتجر\n${it.message ?: "حاولي مرة أخرى"}"
+                loading.text = "تعذر تحميل المتجر\n${CustomerErrorMessages.from(it, "حاول مرة أخرى")}"
             }
         }
     }

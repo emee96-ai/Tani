@@ -70,7 +70,7 @@ class MerchantStoreFragment : Fragment() {
             runCatchingCancellable { repository.merchantStore() ?: error("لم يتم إنشاء المتجر بعد") }
                 .onSuccess(::render)
                 .onFailure { error ->
-                    showError(CustomerErrorMessages.from(error, "تعذر تحميل بيانات المتجر. حاولي مرة أخرى."))
+                    showError(CustomerErrorMessages.from(error, "تعذر تحميل بيانات المتجر. حاول مرة أخرى."))
                 }
         }
     }
@@ -82,7 +82,7 @@ class MerchantStoreFragment : Fragment() {
         assetUploadInFlight = false
         root.removeAllViews()
         root.addView(MerchantUi.title(context, "بيانات المتجر"))
-        root.addView(MerchantUi.subtitle(context, "عدّلي المعلومات التي يراها العملاء وحالة استقبال الطلبات."))
+        root.addView(MerchantUi.subtitle(context, "عدّل المعلومات التي يراها العملاء وحالة استقبال الطلبات."))
 
         logoPath = store.logo_url
         coverPath = store.cover_url
@@ -154,7 +154,7 @@ class MerchantStoreFragment : Fragment() {
         root.addView(MerchantUi.card(context, soft = true).apply {
             addView(open)
             addView(visible)
-            addView(MerchantUi.muted(context, "إغلاق المتجر مؤقتاً يوقف الطلبات الجديدة بدون حذف المنتجات. إخفاء المتجر يمنع ظهوره للعملاء إلى أن تفعّليه من جديد.", 12f).apply {
+            addView(MerchantUi.muted(context, "إغلاق المتجر مؤقتاً يوقف الطلبات الجديدة بدون حذف المنتجات. إخفاء المتجر يمنع ظهوره للعملاء إلى أن تفعّله من جديد.", 12f).apply {
                 setPadding(0, MerchantUi.dp(context, 6), 0, 0)
             })
         })
@@ -180,8 +180,8 @@ class MerchantStoreFragment : Fragment() {
         if (saveInFlight) return
         val cleanName = name.text.toString().trim()
         val cleanCity = city.text.toString().trim()
-        if (cleanName.length < 2) return toast("أدخلي اسم المتجر")
-        if (cleanCity.length < 2) return toast("أدخلي المدينة")
+        if (cleanName.length < 2) return toast("أدخل اسم المتجر")
+        if (cleanCity.length < 2) return toast("أدخل المدينة")
 
         saveInFlight = true
         toast("جاري حفظ المتجر…")
@@ -206,7 +206,7 @@ class MerchantStoreFragment : Fragment() {
                 render(updated)
             }.onFailure { error ->
                 saveInFlight = false
-                toast(CustomerErrorMessages.from(error, merchantFallback(error, "تعذر حفظ بيانات المتجر. حاولي مرة أخرى.")))
+                toast(CustomerErrorMessages.from(error, merchantFallback(error, "تعذر حفظ بيانات المتجر. حاول مرة أخرى.")))
             }
         }
     }
@@ -214,7 +214,7 @@ class MerchantStoreFragment : Fragment() {
     private fun uploadAsset(uri: Uri) {
         if (assetUploadInFlight) return
         val kind = pendingAsset ?: return
-        val store = currentStore ?: return toast("أعيدي فتح بيانات المتجر ثم حاولي مرة أخرى")
+        val store = currentStore ?: return toast("أعد فتح بيانات المتجر ثم حاول مرة أخرى")
         assetUploadInFlight = true
         if (kind == "logo") logoStatus?.text = "الشعار: جاري الرفع…" else coverStatus?.text = "الغلاف: جاري الرفع…"
 
@@ -256,7 +256,7 @@ class MerchantStoreFragment : Fragment() {
                 } else {
                     coverStatus?.text = if (coverPath.isNullOrBlank()) "الغلاف: غير مرفوع" else "الغلاف: محفوظ ✓"
                 }
-                toast(CustomerErrorMessages.from(error, merchantFallback(error, "تعذر رفع صورة المتجر. حاولي مرة أخرى.")))
+                toast(CustomerErrorMessages.from(error, merchantFallback(error, "تعذر رفع صورة المتجر. حاول مرة أخرى.")))
             }
         }
     }
@@ -264,11 +264,10 @@ class MerchantStoreFragment : Fragment() {
     private fun merchantFallback(error: Throwable, fallback: String): String {
         val raw = error.message.orEmpty()
         return when {
-            raw.contains("اسم المتجر", ignoreCase = true) -> "راجعي اسم المتجر ثم أعيدي الحفظ."
-            raw.contains("المدينة", ignoreCase = true) -> "راجعي اسم المدينة ثم أعيدي الحفظ."
-            raw.contains("5 ميجابايت", ignoreCase = true) -> "الصورة كبيرة جداً. اختاري صورة أصغر من 5 ميجابايت."
-            raw.any { it in '\u0600'..'\u06FF' } -> raw
-            else -> fallback
+            raw.contains("اسم المتجر", ignoreCase = true) -> "راجع اسم المتجر ثم أعد الحفظ."
+            raw.contains("المدينة", ignoreCase = true) -> "راجع اسم المدينة ثم أعد الحفظ."
+            raw.contains("5 ميجابايت", ignoreCase = true) -> "الصورة كبيرة جداً. اختر صورة أصغر من 5 ميجابايت."
+            else -> CustomerErrorMessages.from(error, fallback)
         }
     }
 

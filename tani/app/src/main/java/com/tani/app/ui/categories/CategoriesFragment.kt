@@ -1,5 +1,7 @@
 package com.tani.app.ui.categories
 
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.os.Bundle
@@ -71,7 +73,7 @@ class CategoriesFragment : Fragment(R.layout.fragment_stores) {
                     .onFailure {
                         adapter.submitList(emptyList())
                         loading.visibility = View.VISIBLE
-                        loading.text = "تعذر تحميل المتاجر\n${it.message ?: "حاولي مرة أخرى"}"
+                        loading.text = "تعذر تحميل المتاجر\n${CustomerErrorMessages.from(it, "حاول مرة أخرى")}"
                     }
             }
         }

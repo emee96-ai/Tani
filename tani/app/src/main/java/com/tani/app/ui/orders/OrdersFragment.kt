@@ -1,5 +1,7 @@
 package com.tani.app.ui.orders
 
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.content.res.ColorStateList
@@ -75,7 +77,7 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
                     groups = emptyList()
                     box.removeAllViews()
                     summary.text = "تعذر تحميل الطلبات"
-                    box.addView(message(it.message ?: "حاولي مرة أخرى"))
+                    box.addView(message(CustomerErrorMessages.from(it, "حاول مرة أخرى")))
                 }
             progress.visibility = View.GONE
         }
@@ -242,7 +244,7 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
             setTextColor(requireContext().getColor(R.color.text_dark))
         })
         addView(TextView(requireContext()).apply {
-            text = if (filter == Filter.ALL) "أي طلب جديد حيظهر هنا وتقدري تتابعي حالته." else "اختاري قسم تاني لعرض بقية الطلبات."
+            text = if (filter == Filter.ALL) "أي طلب جديد حيظهر هنا وتقدر تتابع حالته." else "اختر قسم تاني لعرض بقية الطلبات."
             textSize = 15f
             gravity = Gravity.CENTER
             setPadding(0, dp(8), 0, 0)

@@ -17,7 +17,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:text="مركز إدارة تاني"
+        android:text="@string/header_admin_drawer_label"
         android:textColor="@color/text_dark"
         android:textSize="20sp"
         android:textStyle="bold" />
@@ -34,6 +34,6 @@
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:layout_marginTop="12dp"
-        android:text="إدارة المشرفين"
+        android:text="@string/header_admin_drawer_label_2"
         android:visibility="gone" />
 </LinearLayout>

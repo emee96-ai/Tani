@@ -30,7 +30,7 @@ class TaniMessagingService : FirebaseMessagingService() {
         val notification = NotificationCompat.Builder(this, PushMessaging.CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle("تاني")
-            .setContentText("لديك تحديث جديد. افتحي تاني لمتابعته.")
+            .setContentText("لديك تحديث جديد. افتح تاني لمتابعته.")
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
             .setAutoCancel(true).setContentIntent(pending).build()
         try {

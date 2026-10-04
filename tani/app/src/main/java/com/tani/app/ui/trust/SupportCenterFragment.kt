@@ -1,5 +1,7 @@
 package com.tani.app.ui.trust
 
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.os.Bundle
@@ -88,7 +90,7 @@ class SupportCenterFragment : Fragment() {
                         })
                     }
                 }
-                .onFailure { toast(it.message ?: "تعذر تحميل الدعم") }
+                .onFailure { toast(CustomerErrorMessages.from(it, "تعذر تحميل الدعم")) }
         }
     }
 
@@ -98,14 +100,14 @@ class SupportCenterFragment : Fragment() {
         root.removeAllViews()
         root.addView(ScreenUi.title(context, "تذكرة دعم جديدة"))
         val subject = ScreenUi.input(context, "عنوان المشكلة")
-        val body = ScreenUi.input(context, "اكتبي التفاصيل", true)
+        val body = ScreenUi.input(context, "اكتب التفاصيل", true)
         root.addView(subject)
         root.addView(body)
         root.addView(ScreenUi.button(context, "إرسال") {
             viewLifecycleOwner.lifecycleScope.launch {
                 runCatchingCancellable { repository.createTicket(subject.text.toString(), body.text.toString()) }
                     .onSuccess { toast("تم إنشاء التذكرة"); renderHome() }
-                    .onFailure { toast(it.message ?: "تعذر إنشاء التذكرة") }
+                    .onFailure { toast(CustomerErrorMessages.from(it, "تعذر إنشاء التذكرة")) }
             }
         })
         root.addView(ScreenUi.button(context, "رجوع") { renderHome() })
@@ -152,7 +154,7 @@ class SupportCenterFragment : Fragment() {
                         sellerId
                     )
                 }.onSuccess { toast("تم إرسال الشكوى"); linkedOrderId = null; linkedSellerId = null; renderHome() }
-                    .onFailure { toast(it.message ?: "تعذر إرسال الشكوى") }
+                    .onFailure { toast(CustomerErrorMessages.from(it, "تعذر إرسال الشكوى")) }
             }
         })
         root.addView(ScreenUi.button(context, "رجوع") { linkedOrderId = null; linkedSellerId = null; renderHome() })
@@ -191,7 +193,7 @@ class SupportCenterFragment : Fragment() {
             if (messages.isEmpty()) messagesBox.addView(ScreenUi.muted(context, "لا توجد ردود بعد."))
             messages.distinctBy { it.id }.sortedWith(compareBy({ it.created_at }, { it.id })).forEach { item ->
                 messagesBox.addView(ScreenUi.card(context).apply {
-                    addView(ScreenUi.text(context, if (item.sender_id == Supabase.userId) "أنتِ" else "فريق الدعم", 14f, true))
+                    addView(ScreenUi.text(context, if (item.sender_id == Supabase.userId) "أنت" else "فريق الدعم", 14f, true))
                     addView(ScreenUi.text(context, item.body, 15f))
                     addView(ScreenUi.muted(context, item.created_at.orEmpty()))
                 })
@@ -205,7 +207,7 @@ class SupportCenterFragment : Fragment() {
                         messages.addAll(page)
                         showMessages()
                         older.visibility = if (page.size == 100) View.VISIBLE else View.GONE
-                    }.onFailure { toast(it.message ?: "تعذر تحميل الرسائل") }
+                    }.onFailure { toast(CustomerErrorMessages.from(it, "تعذر تحميل الرسائل")) }
                 older.isEnabled = true
             }
         }
@@ -219,14 +221,14 @@ class SupportCenterFragment : Fragment() {
                     send.isEnabled = open
                     reply.isEnabled = open
                     if (!open) root.addView(ScreenUi.muted(context, "التذكرة ${status(current.status)}. يمكنك فتح تذكرة جديدة."))
-                }.onFailure { toast(it.message ?: "تعذر تحميل المحادثة") }
+                }.onFailure { toast(CustomerErrorMessages.from(it, "تعذر تحميل المحادثة")) }
         }
         send.setOnClickListener {
             send.isEnabled = false
             viewLifecycleOwner.lifecycleScope.launch {
                 runCatchingCancellable { repository.sendTicketMessage(ticket.id, reply.text.toString()) }
                     .onSuccess { renderConversation(ticket) }
-                    .onFailure { toast(it.message ?: "تعذر إرسال الرد"); send.isEnabled = true }
+                    .onFailure { toast(CustomerErrorMessages.from(it, "تعذر إرسال الرد")); send.isEnabled = true }
             }
         }
     }

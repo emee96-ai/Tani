@@ -19,7 +19,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="سلة المشتريات"
+            android:text="@string/cart_label"
             android:textColor="@color/text_dark"
             android:textSize="26sp"
             android:textStyle="bold" />
@@ -28,7 +28,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="راجعي المنتجات قبل الانتقال لإتمام الطلب"
+            android:text="@string/cart_label_2"
             android:textColor="@color/text_muted"
             android:textSize="13sp" />
 

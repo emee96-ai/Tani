@@ -97,7 +97,7 @@ class MerchantProductsFragment : Fragment() {
                 }
             }.onSuccess(::render)
                 .onFailure { error ->
-                    showError(CustomerErrorMessages.from(error, "تعذر تحميل المنتجات. حاولي مرة أخرى."))
+                    showError(CustomerErrorMessages.from(error, "تعذر تحميل المنتجات. حاول مرة أخرى."))
                 }
         }
     }
@@ -108,12 +108,12 @@ class MerchantProductsFragment : Fragment() {
         val variantsByProduct = data.variants.groupBy { it.product_id }
         root.removeAllViews()
         root.addView(MerchantUi.title(context, "المنتجات والمخزون"))
-        root.addView(MerchantUi.subtitle(context, "أضيفي المنتجات، حدّثي المخزون، وأوقفي المنتج مؤقتاً بدل حذفه عند الحاجة."))
+        root.addView(MerchantUi.subtitle(context, "أضف المنتجات، حدّث المخزون، وأوقف المنتج مؤقتاً بدل حذفه عند الحاجة."))
 
         if (data.categories.isEmpty()) {
             root.addView(MerchantUi.card(context, soft = true).apply {
                 addView(MerchantUi.text(context, "الفئات غير متاحة الآن", 14f, true))
-                addView(MerchantUi.muted(context, "تقدري تديري منتجاتك الحالية، لكن تغيير الفئة قد يكون محدوداً لحد ما ترجع الشبكة.", 12.5f).apply {
+                addView(MerchantUi.muted(context, "تقدر تدير منتجاتك الحالية، لكن تغيير الفئة قد يكون محدوداً لحد ما ترجع الشبكة.", 12.5f).apply {
                     setPadding(0, MerchantUi.dp(context, 4), 0, 0)
                 })
             })
@@ -140,7 +140,7 @@ class MerchantProductsFragment : Fragment() {
         root.addView(MerchantUi.sectionTitle(context, "منتجاتك"))
 
         if (products.isEmpty()) {
-            root.addView(MerchantUi.emptyCard(context, "ما عندك منتجات لسه", "أضيفي أول منتج عشان يبدأ متجرك يظهر للعملاء."))
+            root.addView(MerchantUi.emptyCard(context, "ما عندك منتجات لسه", "أضف أول منتج عشان يبدأ متجرك يظهر للعملاء."))
             return
         }
 
@@ -231,7 +231,7 @@ class MerchantProductsFragment : Fragment() {
                 topMargin = MerchantUi.dp(context, 6)
                 bottomMargin = MerchantUi.dp(context, 6)
             })
-            pendingCreateImageStatus = MerchantUi.muted(context, "اختاري صورة واحدة على الأقل قبل حفظ المنتج.", 12.5f).also {
+            pendingCreateImageStatus = MerchantUi.muted(context, "اختر صورة واحدة على الأقل قبل حفظ المنتج.", 12.5f).also {
                 content.addView(it, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
                     bottomMargin = MerchantUi.dp(context, 12)
                 })
@@ -293,16 +293,16 @@ class MerchantProductsFragment : Fragment() {
                 val p = price.text.toString().toDoubleOrNull()
                 val s = stock.text.toString().toIntOrNull()
                 if (cleanName.length < 2) {
-                    toast("اكتبي اسم المنتج")
+                    toast("اكتب اسم المنتج")
                     return@setOnClickListener
                 }
                 if (p == null || p < 0 || s == null || s < 0) {
-                    toast("راجعي السعر والمخزون")
+                    toast("راجع السعر والمخزون")
                     return@setOnClickListener
                 }
                 val selectedImages = pendingCreateImages.toList()
                 if (isCreating && selectedImages.isEmpty()) {
-                    toast("اختاري صورة واحدة على الأقل للمنتج")
+                    toast("اختر صورة واحدة على الأقل للمنتج")
                     return@setOnClickListener
                 }
 
@@ -394,7 +394,7 @@ class MerchantProductsFragment : Fragment() {
     private fun updateCreateImageStatus() {
         val count = pendingCreateImages.size
         pendingCreateImageStatus?.text = if (count == 0) {
-            "اختاري صورة واحدة على الأقل قبل حفظ المنتج."
+            "اختر صورة واحدة على الأقل قبل حفظ المنتج."
         } else {
             "تم اختيار $count ${if (count == 1) "صورة" else "صور"}. أول صورة ستكون الرئيسية."
         }
@@ -409,9 +409,9 @@ class MerchantProductsFragment : Fragment() {
                     val variantsRequest = async { repository.merchantProductVariants(product.id) }
                     val images = imagesRequest.await()
                     val variants = variantsRequest.await()
-                    require(images.isNotEmpty()) { "أضيفي صورة واحدة على الأقل قبل نشر المنتج" }
+                    require(images.isNotEmpty()) { "أضف صورة واحدة على الأقل قبل نشر المنتج" }
                     if (product.has_variants || variants.isNotEmpty()) {
-                        require(variants.any { it.is_active }) { "فعّلي خياراً واحداً على الأقل قبل نشر المنتج" }
+                        require(variants.any { it.is_active }) { "فعّل خياراً واحداً على الأقل قبل نشر المنتج" }
                     }
                 }
                 repository.deactivateMerchantProduct(product.id, !product.is_active)
@@ -428,7 +428,7 @@ class MerchantProductsFragment : Fragment() {
     private fun confirmDelete(product: Product) {
         MaterialAlertDialogBuilder(requireContext())
             .setTitle("حذف ${product.name}؟")
-            .setMessage("إذا كان للمنتج سجل طلبات لن يُحذف نهائياً. في هذه الحالة استخدمي إيقاف المنتج.")
+            .setMessage("إذا كان للمنتج سجل طلبات لن يُحذف نهائياً. في هذه الحالة استخدم إيقاف المنتج.")
             .setPositiveButton("حذف") { _, _ ->
                 if (!busyProductIds.add(product.id)) return@setPositiveButton
                 viewLifecycleOwner.lifecycleScope.launch {
@@ -438,7 +438,7 @@ class MerchantProductsFragment : Fragment() {
                             load()
                         }
                         .onFailure { error ->
-                            toast(CustomerErrorMessages.from(error, "تعذر حذف المنتج. أوقفيه بدلاً من الحذف إذا كان مرتبطاً بطلبات."))
+                            toast(CustomerErrorMessages.from(error, "تعذر حذف المنتج. أوقفه بدلاً من الحذف إذا كان مرتبطاً بطلبات."))
                         }
                     busyProductIds.remove(product.id)
                 }
@@ -465,7 +465,7 @@ class MerchantProductsFragment : Fragment() {
                             pickImage.launch("image/*")
                         })
                     } else {
-                        content.addView(MerchantUi.muted(context, "وصلتي للحد الأقصى: $MAX_PRODUCT_IMAGES صور.", 12.5f))
+                        content.addView(MerchantUi.muted(context, "وصلت للحد الأقصى: $MAX_PRODUCT_IMAGES صور.", 12.5f))
                     }
 
                     if (images.isEmpty()) {
@@ -496,7 +496,7 @@ class MerchantProductsFragment : Fragment() {
                             })
                             addView(MerchantUi.compactButton(context, "حذف الصورة") {
                                 if (images.size == 1 && product.is_active) {
-                                    toast("لا يمكن حذف آخر صورة من منتج منشور. أوقفي المنتج أولاً.")
+                                    toast("لا يمكن حذف آخر صورة من منتج منشور. أوقف المنتج أولاً.")
                                     return@compactButton
                                 }
                                 viewLifecycleOwner.lifecycleScope.launch {

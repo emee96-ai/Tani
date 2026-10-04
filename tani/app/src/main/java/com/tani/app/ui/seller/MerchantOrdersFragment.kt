@@ -1,5 +1,7 @@
 package com.tani.app.ui.seller
 
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.content.ClipData
@@ -92,7 +94,7 @@ class MerchantOrdersFragment : Fragment() {
         root.addView(
             MerchantUi.subtitle(
                 context,
-                "الطلبات الجديدة أولاً. سجّلي كل خطوة عشان العميل يعرف طلبه وصل وين."
+                "الطلبات الجديدة أولاً. سجّل كل خطوة عشان العميل يعرف طلبه وصل وين."
             )
         )
 
@@ -164,7 +166,7 @@ class MerchantOrdersFragment : Fragment() {
                     if (ordersSnapshot.isEmpty()) {
                         "أول طلب حيظهر هنا ومعاه كل التفاصيل المطلوبة للتنفيذ."
                     } else {
-                        "اختاري قسم تاني أو ارجعي لكل الطلبات."
+                        "اختر قسم تاني أو ارجع لكل الطلبات."
                     }
                 )
             )
@@ -466,9 +468,9 @@ class MerchantOrdersFragment : Fragment() {
         if (content != null) {
             builder.setMessage(
                 if (requiresEta) {
-                    "حددي الزمن المتوقع بعد تسليم الطلب للمندوب. سيظهر للعميل في سجل الطلب."
+                    "حدد الزمن المتوقع بعد تسليم الطلب للمندوب. سيظهر للعميل في سجل الطلب."
                 } else {
-                    "السبب سيظهر في سجل حالة الطلب، فاكتبيه بصورة واضحة."
+                    "السبب سيظهر في سجل حالة الطلب، فاكتبه بصورة واضحة."
                 }
             ).setView(content)
         } else {
@@ -484,15 +486,15 @@ class MerchantOrdersFragment : Fragment() {
                 val eta = etaField?.text?.toString()?.trim()?.toIntOrNull()
 
                 if (requiresReason && note.length < 3) {
-                    toast("اكتبي سبباً واضحاً قبل المتابعة")
+                    toast("اكتب سبباً واضحاً قبل المتابعة")
                     return@setOnClickListener
                 }
                 if (note.length > 350) {
-                    toast("الملاحظة طويلة؛ اختصريها إلى 350 حرفاً")
+                    toast("الملاحظة طويلة؛ اختصرها إلى 350 حرفاً")
                     return@setOnClickListener
                 }
                 if (requiresEta && (eta == null || eta !in 1..1440)) {
-                    toast("حددي زمن وصول صحيح من دقيقة إلى 24 ساعة")
+                    toast("حدد زمن وصول صحيح من دقيقة إلى 24 ساعة")
                     return@setOnClickListener
                 }
 
@@ -595,18 +597,17 @@ class MerchantOrdersFragment : Fragment() {
         val value = raw.orEmpty()
         val lower = value.lowercase()
         return when {
-            lower.contains("final state") -> "الطلب اتحدث بالفعل إلى حالة نهائية. حدّثي القائمة."
-            lower.contains("transition is not allowed") -> "الحالة الحالية للطلب اتغيرت. حدّثي القائمة وجربي من جديد."
-            lower.contains("reason is required") -> "اكتبي سبباً واضحاً قبل المتابعة."
-            lower.contains("delivery eta") -> "حددي زمن الوصول المتوقع بعد تسليم الطلب للمندوب."
+            lower.contains("final state") -> "الطلب اتحدث بالفعل إلى حالة نهائية. حدّث القائمة."
+            lower.contains("transition is not allowed") -> "الحالة الحالية للطلب اتغيرت. حدّث القائمة وجرب من جديد."
+            lower.contains("reason is required") -> "اكتب سبباً واضحاً قبل المتابعة."
+            lower.contains("delivery eta") -> "حدد زمن الوصول المتوقع بعد تسليم الطلب للمندوب."
             lower.contains("only this order seller") || lower.contains("permission") || lower.contains("42501") ->
                 "ما عندك صلاحية لتحديث الطلب دا."
             lower.contains("order not found") -> "الطلب ما عاد موجوداً أو ما عندك صلاحية لعرضه."
             lower.contains("timeout") || lower.contains("timed out") || lower.contains("failed to connect") ||
                 lower.contains("unable to resolve") || lower.contains("network") || lower.contains("host") ->
-                "الشبكة ضعيفة أو مقطوعة. تأكدي من الاتصال وحاولي تاني."
-            value.isBlank() -> "تعذر تنفيذ العملية. حاولي مرة أخرى."
-            else -> value
+                "الشبكة ضعيفة أو مقطوعة. تأكد من الاتصال وحاول تاني."
+            else -> CustomerErrorMessages.fromMessage(value, "تعذر تنفيذ العملية. حاول مرة أخرى.")
         }
     }
 

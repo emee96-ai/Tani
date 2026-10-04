@@ -1,5 +1,7 @@
 package com.tani.app.ui.growth
 
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.os.Bundle
@@ -31,7 +33,7 @@ class FavoritesFragment : Fragment() {
     }
     override fun onViewCreated(view: View, state: Bundle?) { load() }
     private fun load() {
-        val c=requireContext(); root.removeAllViews(); root.addView(ScreenUi.title(c,"المفضلة")); root.addView(ScreenUi.subtitle(c,"المنتجات التي حفظتيها للرجوع إليها بسهولة."))
+        val c=requireContext(); root.removeAllViews(); root.addView(ScreenUi.title(c,"المفضلة")); root.addView(ScreenUi.subtitle(c,"المنتجات التي حفظتها للرجوع إليها بسهولة."))
         if (AppContentStore.favoritesLoaded) {
             renderProducts(AppContentStore.favorites)
             return
@@ -40,19 +42,19 @@ class FavoritesFragment : Fragment() {
             runCatchingCancellable { repository.favoriteProducts() }.onSuccess { products ->
                 AppContentStore.updateFavorites(products)
                 renderProducts(products)
-            }.onFailure { root.addView(ScreenUi.muted(c,it.message?:"تعذر تحميل المفضلة")) }
+            }.onFailure { root.addView(ScreenUi.muted(c,CustomerErrorMessages.from(it, "تعذر تحميل المفضلة"))) }
         }
     }
 
     private fun renderProducts(products: List<ProductCard>) {
         val c = requireContext()
-        if(products.isEmpty()) root.addView(ScreenUi.muted(c,"لم تحفظي أي منتج بعد."))
+        if(products.isEmpty()) root.addView(ScreenUi.muted(c,"لم تحفظ أي منتج بعد."))
         else MarketplaceUi.addTwoColumnGrid(root, products.map { p ->
             MarketplaceUi.productCard(c,viewLifecycleOwner.lifecycleScope,p,
                 onOpen={ (activity as MainActivity).show(ProductDetailsFragment.newInstance(p.id)) },
                 onAdd={
                     if (p.has_variants) {
-                        Toast.makeText(c,"اختاري المقاس أو اللون أولاً",Toast.LENGTH_SHORT).show()
+                        Toast.makeText(c,"اختر المقاس أو اللون أولاً",Toast.LENGTH_SHORT).show()
                         (activity as MainActivity).show(ProductDetailsFragment.newInstance(p.id))
                     } else if (Cart.add(p.toProduct())) {
                         (activity as? MainActivity)?.refreshCartBadge()

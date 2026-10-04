@@ -1,5 +1,7 @@
 package com.tani.app.ui.marketplace
 
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.content.Context
@@ -122,7 +124,7 @@ object MarketplaceUi {
         }
         favoriteButton.setOnClickListener {
             if (Supabase.userId.isNullOrBlank()) {
-                Toast.makeText(context, "سجلي الدخول لإضافة المنتجات للمفضلة", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "سجل الدخول لإضافة المنتجات للمفضلة", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             val target = !favoriteActive
@@ -141,7 +143,7 @@ object MarketplaceUi {
                         Toast.LENGTH_SHORT
                     ).show()
                 }.onFailure {
-                    Toast.makeText(context, it.message ?: "تعذر تحديث المفضلة", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, CustomerErrorMessages.from(it, "تعذر تحديث المفضلة"), Toast.LENGTH_SHORT).show()
                 }
                 favoriteButton.isEnabled = true
             }
@@ -209,7 +211,7 @@ object MarketplaceUi {
                     background = ContextCompat.getDrawable(context, R.drawable.bg_chip)
                     gravity = Gravity.CENTER
                     setPadding(dp(context, 10), dp(context, 7), dp(context, 10), dp(context, 7))
-                    contentDescription = "المنتج له خيارات، افتحي المنتج للاختيار"
+                    contentDescription = "المنتج له خيارات، افتح المنتج للاختيار"
                 })
             }
             else -> {

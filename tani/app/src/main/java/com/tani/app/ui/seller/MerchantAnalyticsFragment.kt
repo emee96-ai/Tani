@@ -1,5 +1,7 @@
 package com.tani.app.ui.seller
 
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.os.Bundle
@@ -41,14 +43,14 @@ class MerchantAnalyticsFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             runCatchingCancellable { repository.merchantDashboardSummary() }
                 .onSuccess(::render)
-                .onFailure { showError(it.message ?: "تعذر تحميل المؤشرات") }
+                .onFailure { showError(CustomerErrorMessages.from(it, "تعذر تحميل المؤشرات")) }
         }
     }
 
     private fun render(m: MerchantDashboardSummary) {
         val context = requireContext(); root.removeAllViews()
         root.addView(MerchantUi.title(context, "أداء المتجر"))
-        root.addView(MerchantUi.subtitle(context, "أرقام بسيطة وواضحة تساعدك تعرفي شغلك ماشي كيف."))
+        root.addView(MerchantUi.subtitle(context, "أرقام بسيطة وواضحة تساعدك تعرف شغلك ماشي كيف."))
 
         root.addView(MerchantUi.sectionTitle(context, "المبيعات والطلبات"))
         addMetricPair("كل الطلبات", m.orders.toString(), "تم التسليم", m.delivered_orders.toString())

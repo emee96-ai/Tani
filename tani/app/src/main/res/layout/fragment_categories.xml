@@ -14,7 +14,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="الفئات"
+            android:text="@string/categories_label"
             android:textColor="@color/text_dark"
             android:textSize="28sp"
             android:textStyle="bold" />
@@ -23,7 +23,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="اختاري الفئة المناسبة واكتشفي متاجر ومنتجات أكثر"
+            android:text="@string/categories_label_2"
             android:textColor="@color/text_muted" />
 
         <LinearLayout
@@ -37,7 +37,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="كل المنتجات" />
+                android:text="@string/categories_all_products" />
 
             <Button
                 android:id="@+id/categories_stores"
@@ -46,7 +46,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:layout_weight="1"
-                android:text="المتاجر" />
+                android:text="@string/categories_stores" />
         </LinearLayout>
 
         <TextView
@@ -54,7 +54,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:text="جاري تحميل الفئات..."
+            android:text="@string/categories_loading"
             android:textColor="@color/text_muted" />
 
         <LinearLayout

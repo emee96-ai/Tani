@@ -1,5 +1,7 @@
 package com.tani.app.ui.profile
 
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.app.AlertDialog
@@ -68,7 +70,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
         AlertDialog.Builder(requireContext())
             .setTitle("تغيير كلمة المرور")
-            .setMessage("استخدمي 8 أحرف على الأقل، وبها حرف ورقم.")
+            .setMessage("استخدم 8 أحرف على الأقل، وبها حرف ورقم.")
             .setView(container)
             .setPositiveButton("حفظ") { _, _ ->
                 setActionsEnabled(false)
@@ -84,7 +86,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                     }.onFailure {
                         val message = if (it.message.orEmpty().contains("password", ignoreCase = true)) {
                             "كلمة المرور الحالية غير صحيحة أو الجديدة لا تحقق شروط الأمان"
-                        } else it.message ?: "تعذر تغيير كلمة المرور"
+                        } else CustomerErrorMessages.from(it, "تعذر تغيير كلمة المرور")
                         Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
                     }
                     setActionsEnabled(true)
@@ -95,7 +97,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
     }
 
     private fun confirmDeleteAccount() {
-        val confirmation = EditText(requireContext()).apply { hint = "اكتبي كلمة حذف للتأكيد" }
+        val confirmation = EditText(requireContext()).apply { hint = "اكتب كلمة حذف للتأكيد" }
         AlertDialog.Builder(requireContext())
             .setTitle("حذف الحساب")
             .setMessage(
@@ -104,7 +106,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             .setView(confirmation)
             .setPositiveButton("حذف") { _, _ ->
                 if (confirmation.text.toString().trim() != "حذف") {
-                    Toast.makeText(requireContext(), "اكتبي كلمة حذف للتأكيد", Toast.LENGTH_LONG).show()
+                    Toast.makeText(requireContext(), "اكتب كلمة حذف للتأكيد", Toast.LENGTH_LONG).show()
                 } else {
                     deleteAccount()
                 }
@@ -134,7 +136,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                 }
                 .onFailure {
                     if (isAdded) {
-                        Toast.makeText(requireContext(), it.message ?: "تعذر حذف الحساب", Toast.LENGTH_LONG).show()
+                        Toast.makeText(requireContext(), CustomerErrorMessages.from(it, "تعذر حذف الحساب"), Toast.LENGTH_LONG).show()
                         setActionsEnabled(true)
                     }
                 }
@@ -144,7 +146,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
     private fun confirmLogout() {
         AlertDialog.Builder(requireContext())
             .setTitle("تسجيل الخروج")
-            .setMessage("هل تريدين تسجيل الخروج من حسابك؟")
+            .setMessage("هل تريد تسجيل الخروج من حسابك؟")
             .setPositiveButton("تسجيل الخروج") { _, _ -> logout() }
             .setNegativeButton("إلغاء", null)
             .show()

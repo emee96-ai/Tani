@@ -12,7 +12,7 @@
         android:id="@+id/products_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="المنتجات"
+        android:text="@string/products_title"
         android:textColor="@color/text_dark"
         android:textSize="26sp"
         android:textStyle="bold" />
@@ -21,7 +21,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="3dp"
-        android:text="ابحثي، رتبي، وضيّقي النتائج بسرعة"
+        android:text="@string/products_label"
         android:textColor="@color/text_muted"
         android:textSize="14sp" />
 
@@ -31,7 +31,7 @@
         android:layout_height="52dp"
         android:layout_marginTop="12dp"
         android:background="@drawable/bg_field"
-        android:hint="اسم المنتج أو المتجر"
+        android:hint="@string/products_search_hint"
         android:imeOptions="actionSearch"
         android:paddingHorizontal="14dp"
         android:singleLine="true" />
@@ -48,7 +48,7 @@
             android:layout_width="0dp"
             android:layout_height="48dp"
             android:layout_weight="1"
-            android:text="فلترة وترتيب" />
+            android:text="@string/products_filter_toggle" />
 
         <Button
             android:id="@+id/products_clear"
@@ -56,7 +56,7 @@
             android:layout_width="wrap_content"
             android:layout_height="48dp"
             android:layout_marginStart="6dp"
-            android:text="مسح" />
+            android:text="@string/products_clear" />
     </LinearLayout>
 
     <TextView
@@ -64,7 +64,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
-        android:text="الأحدث"
+        android:text="@string/products_filter_summary"
         android:textColor="@color/text_muted"
         android:textSize="13sp" />
 
@@ -89,7 +89,7 @@
                 android:layout_height="48dp"
                 android:layout_weight="1"
                 android:background="@drawable/bg_field"
-                android:hint="أقل سعر"
+                android:hint="@string/products_min_price_hint"
                 android:inputType="numberDecimal"
                 android:paddingHorizontal="14dp"
                 android:singleLine="true" />
@@ -101,7 +101,7 @@
                 android:layout_marginStart="8dp"
                 android:layout_weight="1"
                 android:background="@drawable/bg_field"
-                android:hint="أعلى سعر"
+                android:hint="@string/products_max_price_hint"
                 android:inputType="numberDecimal"
                 android:paddingHorizontal="14dp"
                 android:singleLine="true" />
@@ -120,7 +120,7 @@
             android:layout_width="wrap_content"
             android:layout_height="48dp"
             android:layout_marginTop="5dp"
-            android:text="عرض المتوفر فقط"
+            android:text="@string/products_in_stock"
             android:textColor="@color/text_dark" />
 
         <Button
@@ -128,7 +128,7 @@
             android:layout_width="match_parent"
             android:layout_height="50dp"
             android:layout_marginTop="8dp"
-            android:text="تطبيق الفلاتر" />
+            android:text="@string/products_apply" />
     </LinearLayout>
 
     <TextView
@@ -136,7 +136,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:text="جاري تحميل المنتجات..."
+        android:text="@string/products_loading"
         android:textColor="@color/text_muted" />
 
     <androidx.recyclerview.widget.RecyclerView
@@ -155,6 +155,6 @@
         android:layout_height="50dp"
         android:layout_marginTop="6dp"
         android:layout_marginBottom="12dp"
-        android:text="عرض المزيد"
+        android:text="@string/products_load_more"
         android:visibility="gone" />
 </LinearLayout>

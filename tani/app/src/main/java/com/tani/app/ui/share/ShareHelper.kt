@@ -7,17 +7,17 @@ import com.tani.app.BuildConfig
 object ShareHelper {
     fun product(context: Context, productId: String, name: String) = share(
         context,
-        "شوفي $name على تاني\n${link("product",productId)}"
+        "شوف $name على تاني\n${link("product",productId)}"
     )
 
     fun store(context: Context, storeId: String, name: String) = share(
         context,
-        "شوفي متجر $name على تاني\n${link("store",storeId)}"
+        "شوف متجر $name على تاني\n${link("store",storeId)}"
     )
 
     fun referral(context: Context, code: String) = share(
         context,
-        "انضمي لتاني بكود الإحالة: $code"
+        "انضم لتاني بكود الإحالة: $code"
     )
 
     private fun share(context: Context, text: String) {

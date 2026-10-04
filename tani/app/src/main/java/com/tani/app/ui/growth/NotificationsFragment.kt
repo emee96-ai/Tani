@@ -1,5 +1,7 @@
 package com.tani.app.ui.growth
 
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.graphics.Typeface
@@ -107,7 +109,7 @@ class NotificationsFragment : Fragment() {
                     root.removeAllViews()
                     root.addView(ScreenUi.title(context, "الإشعارات"))
                     root.addView(ScreenUi.subtitle(context, "تعذر تحميل الإشعارات حالياً."))
-                    root.addView(ScreenUi.muted(context, it.message ?: "حاولي مرة أخرى"))
+                    root.addView(ScreenUi.muted(context, CustomerErrorMessages.from(it, "حاول مرة أخرى")))
                     root.addView(ScreenUi.button(context, "إعادة المحاولة") { load(forceRefresh = true) })
                 }
         }
@@ -128,7 +130,7 @@ class NotificationsFragment : Fragment() {
             ScreenUi.subtitle(
                 context,
                 when {
-                    hasMerchantAccount -> "افصلي بين إشعارات مشترياتك وإشعارات متجرك."
+                    hasMerchantAccount -> "افصل بين إشعارات مشترياتك وإشعارات متجرك."
                     unread > 0 -> "عندك $unread إشعار غير مقروء"
                     else -> "كل الإشعارات مقروءة"
                 }
@@ -308,7 +310,7 @@ class NotificationsFragment : Fragment() {
         if (date.isNotBlank()) card.addView(ScreenUi.muted(context, date))
 
         if (hasDestination(notification)) {
-            card.addView(ScreenUi.muted(context, "اضغطي على الإشعار لفتح التفاصيل"))
+            card.addView(ScreenUi.muted(context, "اضغط على الإشعار لفتح التفاصيل"))
         }
         if (isUnread) {
             card.addView(ScreenUi.button(context, "تحديد كمقروء") { markRead(notification.id) })
@@ -320,7 +322,7 @@ class NotificationsFragment : Fragment() {
         val context = requireContext()
         val card = ScreenUi.card(context)
         card.addView(ScreenUi.text(context, "إعدادات الإشعارات", 18f, true))
-        card.addView(ScreenUi.muted(context, "اختاري أنواع التنبيهات التي تريدين استقبالها."))
+        card.addView(ScreenUi.muted(context, "اختر أنواع التنبيهات التي تريد استقبالها."))
 
         val enabled = CheckBox(context).apply {
             text = "تشغيل الإشعارات"
@@ -372,7 +374,7 @@ class NotificationsFragment : Fragment() {
                 AppContentStore.updateNotifications(items, it)
                 Toast.makeText(context, "تم حفظ إعدادات الإشعارات", Toast.LENGTH_SHORT).show()
             }.onFailure {
-                Toast.makeText(context, it.message ?: "تعذر حفظ الإعدادات", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, CustomerErrorMessages.from(it, "تعذر حفظ الإعدادات"), Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -390,7 +392,7 @@ class NotificationsFragment : Fragment() {
                         syncBadge()
                     }
                     .onFailure {
-                        Toast.makeText(requireContext(), it.message ?: "تعذر تحديث الإشعار", Toast.LENGTH_LONG).show()
+                        Toast.makeText(requireContext(), CustomerErrorMessages.from(it, "تعذر تحديث الإشعار"), Toast.LENGTH_LONG).show()
                     }
             }
             openDestination(main, notification)
@@ -424,7 +426,7 @@ class NotificationsFragment : Fragment() {
                     render()
                 }
                 .onFailure {
-                    Toast.makeText(context, it.message ?: "تعذر تحديث الإشعار", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, CustomerErrorMessages.from(it, "تعذر تحديث الإشعار"), Toast.LENGTH_LONG).show()
                 }
         }
     }
@@ -449,7 +451,7 @@ class NotificationsFragment : Fragment() {
                 Toast.makeText(context, "تم تحديد إشعارات القسم كمقروءة", Toast.LENGTH_SHORT).show()
                 render()
             }.onFailure {
-                Toast.makeText(context, it.message ?: "تعذر تحديث الإشعارات", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, CustomerErrorMessages.from(it, "تعذر تحديث الإشعارات"), Toast.LENGTH_LONG).show()
             }
         }
     }

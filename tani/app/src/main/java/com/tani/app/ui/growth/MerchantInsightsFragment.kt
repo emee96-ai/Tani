@@ -1,5 +1,7 @@
 package com.tani.app.ui.growth
 
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.os.Bundle
@@ -48,7 +50,7 @@ class MerchantInsightsFragment : Fragment() {
         val context = requireContext()
         root.removeAllViews()
         root.addView(MerchantUi.title(context, "صحة المتجر"))
-        root.addView(MerchantUi.subtitle(context, "المؤشرات التي تساعدك تعرفي أين يحتاج المتجر انتباهك."))
+        root.addView(MerchantUi.subtitle(context, "المؤشرات التي تساعدك تعرف أين يحتاج المتجر انتباهك."))
         root.addView(MerchantUi.card(context, soft = true).apply {
             addView(MerchantUi.text(context, "جاري تجهيز المؤشرات…", 14f, true))
         })
@@ -61,7 +63,7 @@ class MerchantInsightsFragment : Fragment() {
             }.onSuccess { (metrics, health) ->
                 root.removeAllViews()
                 root.addView(MerchantUi.title(context, "صحة المتجر"))
-                root.addView(MerchantUi.subtitle(context, "ركّزي على التنبيهات أولاً، وبعدها تابعي النمو."))
+                root.addView(MerchantUi.subtitle(context, "ركّز على التنبيهات أولاً، وبعدها تابع النمو."))
 
                 root.addView(MerchantUi.sectionTitle(context, "الطلبات والمبيعات"))
                 addMetricPair("كل الطلبات", (metrics?.total_orders ?: 0).toString(), "الطلبات المكتملة", (metrics?.completed_orders ?: 0).toString())
@@ -97,7 +99,7 @@ class MerchantInsightsFragment : Fragment() {
                 root.addView(MerchantUi.title(context, "صحة المتجر"))
                 root.addView(MerchantUi.card(context).apply {
                     addView(MerchantUi.text(context, "تعذر تحميل المؤشرات", 16f, true))
-                    addView(MerchantUi.muted(context, it.message ?: "حاولي مرة أخرى لاحقاً").apply {
+                    addView(MerchantUi.muted(context, CustomerErrorMessages.from(it, "حاول مرة أخرى لاحقاً")).apply {
                         setPadding(0, MerchantUi.dp(context, 5), 0, 0)
                     })
                 })

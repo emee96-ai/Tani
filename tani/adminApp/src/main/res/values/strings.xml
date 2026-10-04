@@ -8,4 +8,19 @@
     <string name="logout">خروج</string>
     <string name="refresh">تحديث</string>
     <string name="search">بحث</string>
+    <string name="header_admin_drawer_label">مركز إدارة تاني</string>
+    <string name="header_admin_drawer_label_2">إدارة المشرفين</string>
+    <string name="bottom_admin_nav_nav_dashboard">الرئيسية</string>
+    <string name="bottom_admin_nav_nav_orders">الطلبات</string>
+    <string name="bottom_admin_nav_nav_merchants">التجار</string>
+    <string name="bottom_admin_nav_nav_support">الدعم</string>
+    <string name="bottom_admin_nav_nav_more">المزيد</string>
+    <string name="drawer_dashboard">نظرة عامة</string>
+    <string name="drawer_reports">التقارير والتحليلات</string>
+    <string name="drawer_customers">إدارة العملاء</string>
+    <string name="drawer_products">إدارة المنتجات</string>
+    <string name="drawer_monetization">الاشتراكات والظهور</string>
+    <string name="drawer_configuration">إعدادات السوق</string>
+    <string name="drawer_system">حالة النظام والسجل</string>
+    <string name="drawer_logout">تسجيل الخروج</string>
 </resources>

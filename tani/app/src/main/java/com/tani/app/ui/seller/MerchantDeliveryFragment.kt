@@ -1,5 +1,7 @@
 package com.tani.app.ui.seller
 
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.os.Bundle
@@ -76,7 +78,7 @@ class MerchantDeliveryFragment : Fragment() {
                     )
                 }
                 render(values, settings?.notes.orEmpty(), settings?.is_active ?: true)
-            }.onFailure { showError(it.message ?: "تعذر تحميل إعدادات التوصيل") }
+            }.onFailure { showError(CustomerErrorMessages.from(it, "تعذر تحميل إعدادات التوصيل")) }
         }
     }
 
@@ -85,7 +87,7 @@ class MerchantDeliveryFragment : Fragment() {
         root.removeAllViews()
         zoneEditors.clear()
         root.addView(MerchantUi.title(context, "التوصيل"))
-        root.addView(MerchantUi.subtitle(context, "حددي المناطق المتاحة وسعر وزمن الوصول لكل منطقة. الزمن يبدأ بعد تسليم الطلب للمندوب."))
+        root.addView(MerchantUi.subtitle(context, "حدد المناطق المتاحة وسعر وزمن الوصول لكل منطقة. الزمن يبدأ بعد تسليم الطلب للمندوب."))
 
         root.addView(MerchantUi.card(context, soft = true).apply {
             addView(MerchantUi.text(context, "كيف تعمل الإعدادات؟", 14.5f, true))
@@ -131,18 +133,18 @@ class MerchantDeliveryFragment : Fragment() {
                 val minutesText = editor.minutes.text.toString().trim()
                 val minutes = minutesText.takeIf { it.isNotEmpty() }?.toIntOrNull()
                 when {
-                    area.isBlank() -> return@primaryButton toast("اكتبي اسم كل منطقة توصيل")
-                    fee == null || fee < 0 -> return@primaryButton toast("راجعي رسوم التوصيل")
-                    minutesText.isNotBlank() && minutes == null -> return@primaryButton toast("راجعي زمن الوصول")
+                    area.isBlank() -> return@primaryButton toast("اكتب اسم كل منطقة توصيل")
+                    fee == null || fee < 0 -> return@primaryButton toast("راجع رسوم التوصيل")
+                    minutesText.isNotBlank() && minutes == null -> return@primaryButton toast("راجع زمن الوصول")
                     minutes != null && minutes !in 1..1440 -> return@primaryButton toast("زمن الوصول يجب أن يكون بين دقيقة و24 ساعة")
                 }
                 values += MerchantDeliveryZoneUpdateInput(area, fee, minutes, editor.available.isChecked)
             }
             if (values.map { it.area.lowercase() }.distinct().size != values.size) {
-                return@primaryButton toast("لا تكرري نفس منطقة التوصيل")
+                return@primaryButton toast("لا تكرر نفس منطقة التوصيل")
             }
             if (active.isChecked && values.none { it.isActive }) {
-                return@primaryButton toast("فعّلي منطقة توصيل واحدة على الأقل أو أوقفي التوصيل العام")
+                return@primaryButton toast("فعّل منطقة توصيل واحدة على الأقل أو أوقف التوصيل العام")
             }
             save(values, notes.text.toString(), active.isChecked)
         })
@@ -201,9 +203,9 @@ class MerchantDeliveryFragment : Fragment() {
                 load()
             }.onFailure { error ->
                 val message = when {
-                    error.message.orEmpty().contains("Enable at least one", ignoreCase = true) -> "فعّلي منطقة توصيل واحدة على الأقل"
+                    error.message.orEmpty().contains("Enable at least one", ignoreCase = true) -> "فعّل منطقة توصيل واحدة على الأقل"
                     error.message.orEmpty().contains("Approved merchant", ignoreCase = true) -> "حساب التاجر غير جاهز لتعديل التوصيل"
-                    else -> error.message ?: "تعذر حفظ التوصيل"
+                    else -> CustomerErrorMessages.from(error, "تعذر حفظ التوصيل")
                 }
                 toast(message)
             }

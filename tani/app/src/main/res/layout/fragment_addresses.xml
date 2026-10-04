@@ -11,7 +11,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="عناويني"
+            android:text="@string/account_addresses"
             android:textSize="28sp"
             android:textStyle="bold"
             android:textColor="@color/text_dark" />
@@ -19,14 +19,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="احفظي أكثر من عنوان واختاري الافتراضي للتوصيل."
+            android:text="@string/addresses_label"
             android:textColor="@color/text_muted" />
         <Button
             android:id="@+id/addresses_add"
             android:layout_width="match_parent"
             android:layout_height="52dp"
             android:layout_marginTop="16dp"
-            android:text="إضافة عنوان جديد" />
+            android:text="@string/addresses_add" />
         <ProgressBar
             android:id="@+id/addresses_progress"
             android:layout_width="42dp"

@@ -1,5 +1,7 @@
 package com.tani.app.ui.marketplace
 
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.content.res.ColorStateList
@@ -58,7 +60,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
                     content.visibility = View.VISIBLE
                     bind(view, details)
                 }
-                .onFailure { loading.text = "تعذر تحميل المنتج\n${it.message ?: "حاولي مرة أخرى"}" }
+                .onFailure { loading.text = "تعذر تحميل المنتج\n${CustomerErrorMessages.from(it, "حاول مرة أخرى")}" }
         }
     }
 
@@ -265,7 +267,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
 
         favoriteButton.setOnClickListener {
             if (Supabase.userId.isNullOrBlank()) {
-                Toast.makeText(requireContext(), "سجلي الدخول لإضافة المنتج للمفضلة", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "سجل الدخول لإضافة المنتج للمفضلة", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             favoriteButton.isEnabled = false
@@ -281,7 +283,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
                             Toast.LENGTH_SHORT
                         ).show()
                     }
-                    .onFailure { Toast.makeText(requireContext(), it.message ?: "تعذر تحديث المفضلة", Toast.LENGTH_LONG).show() }
+                    .onFailure { Toast.makeText(requireContext(), CustomerErrorMessages.from(it, "تعذر تحديث المفضلة"), Toast.LENGTH_LONG).show() }
                 favoriteButton.isEnabled = true
             }
         }
@@ -325,7 +327,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
             mainPrice.text = MarketplaceUi.formatPrice(price)
             stickyPrice.text = MarketplaceUi.formatPrice(price)
             stockText.text = when {
-                product.has_variants && chosenVariant() == null -> "اختاري الخيار"
+                product.has_variants && chosenVariant() == null -> "اختر الخيار"
                 availableStock() > 0 -> "متوفر (${availableStock()})"
                 else -> "غير متوفر حالياً"
             }
@@ -335,7 +337,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
             plus.isEnabled = available > 0 && quantity < available
             addButton.isEnabled = choiceReady() && available > 0
             addButton.text = when {
-                product.has_variants && chosenVariant() == null -> "اختاري المقاس أو اللون أولاً"
+                product.has_variants && chosenVariant() == null -> "اختر المقاس أو اللون أولاً"
                 availableStock() <= 0 -> "غير متوفر حالياً"
                 available <= 0 -> "الكمية المتاحة موجودة في السلة"
                 else -> "إضافة للسلة • ${MarketplaceUi.formatPrice(price * quantity)}"
@@ -352,7 +354,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
         }
         addButton.setOnClickListener {
             if (!choiceReady()) {
-                Toast.makeText(requireContext(), "اختاري المقاس أو اللون أولاً", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "اختر المقاس أو اللون أولاً", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             val wanted = quantity.coerceAtMost(availableToAdd())
@@ -432,7 +434,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
             return
         }
 
-        variantNote.text = "اختاري المقاس أو اللون المطلوب قبل الإضافة للسلة."
+        variantNote.text = "اختر المقاس أو اللون المطلوب قبل الإضافة للسلة."
         fun renderChoices() {
             variantsBox.removeAllViews()
             details.variants.forEach { variant ->
@@ -508,7 +510,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
                 onOpen = { (activity as MainActivity).show(newInstance(related.id)) },
                 onAdd = {
                     if (related.has_variants) {
-                        Toast.makeText(requireContext(), "اختاري المقاس أو اللون أولاً", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), "اختر المقاس أو اللون أولاً", Toast.LENGTH_SHORT).show()
                         (activity as MainActivity).show(newInstance(related.id))
                     } else if (Cart.add(related.toProduct())) {
                         (activity as? MainActivity)?.refreshCartBadge()

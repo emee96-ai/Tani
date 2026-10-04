@@ -17,6 +17,10 @@ import kotlinx.serialization.json.put
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
+private const val CUSTOMER_ORDER_HISTORY_LIMIT = 200
+private const val MERCHANT_FINISHED_ORDERS_LIMIT = 200
+private const val FINAL_ORDER_STATUSES = "delivered,cancelled,rejected,failed"
+
 class Repository {
 
     suspend fun login(email: String, password: String) {
@@ -48,7 +52,7 @@ class Repository {
         val cleanPhone = normalizePhone(phone)
         val cleanEmail = validateEmail(email)
 
-        require(cleanName.length >= 2) { "أدخلي الاسم الكامل أو اسماً واضحاً" }
+        require(cleanName.length >= 2) { "أدخل الاسم الكامل أو اسماً واضحاً" }
         require(cleanPhone.length in 9..15) { "رقم الهاتف غير صحيح" }
         validateNewPassword(password, confirmPassword)
 
@@ -98,7 +102,7 @@ class Repository {
         confirmPassword: String
     ) {
         require(recoveryToken.isNotBlank()) { "رابط استعادة كلمة المرور غير صالح" }
-        require(recoveryRefreshToken.isNotBlank()) { "رابط الاستعادة لا يحتوي جلسة كاملة. أطلبي رابطاً جديداً" }
+        require(recoveryRefreshToken.isNotBlank()) { "رابط الاستعادة لا يحتوي جلسة كاملة. اطلب رابطاً جديداً" }
         validateNewPassword(password, confirmPassword)
 
         val user: AuthUser = Supabase.authPut(
@@ -447,15 +451,6 @@ class Repository {
         Charsets.UTF_8.name()
     )
 
-    suspend fun products(): List<Product> {
-        val result: List<Product> = Supabase.get(
-            "products",
-            "select=*&is_active=eq.true&order=created_at.desc"
-        )
-        Analytics.track("product_list_loaded", screen = "products", metadata = buildJsonObject { put("count", result.size) })
-        return result
-    }
-
     suspend fun becomeSeller(storeName: String) {
         val uid = Supabase.userId ?: error("تسجيل الدخول مطلوب")
         require(storeName.isNotBlank()) { "اسم المتجر مطلوب" }
@@ -533,7 +528,7 @@ class Repository {
     ): Address {
         val uid = Supabase.userId ?: error("تسجيل الدخول مطلوب")
         val cleanDescription = description.trim()
-        require(cleanDescription.length in 2..500) { "أدخلي عنواناً واضحاً" }
+        require(cleanDescription.length in 2..500) { "أدخل عنواناً واضحاً" }
         val cleanPhone = phone?.trim()?.takeIf { it.isNotBlank() }
         if (cleanPhone != null) require(cleanPhone.length in 7..30) { "رقم الهاتف غير صحيح" }
 
@@ -565,7 +560,7 @@ class Repository {
         isDefault: Boolean
     ): Address {
         val cleanDescription = description.trim()
-        require(cleanDescription.length in 2..500) { "أدخلي عنواناً واضحاً" }
+        require(cleanDescription.length in 2..500) { "أدخل عنواناً واضحاً" }
         val result: List<Address> = Supabase.patch(
             "addresses",
             "id=eq.$id",
@@ -652,7 +647,7 @@ class Repository {
     ): String {
         require(items.isNotEmpty()) { "السلة فارغة" }
         require(phone.trim().length in 7..30) { "رقم الهاتف غير صحيح" }
-        require(idempotencyKey.length in 16..100) { "تعذر تجهيز الطلب. حاولي مرة أخرى" }
+        require(idempotencyKey.length in 16..100) { "تعذر تجهيز الطلب. حاول مرة أخرى" }
 
         val payload = buildJsonArray {
             items.forEach { item ->
@@ -690,7 +685,7 @@ class Repository {
         val uid = Supabase.userId ?: return emptyList()
         return Supabase.get(
             "order_groups",
-            "select=*&customer_id=eq.$uid&order=created_at.desc"
+            "select=*&customer_id=eq.$uid&order=created_at.desc&limit=$CUSTOMER_ORDER_HISTORY_LIMIT"
         )
     }
 
@@ -698,14 +693,6 @@ class Repository {
         "orders",
         "select=*&order_group_id=eq.$groupId&order=created_at.asc"
     )
-
-    suspend fun orders(): List<Order> {
-        val uid = Supabase.userId ?: return emptyList()
-        return Supabase.get(
-            "orders",
-            "select=*&customer_id=eq.$uid&order=created_at.desc"
-        )
-    }
 
     suspend fun orderGroupDetails(groupId: String): OrderGroupDetails = coroutineScope {
         val groupDeferred = async {
@@ -757,12 +744,6 @@ class Repository {
         return result
     }
 
-    suspend fun sellerOrderItems(sellerId: String): List<OrderItem> =
-        Supabase.get(
-            "order_items",
-            "select=*&seller_id=eq.$sellerId&order=created_at.desc"
-        )
-
 
     suspend fun merchantProfile(): MerchantProfile? {
         val uid = Supabase.userId ?: return null
@@ -795,7 +776,7 @@ class Repository {
     suspend fun verifyMerchantPhone(phone: String, code: String) {
         val cleanPhone = normalizePhone(phone)
         val cleanCode = code.trim()
-        require(Regex("^[0-9]{6}$").matches(cleanCode)) { "أدخلي رمز التحقق المكوّن من 6 أرقام" }
+        require(Regex("^[0-9]{6}$").matches(cleanCode)) { "أدخل رمز التحقق المكوّن من 6 أرقام" }
         val access = Supabase.token ?: error("تسجيل الدخول مطلوب")
         val response: AuthResponse = Supabase.authPostAuthorized(
             "verify",
@@ -857,11 +838,11 @@ class Repository {
     ): String {
         require(businessName.trim().length in 2..120) { "اسم النشاط مطلوب" }
         require(storeName.trim().length in 2..120) { "اسم المتجر مطلوب" }
-        require(categoryId != null || requestedCategory.trim().length in 2..80) { "اختاري فئة أو اكتبي الفئة المطلوبة" }
-        require(deliveryZones.isNotEmpty()) { "أضيفي منطقة توصيل واحدة على الأقل" }
-        require(deliveryZones.all { it.area.trim().length in 2..100 && it.fee >= 0 }) { "راجعي مناطق ورسوم التوصيل" }
-        require(deliveryZones.all { it.estimated_minutes == null || it.estimated_minutes in 1..1440 }) { "راجعي زمن الوصول" }
-        require(identityPath.isNotBlank()) { "ارفعي مستند الهوية أولاً" }
+        require(categoryId != null || requestedCategory.trim().length in 2..80) { "اختر فئة أو اكتب الفئة المطلوبة" }
+        require(deliveryZones.isNotEmpty()) { "أضف منطقة توصيل واحدة على الأقل" }
+        require(deliveryZones.all { it.area.trim().length in 2..100 && it.fee >= 0 }) { "راجع مناطق ورسوم التوصيل" }
+        require(deliveryZones.all { it.estimated_minutes == null || it.estimated_minutes in 1..1440 }) { "راجع زمن الوصول" }
+        require(identityPath.isNotBlank()) { "ارفع مستند الهوية أولاً" }
         require(acceptPolicies) { "يجب الموافقة على سياسات التاجر" }
         val merchantId: String = Supabase.post(
             "rpc/submit_merchant_application",
@@ -967,7 +948,7 @@ class Repository {
         active: Boolean
     ): DeliverySettings {
         require(fee >= 0) { "رسوم التوصيل غير صحيحة" }
-        require(area.trim().length in 2..300) { "حددي منطقة التوصيل" }
+        require(area.trim().length in 2..300) { "حدد منطقة التوصيل" }
         if (estimatedMinutes != null) require(estimatedMinutes in 1..1440) { "زمن التوصيل غير صحيح" }
         val existing = merchantDeliverySettings(sellerId)
         val body = buildJsonObject {
@@ -1158,10 +1139,23 @@ class Repository {
         Supabase.delete("product_variants", "id=eq.$variantId")
     }
 
-    suspend fun merchantOrders(sellerId: String): List<Order> = Supabase.get(
-        "orders",
-        "select=*&seller_id=eq.$sellerId&order=created_at.desc"
-    )
+    /** كل الطلبات المفتوحة مهما كان عددها، وآخر الطلبات المنتهية فقط حتى لا يكبر التحميل مع الوقت. */
+    suspend fun merchantOrders(sellerId: String): List<Order> = coroutineScope {
+        val open = async {
+            Supabase.get<List<Order>>(
+                "orders",
+                "select=*&seller_id=eq.$sellerId&status=not.in.($FINAL_ORDER_STATUSES)&order=created_at.desc"
+            )
+        }
+        val finished = async {
+            Supabase.get<List<Order>>(
+                "orders",
+                "select=*&seller_id=eq.$sellerId&status=in.($FINAL_ORDER_STATUSES)" +
+                    "&order=created_at.desc&limit=$MERCHANT_FINISHED_ORDERS_LIMIT"
+            )
+        }
+        open.await() + finished.await()
+    }
 
     suspend fun merchantOrderItems(orderId: String): List<OrderItem> = Supabase.get(
         "order_items",

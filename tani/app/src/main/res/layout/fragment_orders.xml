@@ -31,7 +31,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="طلباتي"
+                    android:text="@string/orders_label"
                     android:textColor="@color/text_dark"
                     android:textSize="30sp"
                     android:textStyle="bold" />
@@ -42,7 +42,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:lineSpacingExtra="2dp"
-                    android:text="تابعي كل طلباتك الحالية والمكتملة"
+                    android:text="@string/orders_summary"
                     android:textColor="@color/text_muted"
                     android:textSize="16sp" />
             </LinearLayout>
@@ -53,7 +53,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="50dp"
                 android:minWidth="72dp"
-                android:text="تحديث"
+                android:text="@string/orders_refresh"
                 android:textSize="15sp" />
         </LinearLayout>
 
@@ -77,7 +77,7 @@
                     android:minWidth="104dp"
                     android:paddingStart="18dp"
                     android:paddingEnd="18dp"
-                    android:text="الكل"
+                    android:text="@string/orders_all"
                     android:textSize="15sp" />
 
                 <Button
@@ -89,7 +89,7 @@
                     android:minWidth="112dp"
                     android:paddingStart="18dp"
                     android:paddingEnd="18dp"
-                    android:text="النشطة"
+                    android:text="@string/orders_active"
                     android:textSize="15sp" />
 
                 <Button
@@ -101,7 +101,7 @@
                     android:minWidth="122dp"
                     android:paddingStart="18dp"
                     android:paddingEnd="18dp"
-                    android:text="المكتملة"
+                    android:text="@string/orders_completed"
                     android:textSize="15sp" />
 
                 <Button
@@ -113,7 +113,7 @@
                     android:minWidth="112dp"
                     android:paddingStart="18dp"
                     android:paddingEnd="18dp"
-                    android:text="الملغاة"
+                    android:text="@string/orders_cancelled"
                     android:textSize="15sp" />
             </LinearLayout>
         </HorizontalScrollView>

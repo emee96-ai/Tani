@@ -42,7 +42,7 @@ suspend fun Repository.merchantDeliveryZones(sellerId: String): List<MerchantDel
 )
 
 suspend fun Repository.deliveryQuote(sellerId: String, area: String): MerchantDeliveryQuote {
-    require(area.trim().isNotBlank()) { "اختاري منطقة التوصيل" }
+    require(area.trim().isNotBlank()) { "اختر منطقة التوصيل" }
     return Supabase.post(
         "rpc/delivery_quote",
         buildJsonObject {
@@ -66,9 +66,9 @@ suspend fun Repository.checkoutWithDeliveryZones(
     check(PendingCheckoutStore.begin(uid).key == idempotencyKey)
     require(items.isNotEmpty()) { "السلة فارغة" }
     require(phone.trim().length in 7..30) { "رقم الهاتف غير صحيح" }
-    require(idempotencyKey.length in 16..100) { "تعذر تجهيز الطلب. حاولي مرة أخرى" }
+    require(idempotencyKey.length in 16..100) { "تعذر تجهيز الطلب. حاول مرة أخرى" }
     require(expectedGrandTotal >= 0) { "إجمالي الطلب غير صحيح" }
-    require(quoteToken.length == 32) { "انتهت صلاحية التسعير. أعيدي المحاولة" }
+    require(quoteToken.length == 32) { "انتهت صلاحية التسعير. أعد المحاولة" }
 
     val quantities = CheckoutQuantityPolicy.aggregate(items.map {
         CheckoutQuantityPolicy.LineKey(it.product.id, it.variant?.id) to it.quantity
@@ -120,11 +120,11 @@ suspend fun Repository.checkoutWithDeliveryZones(
 suspend fun Repository.replaceMerchantDeliveryZones(
     zones: List<MerchantDeliveryZoneInput>
 ): List<MerchantDeliveryZone> {
-    require(zones.isNotEmpty()) { "أضيفي منطقة توصيل واحدة على الأقل" }
+    require(zones.isNotEmpty()) { "أضف منطقة توصيل واحدة على الأقل" }
     require(zones.size <= 20) { "الحد الأقصى 20 منطقة توصيل" }
-    require(zones.all { it.area.trim().length in 2..100 && it.fee >= 0 }) { "راجعي مناطق ورسوم التوصيل" }
-    require(zones.all { it.estimated_minutes == null || it.estimated_minutes in 1..1440 }) { "راجعي زمن الوصول" }
-    require(zones.map { it.area.trim().lowercase() }.distinct().size == zones.size) { "لا تكرري نفس منطقة التوصيل" }
+    require(zones.all { it.area.trim().length in 2..100 && it.fee >= 0 }) { "راجع مناطق ورسوم التوصيل" }
+    require(zones.all { it.estimated_minutes == null || it.estimated_minutes in 1..1440 }) { "راجع زمن الوصول" }
+    require(zones.map { it.area.trim().lowercase() }.distinct().size == zones.size) { "لا تكرر نفس منطقة التوصيل" }
 
     val result: List<MerchantDeliveryZone> = Supabase.post(
         "rpc/replace_my_delivery_zones",
@@ -151,13 +151,13 @@ suspend fun Repository.saveMerchantDeliveryConfiguration(
     notes: String,
     deliveryEnabled: Boolean
 ): List<MerchantDeliveryZone> {
-    require(zones.isNotEmpty()) { "أضيفي منطقة توصيل واحدة على الأقل" }
+    require(zones.isNotEmpty()) { "أضف منطقة توصيل واحدة على الأقل" }
     require(zones.size <= 20) { "الحد الأقصى 20 منطقة توصيل" }
     require(notes.length <= 500) { "ملاحظات التوصيل طويلة جداً" }
-    require(zones.all { it.area.trim().length in 2..100 && it.fee >= 0 }) { "راجعي مناطق ورسوم التوصيل" }
-    require(zones.all { it.estimatedMinutes == null || it.estimatedMinutes in 1..1440 }) { "راجعي زمن الوصول" }
-    require(zones.map { it.area.trim().lowercase() }.distinct().size == zones.size) { "لا تكرري نفس منطقة التوصيل" }
-    require(!deliveryEnabled || zones.any { it.isActive }) { "فعّلي منطقة توصيل واحدة على الأقل" }
+    require(zones.all { it.area.trim().length in 2..100 && it.fee >= 0 }) { "راجع مناطق ورسوم التوصيل" }
+    require(zones.all { it.estimatedMinutes == null || it.estimatedMinutes in 1..1440 }) { "راجع زمن الوصول" }
+    require(zones.map { it.area.trim().lowercase() }.distinct().size == zones.size) { "لا تكرر نفس منطقة التوصيل" }
+    require(!deliveryEnabled || zones.any { it.isActive }) { "فعّل منطقة توصيل واحدة على الأقل" }
 
     val result: List<MerchantDeliveryZone> = Supabase.post(
         "rpc/save_my_delivery_configuration",

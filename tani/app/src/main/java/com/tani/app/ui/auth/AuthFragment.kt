@@ -1,5 +1,7 @@
 package com.tani.app.ui.auth
 
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.os.Bundle
@@ -109,9 +111,9 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
                 Mode.LOGIN -> {
                     title.text = "مرحباً بعودتك"
                     subtitle.text = when {
-                        continuingCheckout -> "سجّلي الدخول لإكمال طلبك. السلة محفوظة ولن تضيع."
-                        continuingMerchant -> "سجّلي الدخول للوصول إلى البيع على تاني أو متابعة متجرك."
-                        else -> "سجّلي الدخول لمتابعة طلباتك وحسابك في تاني"
+                        continuingCheckout -> "سجّل الدخول لإكمال طلبك. السلة محفوظة ولن تضيع."
+                        continuingMerchant -> "سجّل الدخول للوصول إلى البيع على تاني أو متابعة متجرك."
+                        else -> "سجّل الدخول لمتابعة طلباتك وحسابك في تاني"
                     }
                     action.text = "تسجيل الدخول"
                     toggle.text = "ليس لديك حساب؟ إنشاء حساب"
@@ -119,21 +121,21 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
                 Mode.SIGNUP -> {
                     title.text = "إنشاء حساب"
                     subtitle.text = when {
-                        continuingCheckout -> "أنشئي حسابك لإكمال الطلب. كل المنتجات في سلتك محفوظة."
-                        continuingMerchant -> "أنشئي حسابك أولاً، وبعدها نكمل تسجيل التاجر أو نفتح متجرك."
-                        else -> "أدخلي بياناتك الأساسية للبدء في تاني"
+                        continuingCheckout -> "أنشئ حسابك لإكمال الطلب. كل المنتجات في سلتك محفوظة."
+                        continuingMerchant -> "أنشئ حسابك أولاً، وبعدها نكمل تسجيل التاجر أو نفتح متجرك."
+                        else -> "أدخل بياناتك الأساسية للبدء في تاني"
                     }
                     action.text = "إنشاء الحساب"
                     toggle.text = "لديك حساب؟ تسجيل الدخول"
                 }
                 Mode.FORGOT -> {
                     title.text = "نسيت كلمة المرور؟"
-                    subtitle.text = "أدخلي بريدك وسنرسل لك رابطاً آمناً لتعيين كلمة مرور جديدة"
+                    subtitle.text = "أدخل بريدك وسنرسل لك رابطاً آمناً لتعيين كلمة مرور جديدة"
                     action.text = "إرسال رابط الاستعادة"
                 }
                 Mode.RESET -> {
                     title.text = "كلمة مرور جديدة"
-                    subtitle.text = "اختاري كلمة مرور جديدة لحسابك"
+                    subtitle.text = "اختر كلمة مرور جديدة لحسابك"
                     action.text = "حفظ كلمة المرور"
                 }
             }
@@ -230,7 +232,7 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
         render(
             when {
                 recoveryError != null -> "تعذر فتح رابط الاستعادة: $recoveryError"
-                mode == Mode.RESET && (recoveryToken.isBlank() || recoveryRefreshToken.isBlank()) -> "رابط استعادة كلمة المرور غير صالح أو منتهي. أطلبي رابطاً جديداً."
+                mode == Mode.RESET && (recoveryToken.isBlank() || recoveryRefreshToken.isBlank()) -> "رابط استعادة كلمة المرور غير صالح أو منتهي. اطلب رابطاً جديداً."
                 else -> ""
             }
         )
@@ -255,12 +257,11 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
         val raw = error.message.orEmpty()
         return when {
             raw.contains("Invalid login credentials", true) -> "البريد الإلكتروني أو كلمة المرور غير صحيحة"
-            raw.contains("Email not confirmed", true) -> "تعذر تفعيل الحساب تلقائياً. حاولي تسجيل الدخول مرة أخرى"
+            raw.contains("Email not confirmed", true) -> "تعذر تفعيل الحساب تلقائياً. حاول تسجيل الدخول مرة أخرى"
             raw.contains("User already registered", true) -> "يوجد حساب مسجل بهذا البريد بالفعل"
             raw.contains("Password should be", true) -> "كلمة المرور لا تحقق متطلبات الأمان"
-            raw.contains("rate limit", true) -> "تمت محاولات كثيرة. حاولي مرة أخرى لاحقاً"
-            raw.isBlank() -> "حدث خطأ غير متوقع"
-            else -> raw
+            raw.contains("rate limit", true) -> "تمت محاولات كثيرة. حاول مرة أخرى لاحقاً"
+            else -> CustomerErrorMessages.from(error, "حدث خطأ غير متوقع. حاول مرة أخرى")
         }
     }
 }

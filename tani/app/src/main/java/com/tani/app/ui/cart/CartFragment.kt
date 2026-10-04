@@ -56,7 +56,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
         val items = Cart.all()
         if (items.isEmpty()) {
             box.addView(TextView(requireContext()).apply {
-                text = "السلة فارغة 🛍️\nأضيفي منتجات من المتاجر ثم ارجعي هنا."
+                text = "السلة فارغة 🛍️\nأضف منتجات من المتاجر ثم ارجع هنا."
                 textSize = 17f
                 gravity = Gravity.CENTER
                 setPadding(10, MarketplaceUi.dp(requireContext(), 38), 10, MarketplaceUi.dp(requireContext(), 38))
@@ -114,7 +114,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
                     viewLifecycleOwner.lifecycleScope.launch { Analytics.track("checkout_started", screen = "cart") }
                     (activity as? MainActivity)?.show(CheckoutFragment())
                 } else {
-                    Toast.makeText(requireContext(), "سجّلي الدخول لإتمام الطلب — السلة محفوظة", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "سجّل الدخول لإتمام الطلب — السلة محفوظة", Toast.LENGTH_SHORT).show()
                     (activity as? MainActivity)?.show(AuthFragment.newCheckoutInstance())
                 }
             }
@@ -226,7 +226,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
             minWidth = 0
             setOnClickListener {
                 if (!Cart.increase(item.key)) {
-                    Toast.makeText(requireContext(), "وصلتِ للكمية المتاحة", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "وصلت للكمية المتاحة", Toast.LENGTH_SHORT).show()
                 }
                 render(); syncSilent()
             }

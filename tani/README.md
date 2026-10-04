@@ -54,7 +54,7 @@ The live project schema is the 2026-09-30 snapshot in `qa/database/live_schema_b
 For password recovery add `tani://auth/reset` to Supabase **Authentication → URL Configuration → Redirect URLs**. See `supabase/AUTH_SETUP.md`.
 
 ## Build
-From the project root:
+Requires JDK 17+ and the Android SDK (set `ANDROID_HOME`, or put `sdk.dir=...` in an uncommitted `local.properties`). From the project root:
 ```bash
 chmod +x gradlew
 ./gradlew assembleDebug
