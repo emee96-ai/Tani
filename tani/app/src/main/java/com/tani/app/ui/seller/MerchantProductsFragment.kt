@@ -78,14 +78,14 @@ class MerchantProductsFragment : Fragment() {
     private fun load() {
         val context = requireContext()
         root.removeAllViews()
-        root.addView(MerchantUi.title(context, "المنتجات والمخزون"))
+        root.addView(MerchantUi.title(context, getString(R.string.merchant_products_1)))
         root.addView(MerchantUi.card(context, soft = true).apply {
-            addView(MerchantUi.text(context, "جاري تحميل المنتجات…", 14f, true))
+            addView(MerchantUi.text(context, getString(R.string.merchant_products_2), 14f, true))
         })
 
         viewLifecycleOwner.lifecycleScope.launch {
             runCatchingCancellable {
-                val seller = repository.seller() ?: error("حساب التاجر غير مكتمل")
+                val seller = repository.seller() ?: error(getString(R.string.merchant_delivery_2))
                 coroutineScope {
                     val categoriesRequest = async { runCatchingCancellable { repository.categories() }.getOrDefault(emptyList()) }
                     val products = repository.sellerProducts(seller.id)
@@ -97,7 +97,7 @@ class MerchantProductsFragment : Fragment() {
                 }
             }.onSuccess(::render)
                 .onFailure { error ->
-                    showError(CustomerErrorMessages.from(error, "تعذر تحميل المنتجات. حاول مرة أخرى."))
+                    showError(CustomerErrorMessages.from(error, getString(R.string.products_18)))
                 }
         }
     }
@@ -107,13 +107,13 @@ class MerchantProductsFragment : Fragment() {
         val products = data.products
         val variantsByProduct = data.variants.groupBy { it.product_id }
         root.removeAllViews()
-        root.addView(MerchantUi.title(context, "المنتجات والمخزون"))
-        root.addView(MerchantUi.subtitle(context, "أضف المنتجات، حدّث المخزون، وأوقف المنتج مؤقتاً بدل حذفه عند الحاجة."))
+        root.addView(MerchantUi.title(context, getString(R.string.merchant_products_1)))
+        root.addView(MerchantUi.subtitle(context, getString(R.string.merchant_products_3)))
 
         if (data.categories.isEmpty()) {
             root.addView(MerchantUi.card(context, soft = true).apply {
-                addView(MerchantUi.text(context, "الفئات غير متاحة الآن", 14f, true))
-                addView(MerchantUi.muted(context, "تقدر تدير منتجاتك الحالية، لكن تغيير الفئة قد يكون محدوداً لحد ما ترجع الشبكة.", 12.5f).apply {
+                addView(MerchantUi.text(context, getString(R.string.merchant_products_4), 14f, true))
+                addView(MerchantUi.muted(context, getString(R.string.merchant_products_5), 12.5f).apply {
                     setPadding(0, MerchantUi.dp(context, 4), 0, 0)
                 })
             })
@@ -125,22 +125,22 @@ class MerchantProductsFragment : Fragment() {
         root.addView(LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
-            addView(MerchantUi.metricCard(context, "كل المنتجات", products.size.toString()), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = MerchantUi.dp(context, 4) })
-            addView(MerchantUi.metricCard(context, "المنشورة", active.toString()), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = MerchantUi.dp(context, 4) })
+            addView(MerchantUi.metricCard(context, getString(R.string.merchant_products_6), products.size.toString()), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = MerchantUi.dp(context, 4) })
+            addView(MerchantUi.metricCard(context, getString(R.string.merchant_products_7), active.toString()), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = MerchantUi.dp(context, 4) })
         })
         root.addView(LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
-            addView(MerchantUi.metricCard(context, "نفد المخزون", out.toString()), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = MerchantUi.dp(context, 4) })
-            addView(MerchantUi.metricCard(context, "مخزون منخفض", low.toString(), "1–$LOW_STOCK_THRESHOLD وحدات"), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = MerchantUi.dp(context, 4) })
+            addView(MerchantUi.metricCard(context, getString(R.string.merchant_insights_23), out.toString()), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = MerchantUi.dp(context, 4) })
+            addView(MerchantUi.metricCard(context, getString(R.string.merchant_products_8), low.toString(), getString(R.string.merchant_products_9, LOW_STOCK_THRESHOLD)), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = MerchantUi.dp(context, 4) })
         })
-        root.addView(MerchantUi.primaryButton(context, "+ إضافة منتج جديد") {
+        root.addView(MerchantUi.primaryButton(context, getString(R.string.merchant_products_10)) {
             productDialog(null, data.sellerId, data.categories)
         })
-        root.addView(MerchantUi.sectionTitle(context, "منتجاتك"))
+        root.addView(MerchantUi.sectionTitle(context, getString(R.string.merchant_products_11)))
 
         if (products.isEmpty()) {
-            root.addView(MerchantUi.emptyCard(context, "ما عندك منتجات لسه", "أضف أول منتج عشان يبدأ متجرك يظهر للعملاء."))
+            root.addView(MerchantUi.emptyCard(context, getString(R.string.merchant_products_12), getString(R.string.merchant_products_13)))
             return
         }
 
@@ -149,11 +149,11 @@ class MerchantProductsFragment : Fragment() {
             val activeVariants = productVariants.filter { it.is_active }
             val availableStock = effectiveStock(product, variantsByProduct)
             val statusText = when {
-                !product.is_active -> "متوقف"
-                product.has_variants && activeVariants.isEmpty() -> "بدون خيارات"
-                availableStock <= 0 -> "نفد"
-                availableStock <= LOW_STOCK_THRESHOLD -> "مخزون منخفض"
-                else -> "منشور"
+                !product.is_active -> getString(R.string.merchant_products_14)
+                product.has_variants && activeVariants.isEmpty() -> getString(R.string.merchant_products_15)
+                availableStock <= 0 -> getString(R.string.merchant_products_16)
+                availableStock <= LOW_STOCK_THRESHOLD -> getString(R.string.merchant_products_8)
+                else -> getString(R.string.merchant_products_17)
             }
             val statusTone = when {
                 !product.is_active -> MerchantUi.Tone.NEUTRAL
@@ -170,7 +170,7 @@ class MerchantProductsFragment : Fragment() {
                     addView(LinearLayout(context).apply {
                         orientation = LinearLayout.VERTICAL
                         addView(MerchantUi.text(context, product.name, 16.5f, true))
-                        addView(MerchantUi.text(context, "${money(product.price)} جنيه", 15f, true).apply {
+                        addView(MerchantUi.text(context, getString(R.string.monetization_8, (money(product.price))), 15f, true).apply {
                             setPadding(0, MerchantUi.dp(context, 4), 0, 0)
                         })
                     }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
@@ -178,9 +178,9 @@ class MerchantProductsFragment : Fragment() {
                 })
 
                 val stockLabel = if (product.has_variants) {
-                    "المخزون المتاح: $availableStock عبر ${activeVariants.size} خيارات نشطة"
+                    getString(R.string.merchant_products_18, availableStock, activeVariants.size)
                 } else {
-                    "المخزون: ${product.stock}"
+                    getString(R.string.merchant_products_19, product.stock)
                 }
                 addView(MerchantUi.muted(context, stockLabel, 12.5f).apply {
                     setPadding(0, MerchantUi.dp(context, 7), 0, MerchantUi.dp(context, 8))
@@ -189,15 +189,15 @@ class MerchantProductsFragment : Fragment() {
                 addView(LinearLayout(context).apply {
                     orientation = LinearLayout.HORIZONTAL
                     layoutDirection = View.LAYOUT_DIRECTION_RTL
-                    addView(MerchantUi.compactButton(context, "تعديل") { productDialog(product, data.sellerId, data.categories) })
-                    addView(MerchantUi.compactButton(context, if (product.is_active) "إيقاف" else "نشر") { toggle(product) })
-                    addView(MerchantUi.compactButton(context, "الصور") { imageManager(product) })
+                    addView(MerchantUi.compactButton(context, getString(R.string.addresses_7)) { productDialog(product, data.sellerId, data.categories) })
+                    addView(MerchantUi.compactButton(context, if (product.is_active) getString(R.string.merchant_products_20) else getString(R.string.merchant_products_21)) { toggle(product) })
+                    addView(MerchantUi.compactButton(context, getString(R.string.merchant_products_22)) { imageManager(product) })
                 })
                 addView(LinearLayout(context).apply {
                     orientation = LinearLayout.HORIZONTAL
                     layoutDirection = View.LAYOUT_DIRECTION_RTL
-                    addView(MerchantUi.compactButton(context, "الخيارات والمقاسات") { variantManager(product) })
-                    addView(MerchantUi.compactButton(context, "حذف") { confirmDelete(product) })
+                    addView(MerchantUi.compactButton(context, getString(R.string.merchant_products_23)) { variantManager(product) })
+                    addView(MerchantUi.compactButton(context, getString(R.string.cart_13)) { confirmDelete(product) })
                 }.apply { setPadding(0, MerchantUi.dp(context, 6), 0, 0) })
             })
         }
@@ -224,22 +224,22 @@ class MerchantProductsFragment : Fragment() {
         }
 
         if (isCreating) {
-            content.addView(MerchantUi.text(context, "صور المنتج *", 14f, true))
-            content.addView(MerchantUi.secondaryButton(context, "اختيار صور المنتج") {
+            content.addView(MerchantUi.text(context, getString(R.string.merchant_products_24), 14f, true))
+            content.addView(MerchantUi.secondaryButton(context, getString(R.string.merchant_products_25)) {
                 pickCreateImages.launch("image/*")
             }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
                 topMargin = MerchantUi.dp(context, 6)
                 bottomMargin = MerchantUi.dp(context, 6)
             })
-            pendingCreateImageStatus = MerchantUi.muted(context, "اختر صورة واحدة على الأقل قبل حفظ المنتج.", 12.5f).also {
+            pendingCreateImageStatus = MerchantUi.muted(context, getString(R.string.merchant_products_26), 12.5f).also {
                 content.addView(it, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
                     bottomMargin = MerchantUi.dp(context, 12)
                 })
             }
         }
 
-        val name = dialogField("اسم المنتج", product?.name)
-        val description = dialogField("الوصف", product?.description, multiline = true)
+        val name = dialogField(getString(R.string.merchant_products_27), product?.name)
+        val description = dialogField(getString(R.string.merchant_products_28), product?.description, multiline = true)
         val category = if (categories.isNotEmpty()) {
             Spinner(context).apply {
                 adapter = ArrayAdapter(context, android.R.layout.simple_spinner_dropdown_item, categories.map { it.name })
@@ -247,10 +247,10 @@ class MerchantProductsFragment : Fragment() {
                 if (index >= 0) setSelection(index)
             }
         } else null
-        val price = dialogField("السعر", product?.price?.let(::money), decimal = true)
-        val stock = dialogField("المخزون", product?.stock?.toString() ?: "0", number = true)
+        val price = dialogField(getString(R.string.merchant_products_29), product?.price?.let(::money), decimal = true)
+        val stock = dialogField(getString(R.string.merchant_insights_19), product?.stock?.toString() ?: "0", number = true)
         val visible = CheckBox(context).apply {
-            text = "ظاهر للعملاء"
+            text = getString(R.string.merchant_products_30)
             isChecked = product?.is_active ?: true
         }
 
@@ -259,23 +259,23 @@ class MerchantProductsFragment : Fragment() {
         if (category != null) {
             content.addView(category, fieldParams())
         } else {
-            content.addView(MerchantUi.muted(context, "الفئات غير متاحة الآن؛ سيتم الاحتفاظ بالفئة الحالية إن وجدت.", 12f), fieldParams())
+            content.addView(MerchantUi.muted(context, getString(R.string.merchant_products_31), 12f), fieldParams())
         }
         content.addView(price, fieldParams())
         content.addView(stock, fieldParams())
         content.addView(visible, fieldParams())
 
         if (product?.has_variants == true) {
-            content.addView(MerchantUi.muted(context, "ملاحظة: مخزون المنتج الظاهر للزبون يُحسب من مجموع الخيارات النشطة، وليس من رقم المخزون الأساسي هنا.", 12f).apply {
+            content.addView(MerchantUi.muted(context, getString(R.string.merchant_products_32), 12f).apply {
                 setPadding(0, 0, 0, MerchantUi.dp(context, 8))
             })
         }
 
         val dialog = MaterialAlertDialogBuilder(context)
-            .setTitle(if (isCreating) "إضافة منتج" else "تعديل المنتج")
+            .setTitle(if (isCreating) getString(R.string.merchant_products_33) else getString(R.string.merchant_products_34))
             .setView(content)
-            .setPositiveButton("حفظ", null)
-            .setNegativeButton("إلغاء", null)
+            .setPositiveButton(getString(R.string.addresses_18), null)
+            .setNegativeButton(getString(R.string.addresses_19), null)
             .create()
 
         dialog.setOnDismissListener {
@@ -293,16 +293,16 @@ class MerchantProductsFragment : Fragment() {
                 val p = price.text.toString().toDoubleOrNull()
                 val s = stock.text.toString().toIntOrNull()
                 if (cleanName.length < 2) {
-                    toast("اكتب اسم المنتج")
+                    toast(getString(R.string.merchant_products_35))
                     return@setOnClickListener
                 }
                 if (p == null || p < 0 || s == null || s < 0) {
-                    toast("راجع السعر والمخزون")
+                    toast(getString(R.string.merchant_products_36))
                     return@setOnClickListener
                 }
                 val selectedImages = pendingCreateImages.toList()
                 if (isCreating && selectedImages.isEmpty()) {
-                    toast("اختر صورة واحدة على الأقل للمنتج")
+                    toast(getString(R.string.merchant_products_37))
                     return@setOnClickListener
                 }
 
@@ -311,7 +311,7 @@ class MerchantProductsFragment : Fragment() {
                 } ?: product?.category_id
 
                 saveButton.isEnabled = false
-                toast(if (isCreating) "جاري حفظ المنتج ورفع الصور…" else "جاري حفظ التعديلات…")
+                toast(if (isCreating) getString(R.string.merchant_products_38) else getString(R.string.merchant_products_39))
 
                 viewLifecycleOwner.lifecycleScope.launch {
                     runCatchingCancellable {
@@ -339,7 +339,7 @@ class MerchantProductsFragment : Fragment() {
                                     )
                                     uploaded += 1
                                 } catch (error: Throwable) {
-                                    draftReason = CustomerErrorMessages.from(error, "تعذر إكمال رفع الصور")
+                                    draftReason = CustomerErrorMessages.from(error, getString(R.string.merchant_products_40))
                                     break
                                 }
                             }
@@ -347,7 +347,7 @@ class MerchantProductsFragment : Fragment() {
                                 try {
                                     repository.deactivateMerchantProduct(created.id, true)
                                 } catch (error: Throwable) {
-                                    draftReason = CustomerErrorMessages.from(error, "تعذر نشر المنتج الآن")
+                                    draftReason = CustomerErrorMessages.from(error, getString(R.string.merchant_products_41))
                                 }
                             }
                             SaveOutcome(
@@ -370,15 +370,15 @@ class MerchantProductsFragment : Fragment() {
                         }
                     }.onSuccess { outcome ->
                         if (outcome.savedAsDraft) {
-                            toast("تم حفظ المنتج كمسودة. اكتمل رفع ${outcome.uploadedImages} من ${outcome.totalImages} صور. ${outcome.detail.orEmpty()}")
+                            toast(getString(R.string.merchant_products_42, outcome.uploadedImages, outcome.totalImages, outcome.detail.orEmpty()))
                         } else {
-                            toast(if (isCreating) "تمت إضافة المنتج وصوره ✓" else "تم حفظ المنتج ✓")
+                            toast(if (isCreating) getString(R.string.merchant_products_43) else getString(R.string.merchant_products_44))
                         }
                         dialog.dismiss()
                         load()
                     }.onFailure { error ->
                         saveButton.isEnabled = true
-                        toast(CustomerErrorMessages.from(error, if (isCreating) "تعذر حفظ المنتج" else "تعذر حفظ التعديلات"))
+                        toast(CustomerErrorMessages.from(error, if (isCreating) getString(R.string.merchant_products_45) else getString(R.string.account_3)))
                     }
                 }
             }
@@ -394,7 +394,7 @@ class MerchantProductsFragment : Fragment() {
     private fun updateCreateImageStatus() {
         val count = pendingCreateImages.size
         pendingCreateImageStatus?.text = if (count == 0) {
-            "اختر صورة واحدة على الأقل قبل حفظ المنتج."
+            getString(R.string.merchant_products_26)
         } else {
             "تم اختيار $count ${if (count == 1) "صورة" else "صور"}. أول صورة ستكون الرئيسية."
         }
@@ -409,17 +409,17 @@ class MerchantProductsFragment : Fragment() {
                     val variantsRequest = async { repository.merchantProductVariants(product.id) }
                     val images = imagesRequest.await()
                     val variants = variantsRequest.await()
-                    require(images.isNotEmpty()) { "أضف صورة واحدة على الأقل قبل نشر المنتج" }
+                    require(images.isNotEmpty()) { getString(R.string.merchant_products_46) }
                     if (product.has_variants || variants.isNotEmpty()) {
-                        require(variants.any { it.is_active }) { "فعّل خياراً واحداً على الأقل قبل نشر المنتج" }
+                        require(variants.any { it.is_active }) { getString(R.string.merchant_products_47) }
                     }
                 }
                 repository.deactivateMerchantProduct(product.id, !product.is_active)
             }.onSuccess {
-                toast(if (product.is_active) "تم إيقاف المنتج" else "تم نشر المنتج ✓")
+                toast(if (product.is_active) getString(R.string.merchant_products_48) else getString(R.string.merchant_products_49))
                 load()
             }.onFailure { error ->
-                toast(CustomerErrorMessages.from(error, "تعذر تحديث حالة المنتج"))
+                toast(CustomerErrorMessages.from(error, getString(R.string.merchant_products_50)))
             }
             busyProductIds.remove(product.id)
         }
@@ -427,23 +427,23 @@ class MerchantProductsFragment : Fragment() {
 
     private fun confirmDelete(product: Product) {
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("حذف ${product.name}؟")
-            .setMessage("إذا كان للمنتج سجل طلبات لن يُحذف نهائياً. في هذه الحالة استخدم إيقاف المنتج.")
-            .setPositiveButton("حذف") { _, _ ->
+            .setTitle(getString(R.string.merchant_products_51, product.name))
+            .setMessage(getString(R.string.merchant_products_52))
+            .setPositiveButton(getString(R.string.cart_13)) { _, _ ->
                 if (!busyProductIds.add(product.id)) return@setPositiveButton
                 viewLifecycleOwner.lifecycleScope.launch {
                     runCatchingCancellable { repository.deleteMerchantProduct(product.id) }
                         .onSuccess {
-                            toast("تم حذف المنتج")
+                            toast(getString(R.string.merchant_products_53))
                             load()
                         }
                         .onFailure { error ->
-                            toast(CustomerErrorMessages.from(error, "تعذر حذف المنتج. أوقفه بدلاً من الحذف إذا كان مرتبطاً بطلبات."))
+                            toast(CustomerErrorMessages.from(error, getString(R.string.merchant_products_54)))
                         }
                     busyProductIds.remove(product.id)
                 }
             }
-            .setNegativeButton("إلغاء", null)
+            .setNegativeButton(getString(R.string.addresses_19), null)
             .show()
     }
 
@@ -459,17 +459,17 @@ class MerchantProductsFragment : Fragment() {
                     var managerDialog: androidx.appcompat.app.AlertDialog? = null
 
                     if (images.size < MAX_PRODUCT_IMAGES) {
-                        content.addView(MerchantUi.primaryButton(context, "+ إضافة صورة") {
+                        content.addView(MerchantUi.primaryButton(context, getString(R.string.merchant_products_55)) {
                             pendingImageProduct = product
                             managerDialog?.dismiss()
                             pickImage.launch("image/*")
                         })
                     } else {
-                        content.addView(MerchantUi.muted(context, "وصلت للحد الأقصى: $MAX_PRODUCT_IMAGES صور.", 12.5f))
+                        content.addView(MerchantUi.muted(context, getString(R.string.merchant_products_56, MAX_PRODUCT_IMAGES), 12.5f))
                     }
 
                     if (images.isEmpty()) {
-                        content.addView(MerchantUi.muted(context, "لا توجد صور لهذا المنتج.").apply {
+                        content.addView(MerchantUi.muted(context, getString(R.string.merchant_products_57)).apply {
                             setPadding(0, MerchantUi.dp(context, 10), 0, 0)
                         })
                     }
@@ -479,24 +479,24 @@ class MerchantProductsFragment : Fragment() {
                             addView(LinearLayout(context).apply {
                                 orientation = LinearLayout.HORIZONTAL
                                 layoutDirection = View.LAYOUT_DIRECTION_RTL
-                                addView(MerchantUi.text(context, if (image.is_primary) "الصورة الرئيسية" else "صورة المنتج", 14f, image.is_primary), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+                                addView(MerchantUi.text(context, if (image.is_primary) getString(R.string.merchant_products_58) else getString(R.string.merchant_products_59), 14f, image.is_primary), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
                                 if (!image.is_primary) {
-                                    addView(MerchantUi.compactButton(context, "اجعلها الرئيسية") {
+                                    addView(MerchantUi.compactButton(context, getString(R.string.merchant_products_60)) {
                                         viewLifecycleOwner.lifecycleScope.launch {
                                             runCatchingCancellable { repository.setPrimaryProductImage(product.id, image.id) }
                                                 .onSuccess {
-                                                    toast("تم تغيير الصورة الرئيسية ✓")
+                                                    toast(getString(R.string.merchant_products_61))
                                                     managerDialog?.dismiss()
                                                     imageManager(product)
                                                 }
-                                                .onFailure { error -> toast(CustomerErrorMessages.from(error, "تعذر تغيير الصورة الرئيسية")) }
+                                                .onFailure { error -> toast(CustomerErrorMessages.from(error, getString(R.string.merchant_products_62))) }
                                         }
                                     })
                                 }
                             })
-                            addView(MerchantUi.compactButton(context, "حذف الصورة") {
+                            addView(MerchantUi.compactButton(context, getString(R.string.merchant_products_63)) {
                                 if (images.size == 1 && product.is_active) {
-                                    toast("لا يمكن حذف آخر صورة من منتج منشور. أوقف المنتج أولاً.")
+                                    toast(getString(R.string.merchant_products_64))
                                     return@compactButton
                                 }
                                 viewLifecycleOwner.lifecycleScope.launch {
@@ -507,31 +507,31 @@ class MerchantProductsFragment : Fragment() {
                                             if (remaining != null) repository.setPrimaryProductImage(product.id, remaining.id)
                                         }
                                     }.onSuccess {
-                                        toast("تم حذف الصورة")
+                                        toast(getString(R.string.merchant_products_65))
                                         managerDialog?.dismiss()
                                         imageManager(product)
-                                    }.onFailure { error -> toast(CustomerErrorMessages.from(error, "تعذر حذف الصورة")) }
+                                    }.onFailure { error -> toast(CustomerErrorMessages.from(error, getString(R.string.merchant_products_66))) }
                                 }
                             })
                         })
                     }
 
                     managerDialog = MaterialAlertDialogBuilder(context)
-                        .setTitle("صور ${product.name}")
+                        .setTitle(getString(R.string.merchant_products_67, product.name))
                         .setView(content)
-                        .setPositiveButton("إغلاق", null)
+                        .setPositiveButton(getString(R.string.merchant_orders_28), null)
                         .show()
                 }
-                .onFailure { error -> toast(CustomerErrorMessages.from(error, "تعذر تحميل الصور")) }
+                .onFailure { error -> toast(CustomerErrorMessages.from(error, getString(R.string.merchant_products_68))) }
         }
     }
 
     private fun uploadProductImage(uri: Uri, product: Product) {
-        toast("جاري رفع الصورة…")
+        toast(getString(R.string.merchant_products_69))
         viewLifecycleOwner.lifecycleScope.launch {
             runCatchingCancellable {
                 val current = repository.productImages(product.id)
-                require(current.size < MAX_PRODUCT_IMAGES) { "الحد الأقصى $MAX_PRODUCT_IMAGES صور للمنتج" }
+                require(current.size < MAX_PRODUCT_IMAGES) { getString(R.string.merchant_products_70, MAX_PRODUCT_IMAGES) }
                 val bytes = withContext(Dispatchers.IO) { imageBytes(uri, 1600, 84) }
                 repository.uploadAndAttachMerchantProductImage(
                     bytes = bytes,
@@ -540,11 +540,11 @@ class MerchantProductsFragment : Fragment() {
                 )
             }.onSuccess {
                 pendingImageProduct = null
-                toast("تمت إضافة الصورة ✓")
+                toast(getString(R.string.merchant_products_71))
                 imageManager(product)
             }.onFailure { error ->
                 pendingImageProduct = null
-                toast(CustomerErrorMessages.from(error, "تعذر رفع الصورة"))
+                toast(CustomerErrorMessages.from(error, getString(R.string.merchant_products_72)))
             }
         }
     }
@@ -553,7 +553,7 @@ class MerchantProductsFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             runCatchingCancellable { repository.merchantProductVariants(product.id) }
                 .onSuccess { variants -> renderVariants(product, variants) }
-                .onFailure { error -> toast(CustomerErrorMessages.from(error, "تعذر تحميل الخيارات")) }
+                .onFailure { error -> toast(CustomerErrorMessages.from(error, getString(R.string.merchant_products_73))) }
         }
     }
 
@@ -565,12 +565,12 @@ class MerchantProductsFragment : Fragment() {
         }
         var managerDialog: androidx.appcompat.app.AlertDialog? = null
 
-        content.addView(MerchantUi.primaryButton(context, "+ إضافة خيار / مقاس") {
+        content.addView(MerchantUi.primaryButton(context, getString(R.string.merchant_products_74)) {
             managerDialog?.dismiss()
             variantDialog(null, product)
         })
         if (variants.isEmpty()) {
-            content.addView(MerchantUi.muted(context, "لا توجد خيارات بعد.").apply {
+            content.addView(MerchantUi.muted(context, getString(R.string.merchant_products_75)).apply {
                 setPadding(0, MerchantUi.dp(context, 10), 0, 0)
             })
         }
@@ -581,7 +581,7 @@ class MerchantProductsFragment : Fragment() {
                     orientation = LinearLayout.HORIZONTAL
                     layoutDirection = View.LAYOUT_DIRECTION_RTL
                     addView(MerchantUi.text(context, variant.name, 14.5f, true), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-                    addView(MerchantUi.pill(context, if (variant.is_active) "متاح" else "متوقف", if (variant.is_active) MerchantUi.Tone.SUCCESS else MerchantUi.Tone.NEUTRAL))
+                    addView(MerchantUi.pill(context, if (variant.is_active) getString(R.string.merchant_products_76) else getString(R.string.merchant_products_14), if (variant.is_active) MerchantUi.Tone.SUCCESS else MerchantUi.Tone.NEUTRAL))
                 })
                 addView(MerchantUi.muted(context, "المخزون ${variant.stock}${variant.price?.let { " • ${money(it)} جنيه" } ?: ""}", 12f).apply {
                     setPadding(0, MerchantUi.dp(context, 4), 0, MerchantUi.dp(context, 6))
@@ -589,20 +589,20 @@ class MerchantProductsFragment : Fragment() {
                 addView(LinearLayout(context).apply {
                     orientation = LinearLayout.HORIZONTAL
                     layoutDirection = View.LAYOUT_DIRECTION_RTL
-                    addView(MerchantUi.compactButton(context, "تعديل") {
+                    addView(MerchantUi.compactButton(context, getString(R.string.addresses_7)) {
                         managerDialog?.dismiss()
                         variantDialog(variant, product)
                     })
-                    addView(MerchantUi.compactButton(context, "حذف") {
+                    addView(MerchantUi.compactButton(context, getString(R.string.cart_13)) {
                         viewLifecycleOwner.lifecycleScope.launch {
                             runCatchingCancellable { repository.deleteProductVariant(variant.id) }
                                 .onSuccess {
-                                    toast("تم حذف الخيار")
+                                    toast(getString(R.string.merchant_products_77))
                                     managerDialog?.dismiss()
                                     variantManager(product)
                                     load()
                                 }
-                                .onFailure { error -> toast(CustomerErrorMessages.from(error, "تعذر حذف الخيار")) }
+                                .onFailure { error -> toast(CustomerErrorMessages.from(error, getString(R.string.merchant_products_78))) }
                         }
                     })
                 })
@@ -610,9 +610,9 @@ class MerchantProductsFragment : Fragment() {
         }
 
         managerDialog = MaterialAlertDialogBuilder(context)
-            .setTitle("خيارات ${product.name}")
+            .setTitle(getString(R.string.merchant_products_79, product.name))
             .setView(content)
-            .setPositiveButton("إغلاق", null)
+            .setPositiveButton(getString(R.string.merchant_orders_28), null)
             .show()
     }
 
@@ -622,21 +622,21 @@ class MerchantProductsFragment : Fragment() {
             orientation = LinearLayout.VERTICAL
             setPadding(MerchantUi.dp(context, 20), 0, MerchantUi.dp(context, 20), 0)
         }
-        val name = dialogField("الخيار: مثلاً أحمر / كبير", variant?.name)
-        val sku = dialogField("SKU اختياري", variant?.sku)
-        val price = dialogField("سعر خاص اختياري", variant?.price?.let(::money), decimal = true)
-        val stock = dialogField("المخزون", variant?.stock?.toString() ?: "0", number = true)
+        val name = dialogField(getString(R.string.merchant_products_80), variant?.name)
+        val sku = dialogField(getString(R.string.merchant_products_81), variant?.sku)
+        val price = dialogField(getString(R.string.merchant_products_82), variant?.price?.let(::money), decimal = true)
+        val stock = dialogField(getString(R.string.merchant_insights_19), variant?.stock?.toString() ?: "0", number = true)
         val active = CheckBox(context).apply {
-            text = "الخيار متاح"
+            text = getString(R.string.merchant_products_83)
             isChecked = variant?.is_active ?: true
         }
         listOf(name, sku, price, stock, active).forEach { content.addView(it, fieldParams()) }
 
         val dialog = MaterialAlertDialogBuilder(context)
-            .setTitle(if (variant == null) "إضافة خيار" else "تعديل الخيار")
+            .setTitle(if (variant == null) getString(R.string.merchant_products_84) else getString(R.string.merchant_products_85))
             .setView(content)
-            .setPositiveButton("حفظ", null)
-            .setNegativeButton("إلغاء", null)
+            .setPositiveButton(getString(R.string.addresses_18), null)
+            .setNegativeButton(getString(R.string.addresses_19), null)
             .create()
 
         dialog.setOnShowListener {
@@ -648,9 +648,9 @@ class MerchantProductsFragment : Fragment() {
                 val priceText = price.text.toString().trim()
                 val priceValue = priceText.takeIf { it.isNotEmpty() }?.toDoubleOrNull()
                 when {
-                    cleanName.isEmpty() -> return@setOnClickListener toast("اسم الخيار مطلوب")
-                    stockValue == null || stockValue < 0 -> return@setOnClickListener toast("المخزون غير صحيح")
-                    priceText.isNotEmpty() && (priceValue == null || priceValue < 0) -> return@setOnClickListener toast("السعر الخاص غير صحيح")
+                    cleanName.isEmpty() -> return@setOnClickListener toast(getString(R.string.merchant_products_86))
+                    stockValue == null || stockValue < 0 -> return@setOnClickListener toast(getString(R.string.merchant_products_87))
+                    priceText.isNotEmpty() && (priceValue == null || priceValue < 0) -> return@setOnClickListener toast(getString(R.string.merchant_products_88))
                 }
 
                 save.isEnabled = false
@@ -665,13 +665,13 @@ class MerchantProductsFragment : Fragment() {
                             repository.updateProductVariant(variant.id, cleanName, cleanSku, priceValue, stockValue, active.isChecked)
                         }
                     }.onSuccess {
-                        toast("تم حفظ الخيار ✓")
+                        toast(getString(R.string.merchant_products_89))
                         dialog.dismiss()
                         variantManager(product)
                         load()
                     }.onFailure { error ->
                         save.isEnabled = true
-                        toast(CustomerErrorMessages.from(error, "تعذر حفظ الخيار"))
+                        toast(CustomerErrorMessages.from(error, getString(R.string.merchant_products_90)))
                     }
                 }
             }
@@ -695,7 +695,7 @@ class MerchantProductsFragment : Fragment() {
 
     private fun imageBytes(uri: Uri, maxSize: Int, quality: Int): ByteArray {
         val bitmap = requireContext().contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
-            ?: error("تعذر قراءة الصورة")
+            ?: error(getString(R.string.account_4))
         val largest = maxOf(bitmap.width, bitmap.height)
         val scaled = if (largest > maxSize) {
             val ratio = maxSize.toFloat() / largest.toFloat()
@@ -707,9 +707,9 @@ class MerchantProductsFragment : Fragment() {
             )
         } else bitmap
         return ByteArrayOutputStream().use { out ->
-            require(scaled.compress(Bitmap.CompressFormat.JPEG, quality, out)) { "تعذر تجهيز الصورة" }
+            require(scaled.compress(Bitmap.CompressFormat.JPEG, quality, out)) { getString(R.string.account_5) }
             out.toByteArray().also {
-                require(it.size <= 5 * 1024 * 1024) { "الصورة أكبر من 5 ميجابايت" }
+                require(it.size <= 5 * 1024 * 1024) { getString(R.string.merchant_onboarding_92) }
             }
         }
     }
@@ -717,13 +717,13 @@ class MerchantProductsFragment : Fragment() {
     private fun showError(message: String) {
         val context = requireContext()
         root.removeAllViews()
-        root.addView(MerchantUi.title(context, "المنتجات والمخزون"))
+        root.addView(MerchantUi.title(context, getString(R.string.merchant_products_1)))
         root.addView(MerchantUi.card(context).apply {
-            addView(MerchantUi.text(context, "تعذر تحميل المنتجات", 16f, true))
+            addView(MerchantUi.text(context, getString(R.string.merchant_products_91), 16f, true))
             addView(MerchantUi.muted(context, message).apply {
                 setPadding(0, MerchantUi.dp(context, 5), 0, MerchantUi.dp(context, 10))
             })
-            addView(MerchantUi.secondaryButton(context, "إعادة المحاولة") { load() })
+            addView(MerchantUi.secondaryButton(context, getString(R.string.notifications_5)) { load() })
         })
     }
 

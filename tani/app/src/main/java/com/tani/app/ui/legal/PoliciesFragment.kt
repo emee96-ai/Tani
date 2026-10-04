@@ -13,8 +13,8 @@ import com.tani.app.ui.common.ScreenUi
 class PoliciesFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, state: Bundle?): View {
         val c=requireContext(); val root=ScreenUi.root(c)
-        root.addView(ScreenUi.title(c,"السياسات والخصوصية"))
-        root.addView(ScreenUi.subtitle(c,"ملخصات تشغيلية داخل التطبيق. النسخ القانونية الكاملة موجودة مع المشروع وتحتاج مراجعة قانونية محلية قبل الإطلاق التجاري."))
+        root.addView(ScreenUi.title(c,getString(R.string.main_27)))
+        root.addView(ScreenUi.subtitle(c,getString(R.string.policies_1)))
         policies.forEach { (title,body) -> root.addView(ScreenUi.card(c).apply { addView(ScreenUi.text(c,title,17f,true)); addView(ScreenUi.muted(c,body)) }) }
         return ScrollView(c).apply { setBackgroundColor(c.getColor(R.color.tani_background)); addView(root) }
     }

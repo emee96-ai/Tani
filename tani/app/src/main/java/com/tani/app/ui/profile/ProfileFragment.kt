@@ -64,15 +64,15 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             isSingleLine = true
             container.addView(this)
         }
-        val current = passwordField("كلمة المرور الحالية")
-        val next = passwordField("كلمة المرور الجديدة")
-        val confirm = passwordField("تأكيد كلمة المرور الجديدة")
+        val current = passwordField(getString(R.string.profile_1))
+        val next = passwordField(getString(R.string.profile_2))
+        val confirm = passwordField(getString(R.string.profile_3))
 
         AlertDialog.Builder(requireContext())
-            .setTitle("تغيير كلمة المرور")
-            .setMessage("استخدم 8 أحرف على الأقل، وبها حرف ورقم.")
+            .setTitle(getString(R.string.profile_4))
+            .setMessage(getString(R.string.profile_5))
             .setView(container)
-            .setPositiveButton("حفظ") { _, _ ->
+            .setPositiveButton(getString(R.string.addresses_18)) { _, _ ->
                 setActionsEnabled(false)
                 viewLifecycleOwner.lifecycleScope.launch {
                     runCatchingCancellable {
@@ -82,36 +82,36 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                             confirmPassword = confirm.text.toString()
                         )
                     }.onSuccess {
-                        Toast.makeText(requireContext(), "تم تغيير كلمة المرور", Toast.LENGTH_LONG).show()
+                        Toast.makeText(requireContext(), getString(R.string.profile_6), Toast.LENGTH_LONG).show()
                     }.onFailure {
                         val message = if (it.message.orEmpty().contains("password", ignoreCase = true)) {
-                            "كلمة المرور الحالية غير صحيحة أو الجديدة لا تحقق شروط الأمان"
-                        } else CustomerErrorMessages.from(it, "تعذر تغيير كلمة المرور")
+                            getString(R.string.profile_7)
+                        } else CustomerErrorMessages.from(it, getString(R.string.profile_8))
                         Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
                     }
                     setActionsEnabled(true)
                 }
             }
-            .setNegativeButton("إلغاء", null)
+            .setNegativeButton(getString(R.string.addresses_19), null)
             .show()
     }
 
     private fun confirmDeleteAccount() {
-        val confirmation = EditText(requireContext()).apply { hint = "اكتب كلمة حذف للتأكيد" }
+        val confirmation = EditText(requireContext()).apply { hint = getString(R.string.profile_9) }
         AlertDialog.Builder(requireContext())
-            .setTitle("حذف الحساب")
+            .setTitle(getString(R.string.profile_10))
             .setMessage(
-                "سيتم تعطيل الحساب وإخفاء أي متجر ومنتجات نشطة. نحتفظ بالحد الأدنى من سجلات الطلبات اللازمة للدعم والمحاسبة والأمان. لا يمكن التراجع من داخل التطبيق."
+                getString(R.string.profile_11)
             )
             .setView(confirmation)
-            .setPositiveButton("حذف") { _, _ ->
-                if (confirmation.text.toString().trim() != "حذف") {
-                    Toast.makeText(requireContext(), "اكتب كلمة حذف للتأكيد", Toast.LENGTH_LONG).show()
+            .setPositiveButton(getString(R.string.cart_13)) { _, _ ->
+                if (confirmation.text.toString().trim() != getString(R.string.cart_13)) {
+                    Toast.makeText(requireContext(), getString(R.string.profile_9), Toast.LENGTH_LONG).show()
                 } else {
                     deleteAccount()
                 }
             }
-            .setNegativeButton("إلغاء", null)
+            .setNegativeButton(getString(R.string.addresses_19), null)
             .show()
     }
 
@@ -127,16 +127,16 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                         MarketplaceCache(appContext).clearRecommendations(userId)
                     }
                     if (deleted && isAdded) {
-                        Toast.makeText(requireContext(), "تم تعطيل الحساب", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), getString(R.string.profile_12), Toast.LENGTH_SHORT).show()
                         (activity as? MainActivity)?.showAuth()
                     } else if (isAdded) {
-                        Toast.makeText(requireContext(), "تعذر حذف الحساب", Toast.LENGTH_LONG).show()
+                        Toast.makeText(requireContext(), getString(R.string.profile_13), Toast.LENGTH_LONG).show()
                         setActionsEnabled(true)
                     }
                 }
                 .onFailure {
                     if (isAdded) {
-                        Toast.makeText(requireContext(), CustomerErrorMessages.from(it, "تعذر حذف الحساب"), Toast.LENGTH_LONG).show()
+                        Toast.makeText(requireContext(), CustomerErrorMessages.from(it, getString(R.string.profile_13)), Toast.LENGTH_LONG).show()
                         setActionsEnabled(true)
                     }
                 }
@@ -145,10 +145,10 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
     private fun confirmLogout() {
         AlertDialog.Builder(requireContext())
-            .setTitle("تسجيل الخروج")
-            .setMessage("هل تريد تسجيل الخروج من حسابك؟")
-            .setPositiveButton("تسجيل الخروج") { _, _ -> logout() }
-            .setNegativeButton("إلغاء", null)
+            .setTitle(getString(R.string.profile_14))
+            .setMessage(getString(R.string.profile_15))
+            .setPositiveButton(getString(R.string.profile_14)) { _, _ -> logout() }
+            .setNegativeButton(getString(R.string.addresses_19), null)
             .show()
     }
 

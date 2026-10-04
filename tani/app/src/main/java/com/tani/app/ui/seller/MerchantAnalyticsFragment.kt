@@ -38,50 +38,50 @@ class MerchantAnalyticsFragment : Fragment() {
 
     private fun load() {
         val context = requireContext(); root.removeAllViews()
-        root.addView(MerchantUi.title(context, "أداء المتجر"))
-        root.addView(MerchantUi.card(context, soft = true).apply { addView(MerchantUi.text(context, "جاري حساب المؤشرات…", 14f, true)) })
+        root.addView(MerchantUi.title(context, getString(R.string.merchant_analytics_1)))
+        root.addView(MerchantUi.card(context, soft = true).apply { addView(MerchantUi.text(context, getString(R.string.merchant_analytics_2), 14f, true)) })
         viewLifecycleOwner.lifecycleScope.launch {
             runCatchingCancellable { repository.merchantDashboardSummary() }
                 .onSuccess(::render)
-                .onFailure { showError(CustomerErrorMessages.from(it, "تعذر تحميل المؤشرات")) }
+                .onFailure { showError(CustomerErrorMessages.from(it, getString(R.string.merchant_insights_26))) }
         }
     }
 
     private fun render(m: MerchantDashboardSummary) {
         val context = requireContext(); root.removeAllViews()
-        root.addView(MerchantUi.title(context, "أداء المتجر"))
-        root.addView(MerchantUi.subtitle(context, "أرقام بسيطة وواضحة تساعدك تعرف شغلك ماشي كيف."))
+        root.addView(MerchantUi.title(context, getString(R.string.merchant_analytics_1)))
+        root.addView(MerchantUi.subtitle(context, getString(R.string.merchant_analytics_3)))
 
-        root.addView(MerchantUi.sectionTitle(context, "المبيعات والطلبات"))
-        addMetricPair("كل الطلبات", m.orders.toString(), "تم التسليم", m.delivered_orders.toString())
-        root.addView(MerchantUi.metricCard(context, "إجمالي المبيعات", "${money(m.gmv)} جنيه", "قيمة الطلبات المسجلة على المتجر"))
+        root.addView(MerchantUi.sectionTitle(context, getString(R.string.merchant_analytics_4)))
+        addMetricPair(getString(R.string.merchant_insights_6), m.orders.toString(), getString(R.string.merchant_analytics_5), m.delivered_orders.toString())
+        root.addView(MerchantUi.metricCard(context, getString(R.string.merchant_analytics_6), getString(R.string.monetization_8, (money(m.gmv))), getString(R.string.merchant_analytics_7)))
 
-        root.addView(MerchantUi.sectionTitle(context, "العملاء والوصول"))
-        addMetricPair("العملاء", m.customers.toString(), "عملاء عادوا للشراء", m.repeat_customers.toString())
-        root.addView(MerchantUi.metricCard(context, "مشاهدات المنتجات", m.product_views.toString()))
+        root.addView(MerchantUi.sectionTitle(context, getString(R.string.merchant_analytics_8)))
+        addMetricPair(getString(R.string.merchant_analytics_9), m.customers.toString(), getString(R.string.merchant_insights_12), m.repeat_customers.toString())
+        root.addView(MerchantUi.metricCard(context, getString(R.string.merchant_insights_11), m.product_views.toString()))
 
-        root.addView(MerchantUi.sectionTitle(context, "جودة الأداء"))
-        root.addView(rateCard("معدل التحويل", m.conversion_rate, "نسبة المشاهدات التي تحولت إلى طلب"))
-        root.addView(rateCard("إتمام الطلبات", m.completion_rate, "نسبة الطلبات التي وصلت للتسليم"))
-        root.addView(rateCard("إلغاء الطلبات", m.cancellation_rate, "كلما قلت النسبة كان أفضل"))
+        root.addView(MerchantUi.sectionTitle(context, getString(R.string.merchant_insights_13)))
+        root.addView(rateCard(getString(R.string.merchant_insights_14), m.conversion_rate, getString(R.string.merchant_analytics_10)))
+        root.addView(rateCard(getString(R.string.merchant_analytics_11), m.completion_rate, getString(R.string.merchant_analytics_12)))
+        root.addView(rateCard(getString(R.string.merchant_insights_16), m.cancellation_rate, getString(R.string.merchant_analytics_13)))
         root.addView(MerchantUi.card(context).apply {
-            addView(MerchantUi.text(context, "متوسط التقييم", 14.5f, true))
+            addView(MerchantUi.text(context, getString(R.string.merchant_insights_18), 14.5f, true))
             addView(MerchantUi.text(context, if (m.average_rating > 0) "${money(m.average_rating)} / 5" else "—", 21f, true).apply {
                 setPadding(0, MerchantUi.dp(context, 5), 0, 0)
             })
         })
         root.addView(MerchantUi.card(context).apply {
-            addView(MerchantUi.text(context, "متوسط الاستجابة", 14.5f, true))
-            addView(MerchantUi.text(context, m.average_response_seconds?.let { "${(it / 60.0).roundToInt()} دقيقة" } ?: "—", 21f, true).apply {
+            addView(MerchantUi.text(context, getString(R.string.merchant_analytics_14), 14.5f, true))
+            addView(MerchantUi.text(context, m.average_response_seconds?.let { getString(R.string.checkout_46, ((it / 60.0).roundToInt())) } ?: "—", 21f, true).apply {
                 setPadding(0, MerchantUi.dp(context, 5), 0, 0)
             })
         })
 
-        root.addView(MerchantUi.sectionTitle(context, "المنتجات"))
-        root.addView(MerchantUi.metricCard(context, "المنتجات النشطة", "${m.active_products} من ${m.products}"))
-        root.addView(MerchantUi.sectionTitle(context, "الأكثر مبيعاً"))
+        root.addView(MerchantUi.sectionTitle(context, getString(R.string.main_16)))
+        root.addView(MerchantUi.metricCard(context, getString(R.string.merchant_analytics_15), getString(R.string.merchant_analytics_16, m.active_products, m.products)))
+        root.addView(MerchantUi.sectionTitle(context, getString(R.string.merchant_analytics_17)))
         if (m.best_sellers.isEmpty()) {
-            root.addView(MerchantUi.emptyCard(context, "لسه ما في بيانات كفاية", "بعد أول مبيعات حتظهر المنتجات الأفضل هنا."))
+            root.addView(MerchantUi.emptyCard(context, getString(R.string.merchant_analytics_18), getString(R.string.merchant_analytics_19)))
         } else {
             m.best_sellers.forEachIndexed { index, item ->
                 root.addView(MerchantUi.card(context).apply {
@@ -90,7 +90,7 @@ class MerchantAnalyticsFragment : Fragment() {
                         addView(MerchantUi.pill(context, "${index + 1}", MerchantUi.Tone.BRAND))
                         addView(MerchantUi.text(context, item.name, 15.5f, true), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = MerchantUi.dp(context, 10) })
                     })
-                    addView(MerchantUi.muted(context, "${item.units} وحدة • ${money(item.revenue)} جنيه • ${item.views} مشاهدة", 12f).apply {
+                    addView(MerchantUi.muted(context, getString(R.string.merchant_analytics_20, item.units, (money(item.revenue)), item.views), 12f).apply {
                         setPadding(0, MerchantUi.dp(context, 7), 0, 0)
                     })
                 })
@@ -123,11 +123,11 @@ class MerchantAnalyticsFragment : Fragment() {
 
     private fun showError(message: String) {
         val context = requireContext(); root.removeAllViews()
-        root.addView(MerchantUi.title(context, "أداء المتجر"))
+        root.addView(MerchantUi.title(context, getString(R.string.merchant_analytics_1)))
         root.addView(MerchantUi.card(context).apply {
-            addView(MerchantUi.text(context, "تعذر تحميل المؤشرات", 16f, true))
+            addView(MerchantUi.text(context, getString(R.string.merchant_insights_26), 16f, true))
             addView(MerchantUi.muted(context, message).apply { setPadding(0, MerchantUi.dp(context, 5), 0, MerchantUi.dp(context, 10)) })
-            addView(MerchantUi.secondaryButton(context, "إعادة المحاولة") { load() })
+            addView(MerchantUi.secondaryButton(context, getString(R.string.notifications_5)) { load() })
         })
     }
     private fun money(value: Double) = if (value % 1.0 == 0.0) value.toInt().toString() else String.format(java.util.Locale.US, "%.2f", value)

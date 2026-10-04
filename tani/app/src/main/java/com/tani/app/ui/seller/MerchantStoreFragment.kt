@@ -65,12 +65,12 @@ class MerchantStoreFragment : Fragment() {
     }
 
     private fun load() {
-        loading("جاري تحميل بيانات المتجر…")
+        loading(getString(R.string.merchant_store_1))
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatchingCancellable { repository.merchantStore() ?: error("لم يتم إنشاء المتجر بعد") }
+            runCatchingCancellable { repository.merchantStore() ?: error(getString(R.string.merchant_store_2)) }
                 .onSuccess(::render)
                 .onFailure { error ->
-                    showError(CustomerErrorMessages.from(error, "تعذر تحميل بيانات المتجر. حاول مرة أخرى."))
+                    showError(CustomerErrorMessages.from(error, getString(R.string.merchant_store_3)))
                 }
         }
     }
@@ -81,50 +81,50 @@ class MerchantStoreFragment : Fragment() {
         saveInFlight = false
         assetUploadInFlight = false
         root.removeAllViews()
-        root.addView(MerchantUi.title(context, "بيانات المتجر"))
-        root.addView(MerchantUi.subtitle(context, "عدّل المعلومات التي يراها العملاء وحالة استقبال الطلبات."))
+        root.addView(MerchantUi.title(context, getString(R.string.merchant_onboarding_22)))
+        root.addView(MerchantUi.subtitle(context, getString(R.string.merchant_store_4)))
 
         logoPath = store.logo_url
         coverPath = store.cover_url
 
-        root.addView(MerchantUi.sectionTitle(context, "هوية المتجر"))
+        root.addView(MerchantUi.sectionTitle(context, getString(R.string.merchant_store_5)))
         root.addView(MerchantUi.card(context).apply {
-            logoStatus = MerchantUi.text(context, if (store.logo_url.isNullOrBlank()) "الشعار: غير مرفوع" else "الشعار: محفوظ ✓", 14f, true)
-            coverStatus = MerchantUi.text(context, if (store.cover_url.isNullOrBlank()) "الغلاف: غير مرفوع" else "الغلاف: محفوظ ✓", 14f, true)
+            logoStatus = MerchantUi.text(context, if (store.logo_url.isNullOrBlank()) getString(R.string.merchant_store_6) else getString(R.string.merchant_store_7), 14f, true)
+            coverStatus = MerchantUi.text(context, if (store.cover_url.isNullOrBlank()) getString(R.string.merchant_store_8) else getString(R.string.merchant_store_9), 14f, true)
             addView(logoStatus)
-            addView(MerchantUi.compactButton(context, if (store.logo_url.isNullOrBlank()) "إضافة شعار" else "تغيير الشعار") {
+            addView(MerchantUi.compactButton(context, if (store.logo_url.isNullOrBlank()) getString(R.string.merchant_store_10) else getString(R.string.merchant_store_11)) {
                 if (assetUploadInFlight) return@compactButton
                 pendingAsset = "logo"
                 pickImage.launch("image/*")
             }.apply { setPadding(MerchantUi.dp(context, 14), 0, MerchantUi.dp(context, 14), 0) })
             addView(coverStatus?.apply { setPadding(0, MerchantUi.dp(context, 12), 0, 0) })
-            addView(MerchantUi.compactButton(context, if (store.cover_url.isNullOrBlank()) "إضافة غلاف" else "تغيير الغلاف") {
+            addView(MerchantUi.compactButton(context, if (store.cover_url.isNullOrBlank()) getString(R.string.merchant_store_12) else getString(R.string.merchant_store_13)) {
                 if (assetUploadInFlight) return@compactButton
                 pendingAsset = "cover"
                 pickImage.launch("image/*")
             })
-            addView(MerchantUi.muted(context, "الشعار والغلاف يُحفظان مباشرة بعد اكتمال الرفع.", 12f).apply {
+            addView(MerchantUi.muted(context, getString(R.string.merchant_store_14), 12f).apply {
                 setPadding(0, MerchantUi.dp(context, 8), 0, 0)
             })
         })
 
-        root.addView(MerchantUi.sectionTitle(context, "معلومات المتجر"))
-        val name = field("اسم المتجر", store.name)
-        val description = field("وصف المتجر", store.description, multiline = true)
-        val city = field("المدينة", store.city)
-        val area = field("المنطقة / الحي", store.area)
+        root.addView(MerchantUi.sectionTitle(context, getString(R.string.merchant_store_15)))
+        val name = field(getString(R.string.merchant_onboarding_25), store.name)
+        val description = field(getString(R.string.merchant_onboarding_29), store.description, multiline = true)
+        val city = field(getString(R.string.merchant_onboarding_30), store.city)
+        val area = field(getString(R.string.checkout_25), store.area)
         root.addView(MerchantUi.card(context).apply {
-            addLabeled(this, "اسم المتجر", name)
-            addLabeled(this, "الوصف", description)
-            addLabeled(this, "المدينة", city)
-            addLabeled(this, "المنطقة / الحي", area)
+            addLabeled(this, getString(R.string.merchant_onboarding_25), name)
+            addLabeled(this, getString(R.string.merchant_products_28), description)
+            addLabeled(this, getString(R.string.merchant_onboarding_30), city)
+            addLabeled(this, getString(R.string.checkout_25), area)
         })
 
-        root.addView(MerchantUi.sectionTitle(context, "التواصل"))
-        val phone = field("هاتف التواصل", store.contact_phone, phone = true)
-        val whatsapp = field("رقم واتساب", store.whatsapp, phone = true)
+        root.addView(MerchantUi.sectionTitle(context, getString(R.string.merchant_store_16)))
+        val phone = field(getString(R.string.merchant_store_17), store.contact_phone, phone = true)
+        val whatsapp = field(getString(R.string.merchant_store_18), store.whatsapp, phone = true)
         val sameWhatsApp = CheckBox(context).apply {
-            text = "رقم الواتساب هو نفس رقم الهاتف"
+            text = getString(R.string.merchant_onboarding_21)
             isChecked = !store.contact_phone.isNullOrBlank() && store.contact_phone == store.whatsapp
             setOnCheckedChangeListener { _, checked ->
                 if (checked) {
@@ -137,29 +137,29 @@ class MerchantStoreFragment : Fragment() {
         }
         if (sameWhatsApp.isChecked) whatsapp.isEnabled = false
         root.addView(MerchantUi.card(context).apply {
-            addLabeled(this, "هاتف التواصل", phone)
-            addLabeled(this, "واتساب", whatsapp)
+            addLabeled(this, getString(R.string.merchant_store_17), phone)
+            addLabeled(this, getString(R.string.merchant_onboarding_44), whatsapp)
             addView(sameWhatsApp)
         })
 
-        root.addView(MerchantUi.sectionTitle(context, "حالة المتجر"))
+        root.addView(MerchantUi.sectionTitle(context, getString(R.string.merchant_store_19)))
         val open = CheckBox(context).apply {
-            text = "المتجر مفتوح لاستقبال الطلبات"
+            text = getString(R.string.merchant_store_20)
             isChecked = store.is_open
         }
         val visible = CheckBox(context).apply {
-            text = "المتجر ظاهر للعملاء"
+            text = getString(R.string.merchant_store_21)
             isChecked = store.is_active
         }
         root.addView(MerchantUi.card(context, soft = true).apply {
             addView(open)
             addView(visible)
-            addView(MerchantUi.muted(context, "إغلاق المتجر مؤقتاً يوقف الطلبات الجديدة بدون حذف المنتجات. إخفاء المتجر يمنع ظهوره للعملاء إلى أن تفعّله من جديد.", 12f).apply {
+            addView(MerchantUi.muted(context, getString(R.string.merchant_store_22), 12f).apply {
                 setPadding(0, MerchantUi.dp(context, 6), 0, 0)
             })
         })
 
-        root.addView(MerchantUi.primaryButton(context, "حفظ التغييرات") {
+        root.addView(MerchantUi.primaryButton(context, getString(R.string.merchant_store_23)) {
             if (saveInFlight) return@primaryButton
             if (sameWhatsApp.isChecked) whatsapp.setText(phone.text.toString())
             save(store, name, description, city, area, phone, whatsapp, open.isChecked, visible.isChecked)
@@ -180,11 +180,11 @@ class MerchantStoreFragment : Fragment() {
         if (saveInFlight) return
         val cleanName = name.text.toString().trim()
         val cleanCity = city.text.toString().trim()
-        if (cleanName.length < 2) return toast("أدخل اسم المتجر")
-        if (cleanCity.length < 2) return toast("أدخل المدينة")
+        if (cleanName.length < 2) return toast(getString(R.string.merchant_onboarding_66))
+        if (cleanCity.length < 2) return toast(getString(R.string.merchant_onboarding_68))
 
         saveInFlight = true
-        toast("جاري حفظ المتجر…")
+        toast(getString(R.string.merchant_store_24))
         viewLifecycleOwner.lifecycleScope.launch {
             runCatchingCancellable {
                 repository.updateMerchantStore(
@@ -202,11 +202,11 @@ class MerchantStoreFragment : Fragment() {
                 )
             }.onSuccess { updated ->
                 currentStore = updated
-                toast("تم حفظ بيانات المتجر ✓")
+                toast(getString(R.string.merchant_store_25))
                 render(updated)
             }.onFailure { error ->
                 saveInFlight = false
-                toast(CustomerErrorMessages.from(error, merchantFallback(error, "تعذر حفظ بيانات المتجر. حاول مرة أخرى.")))
+                toast(CustomerErrorMessages.from(error, merchantFallback(error, getString(R.string.merchant_store_26))))
             }
         }
     }
@@ -214,9 +214,9 @@ class MerchantStoreFragment : Fragment() {
     private fun uploadAsset(uri: Uri) {
         if (assetUploadInFlight) return
         val kind = pendingAsset ?: return
-        val store = currentStore ?: return toast("أعد فتح بيانات المتجر ثم حاول مرة أخرى")
+        val store = currentStore ?: return toast(getString(R.string.merchant_store_27))
         assetUploadInFlight = true
-        if (kind == "logo") logoStatus?.text = "الشعار: جاري الرفع…" else coverStatus?.text = "الغلاف: جاري الرفع…"
+        if (kind == "logo") logoStatus?.text = getString(R.string.merchant_store_28) else coverStatus?.text = getString(R.string.merchant_store_29)
 
         viewLifecycleOwner.lifecycleScope.launch {
             runCatchingCancellable {
@@ -243,20 +243,20 @@ class MerchantStoreFragment : Fragment() {
                 coverPath = updated.cover_url
                 assetUploadInFlight = false
                 if (kind == "logo") {
-                    logoStatus?.text = "الشعار: محفوظ ✓"
-                    toast("تم تحديث شعار المتجر ✓")
+                    logoStatus?.text = getString(R.string.merchant_store_7)
+                    toast(getString(R.string.merchant_store_30))
                 } else {
-                    coverStatus?.text = "الغلاف: محفوظ ✓"
-                    toast("تم تحديث غلاف المتجر ✓")
+                    coverStatus?.text = getString(R.string.merchant_store_9)
+                    toast(getString(R.string.merchant_store_31))
                 }
             }.onFailure { error ->
                 assetUploadInFlight = false
                 if (kind == "logo") {
-                    logoStatus?.text = if (logoPath.isNullOrBlank()) "الشعار: غير مرفوع" else "الشعار: محفوظ ✓"
+                    logoStatus?.text = if (logoPath.isNullOrBlank()) getString(R.string.merchant_store_6) else getString(R.string.merchant_store_7)
                 } else {
-                    coverStatus?.text = if (coverPath.isNullOrBlank()) "الغلاف: غير مرفوع" else "الغلاف: محفوظ ✓"
+                    coverStatus?.text = if (coverPath.isNullOrBlank()) getString(R.string.merchant_store_8) else getString(R.string.merchant_store_9)
                 }
-                toast(CustomerErrorMessages.from(error, merchantFallback(error, "تعذر رفع صورة المتجر. حاول مرة أخرى.")))
+                toast(CustomerErrorMessages.from(error, merchantFallback(error, getString(R.string.merchant_store_32))))
             }
         }
     }
@@ -264,9 +264,9 @@ class MerchantStoreFragment : Fragment() {
     private fun merchantFallback(error: Throwable, fallback: String): String {
         val raw = error.message.orEmpty()
         return when {
-            raw.contains("اسم المتجر", ignoreCase = true) -> "راجع اسم المتجر ثم أعد الحفظ."
-            raw.contains("المدينة", ignoreCase = true) -> "راجع اسم المدينة ثم أعد الحفظ."
-            raw.contains("5 ميجابايت", ignoreCase = true) -> "الصورة كبيرة جداً. اختر صورة أصغر من 5 ميجابايت."
+            raw.contains(getString(R.string.merchant_onboarding_25), ignoreCase = true) -> getString(R.string.merchant_store_33)
+            raw.contains(getString(R.string.merchant_onboarding_30), ignoreCase = true) -> getString(R.string.merchant_store_34)
+            raw.contains(getString(R.string.merchant_store_35), ignoreCase = true) -> getString(R.string.merchant_store_36)
             else -> CustomerErrorMessages.from(error, fallback)
         }
     }
@@ -292,7 +292,7 @@ class MerchantStoreFragment : Fragment() {
 
     private fun imageBytes(uri: Uri, maxSize: Int, quality: Int): ByteArray {
         val bitmap = requireContext().contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
-            ?: error("تعذر قراءة الصورة")
+            ?: error(getString(R.string.account_4))
         val largest = maxOf(bitmap.width, bitmap.height)
         val scaled = if (largest > maxSize) {
             val ratio = maxSize.toFloat() / largest.toFloat()
@@ -301,15 +301,15 @@ class MerchantStoreFragment : Fragment() {
             bitmap
         }
         return ByteArrayOutputStream().use { out ->
-            require(scaled.compress(Bitmap.CompressFormat.JPEG, quality, out)) { "تعذر تجهيز الصورة" }
-            out.toByteArray().also { require(it.size <= 5 * 1024 * 1024) { "الصورة أكبر من 5 ميجابايت" } }
+            require(scaled.compress(Bitmap.CompressFormat.JPEG, quality, out)) { getString(R.string.account_5) }
+            out.toByteArray().also { require(it.size <= 5 * 1024 * 1024) { getString(R.string.merchant_onboarding_92) } }
         }
     }
 
     private fun loading(message: String) {
         val context = requireContext()
         root.removeAllViews()
-        root.addView(MerchantUi.title(context, "بيانات المتجر"))
+        root.addView(MerchantUi.title(context, getString(R.string.merchant_onboarding_22)))
         root.addView(MerchantUi.card(context, soft = true).apply {
             addView(MerchantUi.text(context, message, 14f, true))
         })
@@ -318,11 +318,11 @@ class MerchantStoreFragment : Fragment() {
     private fun showError(message: String) {
         val context = requireContext()
         root.removeAllViews()
-        root.addView(MerchantUi.title(context, "بيانات المتجر"))
+        root.addView(MerchantUi.title(context, getString(R.string.merchant_onboarding_22)))
         root.addView(MerchantUi.card(context).apply {
-            addView(MerchantUi.text(context, "تعذر تحميل المتجر", 16f, true))
+            addView(MerchantUi.text(context, getString(R.string.merchant_store_37), 16f, true))
             addView(MerchantUi.muted(context, message).apply { setPadding(0, MerchantUi.dp(context, 5), 0, MerchantUi.dp(context, 10)) })
-            addView(MerchantUi.secondaryButton(context, "إعادة المحاولة") { load() })
+            addView(MerchantUi.secondaryButton(context, getString(R.string.notifications_5)) { load() })
         })
     }
 

@@ -102,41 +102,41 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
             backToLogin.visibility = if (mode == Mode.FORGOT || mode == Mode.RESET) View.VISIBLE else View.GONE
             browseAsGuest.visibility = if (mode == Mode.LOGIN || mode == Mode.SIGNUP) View.VISIBLE else View.GONE
             browseAsGuest.text = when {
-                continuingCheckout -> "الرجوع للسلة"
-                continuingMerchant -> "الرجوع للسوق"
-                else -> "التصفح كزائر"
+                continuingCheckout -> getString(R.string.auth_1)
+                continuingMerchant -> getString(R.string.auth_2)
+                else -> getString(R.string.auth_3)
             }
 
             when (mode) {
                 Mode.LOGIN -> {
-                    title.text = "مرحباً بعودتك"
+                    title.text = getString(R.string.auth_4)
                     subtitle.text = when {
-                        continuingCheckout -> "سجّل الدخول لإكمال طلبك. السلة محفوظة ولن تضيع."
-                        continuingMerchant -> "سجّل الدخول للوصول إلى البيع على تاني أو متابعة متجرك."
-                        else -> "سجّل الدخول لمتابعة طلباتك وحسابك في تاني"
+                        continuingCheckout -> getString(R.string.auth_5)
+                        continuingMerchant -> getString(R.string.auth_6)
+                        else -> getString(R.string.auth_7)
                     }
-                    action.text = "تسجيل الدخول"
-                    toggle.text = "ليس لديك حساب؟ إنشاء حساب"
+                    action.text = getString(R.string.auth_8)
+                    toggle.text = getString(R.string.auth_9)
                 }
                 Mode.SIGNUP -> {
-                    title.text = "إنشاء حساب"
+                    title.text = getString(R.string.auth_10)
                     subtitle.text = when {
-                        continuingCheckout -> "أنشئ حسابك لإكمال الطلب. كل المنتجات في سلتك محفوظة."
-                        continuingMerchant -> "أنشئ حسابك أولاً، وبعدها نكمل تسجيل التاجر أو نفتح متجرك."
-                        else -> "أدخل بياناتك الأساسية للبدء في تاني"
+                        continuingCheckout -> getString(R.string.auth_11)
+                        continuingMerchant -> getString(R.string.auth_12)
+                        else -> getString(R.string.auth_13)
                     }
-                    action.text = "إنشاء الحساب"
-                    toggle.text = "لديك حساب؟ تسجيل الدخول"
+                    action.text = getString(R.string.auth_14)
+                    toggle.text = getString(R.string.auth_15)
                 }
                 Mode.FORGOT -> {
-                    title.text = "نسيت كلمة المرور؟"
-                    subtitle.text = "أدخل بريدك وسنرسل لك رابطاً آمناً لتعيين كلمة مرور جديدة"
-                    action.text = "إرسال رابط الاستعادة"
+                    title.text = getString(R.string.auth_16)
+                    subtitle.text = getString(R.string.auth_17)
+                    action.text = getString(R.string.auth_18)
                 }
                 Mode.RESET -> {
-                    title.text = "كلمة مرور جديدة"
-                    subtitle.text = "اختر كلمة مرور جديدة لحسابك"
-                    action.text = "حفظ كلمة المرور"
+                    title.text = getString(R.string.auth_19)
+                    subtitle.text = getString(R.string.auth_20)
+                    action.text = getString(R.string.auth_21)
                 }
             }
 
@@ -219,7 +219,7 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
                         "LOGIN_OK", "SIGNUP_OK" -> continueAfterAuthentication(afterAuth)
                         "RESET_OK" -> (activity as? MainActivity)?.showApp()
                         "RECOVERY_SENT" -> {
-                            status.text = "إذا كان البريد مسجلاً، ستصلك رسالة لاستعادة كلمة المرور."
+                            status.text = getString(R.string.auth_22)
                         }
                     }
                 }.onFailure {
@@ -231,8 +231,8 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
 
         render(
             when {
-                recoveryError != null -> "تعذر فتح رابط الاستعادة: $recoveryError"
-                mode == Mode.RESET && (recoveryToken.isBlank() || recoveryRefreshToken.isBlank()) -> "رابط استعادة كلمة المرور غير صالح أو منتهي. اطلب رابطاً جديداً."
+                recoveryError != null -> getString(R.string.auth_23, recoveryError)
+                mode == Mode.RESET && (recoveryToken.isBlank() || recoveryRefreshToken.isBlank()) -> getString(R.string.auth_24)
                 else -> ""
             }
         )
@@ -256,12 +256,12 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
     private fun friendlyError(error: Throwable): String {
         val raw = error.message.orEmpty()
         return when {
-            raw.contains("Invalid login credentials", true) -> "البريد الإلكتروني أو كلمة المرور غير صحيحة"
-            raw.contains("Email not confirmed", true) -> "تعذر تفعيل الحساب تلقائياً. حاول تسجيل الدخول مرة أخرى"
-            raw.contains("User already registered", true) -> "يوجد حساب مسجل بهذا البريد بالفعل"
-            raw.contains("Password should be", true) -> "كلمة المرور لا تحقق متطلبات الأمان"
-            raw.contains("rate limit", true) -> "تمت محاولات كثيرة. حاول مرة أخرى لاحقاً"
-            else -> CustomerErrorMessages.from(error, "حدث خطأ غير متوقع. حاول مرة أخرى")
+            raw.contains("Invalid login credentials", true) -> getString(R.string.auth_25)
+            raw.contains("Email not confirmed", true) -> getString(R.string.auth_26)
+            raw.contains("User already registered", true) -> getString(R.string.auth_27)
+            raw.contains("Password should be", true) -> getString(R.string.auth_28)
+            raw.contains("rate limit", true) -> getString(R.string.auth_29)
+            else -> CustomerErrorMessages.from(error, getString(R.string.auth_30))
         }
     }
 }

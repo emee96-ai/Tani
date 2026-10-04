@@ -49,10 +49,10 @@ class MerchantInsightsFragment : Fragment() {
         val sellerId = requireArguments().getString(ARG_SELLER) ?: return
         val context = requireContext()
         root.removeAllViews()
-        root.addView(MerchantUi.title(context, "صحة المتجر"))
-        root.addView(MerchantUi.subtitle(context, "المؤشرات التي تساعدك تعرف أين يحتاج المتجر انتباهك."))
+        root.addView(MerchantUi.title(context, getString(R.string.merchant_insights_1)))
+        root.addView(MerchantUi.subtitle(context, getString(R.string.merchant_insights_2)))
         root.addView(MerchantUi.card(context, soft = true).apply {
-            addView(MerchantUi.text(context, "جاري تجهيز المؤشرات…", 14f, true))
+            addView(MerchantUi.text(context, getString(R.string.merchant_insights_3), 14f, true))
         })
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -62,44 +62,44 @@ class MerchantInsightsFragment : Fragment() {
                 }
             }.onSuccess { (metrics, health) ->
                 root.removeAllViews()
-                root.addView(MerchantUi.title(context, "صحة المتجر"))
-                root.addView(MerchantUi.subtitle(context, "ركّز على التنبيهات أولاً، وبعدها تابع النمو."))
+                root.addView(MerchantUi.title(context, getString(R.string.merchant_insights_1)))
+                root.addView(MerchantUi.subtitle(context, getString(R.string.merchant_insights_4)))
 
-                root.addView(MerchantUi.sectionTitle(context, "الطلبات والمبيعات"))
-                addMetricPair("كل الطلبات", (metrics?.total_orders ?: 0).toString(), "الطلبات المكتملة", (metrics?.completed_orders ?: 0).toString())
-                addMetricPair("الطلبات الملغاة", (metrics?.cancelled_orders ?: 0).toString(), "المبيعات", money(metrics?.total_sales ?: 0.0) + " جنيه")
-                addMetricPair("مشاهدات المنتجات", (metrics?.product_views ?: 0).toString(), "عملاء عادوا للشراء", (metrics?.repeat_customers ?: 0).toString())
+                root.addView(MerchantUi.sectionTitle(context, getString(R.string.merchant_insights_5)))
+                addMetricPair(getString(R.string.merchant_insights_6), (metrics?.total_orders ?: 0).toString(), getString(R.string.merchant_insights_7), (metrics?.completed_orders ?: 0).toString())
+                addMetricPair(getString(R.string.merchant_insights_8), (metrics?.cancelled_orders ?: 0).toString(), getString(R.string.merchant_insights_9), money(metrics?.total_sales ?: 0.0) + getString(R.string.merchant_insights_10))
+                addMetricPair(getString(R.string.merchant_insights_11), (metrics?.product_views ?: 0).toString(), getString(R.string.merchant_insights_12), (metrics?.repeat_customers ?: 0).toString())
 
-                root.addView(MerchantUi.sectionTitle(context, "جودة الأداء"))
-                root.addView(rateCard("معدل التحويل", metrics?.conversion_rate ?: 0.0, "من المشاهدة إلى طلب"))
-                root.addView(rateCard("إلغاء الطلبات", metrics?.cancellation_rate ?: 0.0, "كلما قلّ كان أفضل"))
+                root.addView(MerchantUi.sectionTitle(context, getString(R.string.merchant_insights_13)))
+                root.addView(rateCard(getString(R.string.merchant_insights_14), metrics?.conversion_rate ?: 0.0, getString(R.string.merchant_insights_15)))
+                root.addView(rateCard(getString(R.string.merchant_insights_16), metrics?.cancellation_rate ?: 0.0, getString(R.string.merchant_insights_17)))
                 root.addView(MerchantUi.card(context).apply {
-                    addView(MerchantUi.text(context, "متوسط التقييم", 15f, true))
+                    addView(MerchantUi.text(context, getString(R.string.merchant_insights_18), 15f, true))
                     val rating = metrics?.average_rating ?: 0.0
                     addView(MerchantUi.text(context, if (rating > 0) "${money(rating)} / 5" else "—", 21f, true).apply {
                         setPadding(0, MerchantUi.dp(context, 5), 0, 0)
                     })
                 })
 
-                root.addView(MerchantUi.sectionTitle(context, "المخزون"))
+                root.addView(MerchantUi.sectionTitle(context, getString(R.string.merchant_insights_19)))
                 val alerts = health.out_of_stock + health.low_stock + health.inactive
                 root.addView(MerchantUi.card(context, soft = alerts > 0).apply {
                     addView(LinearLayout(context).apply {
                         orientation = LinearLayout.HORIZONTAL
                         layoutDirection = View.LAYOUT_DIRECTION_RTL
-                        addView(MerchantUi.text(context, "حالة المخزون", 16f, true), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-                        addView(MerchantUi.pill(context, if (alerts == 0) "ممتاز" else "$alerts تنبيه", if (alerts == 0) MerchantUi.Tone.SUCCESS else MerchantUi.Tone.WARNING))
+                        addView(MerchantUi.text(context, getString(R.string.merchant_insights_20), 16f, true), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+                        addView(MerchantUi.pill(context, if (alerts == 0) getString(R.string.merchant_insights_21) else getString(R.string.merchant_insights_22, alerts), if (alerts == 0) MerchantUi.Tone.SUCCESS else MerchantUi.Tone.WARNING))
                     })
-                    addView(inventoryLine("نفد المخزون", health.out_of_stock, MerchantUi.Tone.ERROR))
-                    addView(inventoryLine("مخزون منخفض (1–3)", health.low_stock, MerchantUi.Tone.WARNING))
-                    addView(inventoryLine("منتجات متوقفة", health.inactive, MerchantUi.Tone.NEUTRAL))
+                    addView(inventoryLine(getString(R.string.merchant_insights_23), health.out_of_stock, MerchantUi.Tone.ERROR))
+                    addView(inventoryLine(getString(R.string.merchant_insights_24), health.low_stock, MerchantUi.Tone.WARNING))
+                    addView(inventoryLine(getString(R.string.merchant_insights_25), health.inactive, MerchantUi.Tone.NEUTRAL))
                 })
             }.onFailure {
                 root.removeAllViews()
-                root.addView(MerchantUi.title(context, "صحة المتجر"))
+                root.addView(MerchantUi.title(context, getString(R.string.merchant_insights_1)))
                 root.addView(MerchantUi.card(context).apply {
-                    addView(MerchantUi.text(context, "تعذر تحميل المؤشرات", 16f, true))
-                    addView(MerchantUi.muted(context, CustomerErrorMessages.from(it, "حاول مرة أخرى لاحقاً")).apply {
+                    addView(MerchantUi.text(context, getString(R.string.merchant_insights_26), 16f, true))
+                    addView(MerchantUi.muted(context, CustomerErrorMessages.from(it, getString(R.string.merchant_insights_27))).apply {
                         setPadding(0, MerchantUi.dp(context, 5), 0, 0)
                     })
                 })

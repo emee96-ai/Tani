@@ -33,7 +33,7 @@ class CategoriesFragment : Fragment(R.layout.fragment_stores) {
     private val repository = Repository()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        activity?.findViewById<MaterialToolbar>(R.id.top_app_bar)?.title = "المتاجر"
+        activity?.findViewById<MaterialToolbar>(R.id.top_app_bar)?.title = getString(R.string.main_17)
 
         val search = view.findViewById<EditText>(R.id.stores_search)
         val loading = view.findViewById<TextView>(R.id.stores_loading)
@@ -47,13 +47,13 @@ class CategoriesFragment : Fragment(R.layout.fragment_stores) {
 
         fun load() {
             loading.visibility = View.VISIBLE
-            loading.text = "جاري تحميل المتاجر..."
+            loading.text = getString(R.string.categories_1)
             viewLifecycleOwner.lifecycleScope.launch {
                 if (AppContentStore.storesLoaded) {
                     val stores = AppContentStore.filteredStores(search.text.toString())
                     adapter.submitList(stores)
                     loading.visibility = if (stores.isEmpty()) View.VISIBLE else View.GONE
-                    if (stores.isEmpty()) loading.text = "لا توجد متاجر مطابقة حالياً"
+                    if (stores.isEmpty()) loading.text = getString(R.string.categories_2)
                     return@launch
                 }
                 runCatchingCancellable { repository.stores(search.text.toString(), limit = 100) }
@@ -65,7 +65,7 @@ class CategoriesFragment : Fragment(R.layout.fragment_stores) {
                         adapter.submitList(stores)
                         if (stores.isEmpty()) {
                             loading.visibility = View.VISIBLE
-                            loading.text = "لا توجد متاجر مطابقة حالياً"
+                            loading.text = getString(R.string.categories_2)
                         } else {
                             loading.visibility = View.GONE
                         }

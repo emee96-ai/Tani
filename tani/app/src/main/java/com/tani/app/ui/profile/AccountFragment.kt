@@ -100,7 +100,7 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
                 .onFailure {
                     Toast.makeText(
                         requireContext(),
-                        CustomerErrorMessages.from(it, "تعذر تحميل بيانات الحساب"),
+                        CustomerErrorMessages.from(it, getString(R.string.account_1)),
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -134,11 +134,11 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
                 name.setText(updated.name)
                 phone.setText(updated.phone)
                 setEditMode(false)
-                Toast.makeText(requireContext(), "تم حفظ التعديلات", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), getString(R.string.account_2), Toast.LENGTH_SHORT).show()
             }.onFailure {
                 Toast.makeText(
                     requireContext(),
-                    CustomerErrorMessages.from(it, "تعذر حفظ التعديلات"),
+                    CustomerErrorMessages.from(it, getString(R.string.account_3)),
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -148,7 +148,7 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
 
     private fun setEditMode(enabled: Boolean) {
         editMode = enabled
-        editButton.text = if (enabled) "إلغاء" else "تعديل"
+        editButton.text = if (enabled) getString(R.string.addresses_19) else getString(R.string.addresses_7)
         changeAvatarButton.visibility = if (enabled) View.VISIBLE else View.GONE
         saveButton.visibility = if (enabled) View.VISIBLE else View.GONE
         setEditable(name, enabled)
@@ -179,16 +179,16 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
                 withContext(Dispatchers.IO) {
                     val bitmap = requireContext().contentResolver.openInputStream(uri)?.use {
                         BitmapFactory.decodeStream(it)
-                    } ?: error("تعذر قراءة الصورة")
+                    } ?: error(getString(R.string.account_4))
                     val scaled = scaleDown(bitmap, 1024)
                     ByteArrayOutputStream().use { output ->
                         require(scaled.compress(Bitmap.CompressFormat.JPEG, 82, output)) {
-                            "تعذر تجهيز الصورة"
+                            getString(R.string.account_5)
                         }
                         output.toByteArray()
                     }.also {
                         require(it.size <= 5 * 1024 * 1024) {
-                            "حجم الصورة كبير جداً. اختر صورة أصغر"
+                            getString(R.string.account_6)
                         }
                     }
                 }
@@ -199,7 +199,7 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
             }.onFailure {
                 Toast.makeText(
                     requireContext(),
-                    CustomerErrorMessages.from(it, "تعذر تجهيز الصورة"),
+                    CustomerErrorMessages.from(it, getString(R.string.account_5)),
                     Toast.LENGTH_LONG
                 ).show()
             }

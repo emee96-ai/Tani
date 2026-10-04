@@ -134,16 +134,16 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             onOpen = { (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id)) },
             onAdd = {
                 if (product.has_variants) {
-                    Toast.makeText(requireContext(), "اختر المقاس أو اللون أولاً", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), getString(R.string.favorites_4), Toast.LENGTH_SHORT).show()
                     (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id))
                 } else if (Cart.add(product.toProduct())) {
                     (activity as? MainActivity)?.refreshCartBadge()
                     viewLifecycleOwner.lifecycleScope.launch {
                         Analytics.track("add_to_cart", screen = "search", entityType = "product", entityId = product.id)
                     }
-                    Toast.makeText(requireContext(), "تمت إضافة ${product.name} للسلة", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), getString(R.string.home_28, product.name), Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(requireContext(), "تعذر إضافة كمية إضافية", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), getString(R.string.home_29), Toast.LENGTH_SHORT).show()
                 }
             }
         )
@@ -163,7 +163,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             productBox.removeAllViews()
             if (products.isEmpty()) {
                 productBox.addView(
-                    MarketplaceUi.empty(requireContext(), "ما لقينا منتجات مطابقة. جرّب كلمة أبسط أو اختر فئة من الاقتراحات.")
+                    MarketplaceUi.empty(requireContext(), getString(R.string.search_1))
                 )
             } else {
                 MarketplaceUi.addTwoColumnGrid(
@@ -175,7 +175,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
 
             storeBox.removeAllViews()
             if (stores.isEmpty()) {
-                storeBox.addView(MarketplaceUi.empty(requireContext(), "لا توجد متاجر مطابقة"))
+                storeBox.addView(MarketplaceUi.empty(requireContext(), getString(R.string.search_2)))
             } else stores.take(PREVIEW_STORES).forEach { store ->
                 MarketplaceUi.addWithSpacing(
                     storeBox,
@@ -207,13 +207,13 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             productBox.removeAllViews()
             storeBox.removeAllViews()
             status.visibility = View.VISIBLE
-            status.text = "اكتب حرفين على الأقل للبحث"
+            status.text = getString(R.string.search_3)
         }
 
         fun runSearch(remember: Boolean) {
             val term = currentTerm()
             if (term.length < 2) {
-                query.error = "اكتب حرفين على الأقل"
+                query.error = getString(R.string.home_1)
                 clearForShortQuery()
                 return
             }
@@ -242,15 +242,15 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                         cachedProducts,
                         cachedStoreResults,
                         if (online) {
-                            "نتائج محفوظة$citySuffix • جاري التحديث..."
+                            getString(R.string.search_4, citySuffix)
                         } else {
-                            "بدون اتصال$citySuffix • ${cachedProducts.size} منتج • ${cachedStoreResults.size} متجر محفوظ"
+                            getString(R.string.search_5, citySuffix, cachedProducts.size, cachedStoreResults.size)
                         },
                         canRetry = !online
                     )
                 } else {
                     status.visibility = View.VISIBLE
-                    status.text = if (online) "جاري البحث$citySuffix..." else "لا يوجد اتصال ولا توجد نتائج محفوظة لهذا البحث$citySuffix"
+                    status.text = if (online) getString(R.string.search_6, citySuffix) else getString(R.string.search_7, citySuffix)
                     retry.visibility = if (online) View.GONE else View.VISIBLE
                     refine.visibility = View.GONE
                     allStores.visibility = View.GONE
@@ -282,9 +282,9 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                         products,
                         stores,
                         if (products.isEmpty() && stores.isEmpty()) {
-                            "ما لقينا نتائج لـ «${term.take(40)}»$citySuffix"
+                            getString(R.string.search_8, (term.take(40)), citySuffix)
                         } else {
-                            "${products.size} منتج • ${stores.size} متجر$citySuffix"
+                            getString(R.string.search_9, products.size, stores.size, citySuffix)
                         }
                     )
 
@@ -300,9 +300,9 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                 } catch (error: Throwable) {
                     if (requestGeneration != generation) return@launch
                     val fallback = if (cachedProducts.isNotEmpty() || cachedStoreResults.isNotEmpty()) {
-                        "تعذر التحديث$citySuffix • نعرض آخر نتائج محفوظة"
+                        getString(R.string.search_10, citySuffix)
                     } else {
-                        "تعذر البحث. حاول مرة أخرى."
+                        getString(R.string.search_11)
                     }
                     if (cachedProducts.isNotEmpty() || cachedStoreResults.isNotEmpty()) {
                         renderResults(
@@ -394,7 +394,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
     private fun searchCacheKey(term: String, city: String?): String {
         fun normalize(value: String): String = value
             .lowercase()
-            .replace(Regex("[أإآٱ]"), "ا")
+            .replace(Regex(getString(R.string.search_12)), getString(R.string.search_13))
             .replace('ى', 'ي')
             .replace('ؤ', 'و')
             .replace('ئ', 'ي')

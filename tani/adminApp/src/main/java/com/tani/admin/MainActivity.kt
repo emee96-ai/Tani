@@ -80,7 +80,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
                 .onSuccess { enterDashboard(it) }
                 .onFailure {
                     AdminApi.clearSession()
-                    showLogin(error = it.message ?: "انتهت جلسة الدخول")
+                    showLogin(error = it.message ?: getString(R.string.main_1))
                 }
         }
     }
@@ -101,7 +101,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
             val mail = email.text?.toString()?.trim().orEmpty()
             val pass = password.text?.toString().orEmpty()
             if (mail.isBlank() || pass.isBlank()) {
-                status.text = "أدخل البريد وكلمة المرور"
+                status.text = getString(R.string.main_2)
                 return@setOnClickListener
             }
             status.text = ""
@@ -114,7 +114,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
                 }.onSuccess { enterDashboard(it) }
                     .onFailure {
                         AdminApi.clearSession()
-                        status.text = it.message ?: "تعذر تسجيل الدخول"
+                        status.text = it.message ?: getString(R.string.main_3)
                         progress.visibility = View.GONE
                         button.isEnabled = true
                     }
@@ -131,8 +131,8 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
         navigationView = findViewById(R.id.adminNavigationView)
         renderer = DashboardRenderer(this, { role }, this)
 
-        toolbar.title = "تاني — الإدارة"
-        toolbar.subtitle = if (newRole == "admin") "مدير النظام" else "فريق الدعم"
+        toolbar.title = getString(R.string.main_4)
+        toolbar.subtitle = if (newRole == "admin") getString(R.string.main_5) else getString(R.string.main_6)
         toolbar.setNavigationOnClickListener { drawer.openDrawer(GravityCompat.START) }
         toolbar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
@@ -145,7 +145,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
 
         val header = navigationView.getHeaderView(0)
         header.findViewById<TextView>(R.id.drawerRoleBadge).text =
-            if (newRole == "admin") "مدير النظام — صلاحيات كاملة" else "موظف دعم — صلاحيات محدودة"
+            if (newRole == "admin") getString(R.string.main_7) else getString(R.string.main_8)
 
         onBackPressedDispatcher.addCallback(this) {
             when {
@@ -182,7 +182,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
                 R.id.drawer_configuration -> AdminSection.CONFIGURATION
                 R.id.drawer_system -> AdminSection.SYSTEM
                 R.id.drawer_logout -> {
-                    confirm("تسجيل الخروج", "هل تريد إنهاء جلسة الإدارة؟", "خروج", danger = true) { signOut() }
+                    confirm(getString(R.string.main_9), getString(R.string.main_10), getString(R.string.main_11), danger = true) { signOut() }
                     drawer.closeDrawer(GravityCompat.START)
                     return@setNavigationItemSelectedListener true
                 }
@@ -197,7 +197,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
     private fun setupSearch() {
         val searchItem = toolbar.menu.findItem(R.id.action_search)
         val searchView = searchItem.actionView as SearchView
-        searchView.queryHint = "بحث في القسم"
+        searchView.queryHint = getString(R.string.main_12)
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 searchQuery = query?.trim().orEmpty()
@@ -278,7 +278,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
                     AdminSection.SYSTEM -> loadSystem()
                 }
             }.onFailure { error ->
-                if (requested == currentSection) showStatus(error.message ?: "تعذر تحميل هذا القسم")
+                if (requested == currentSection) showStatus(error.message ?: getString(R.string.main_13))
             }
             if (requested == currentSection) setLoading(false)
         }
@@ -430,9 +430,9 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
                 ).awaitAll().toMap()
             }
             val health = AdminApi.rpc("launch_operational_health", buildJsonObject { })?.jsonObject
-                ?: error("تعذر تحميل حالة عامل الصيانة")
+                ?: error(getString(R.string.main_14))
             val workerStats = listOf("worker_missing", "push_configuration_missing", "failed_push", "failed_erasure")
-                .associateWith { key -> health[key]?.jsonPrimitive?.intOrNull ?: error("بيانات حالة الصيانة غير مكتملة") }
+                .associateWith { key -> health[key]?.jsonPrimitive?.intOrNull ?: error(getString(R.string.main_15)) }
             renderer.renderSystem(mode, JsonArray(emptyList()), stats + workerStats)
             return
         }
@@ -460,9 +460,9 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
     override fun verifyMerchantPhone(row: JsonObject) {
         val id = row.string("id") ?: return
         val phone = row.string("phone") ?: return
-        prompt("توثيق تحقق الهاتف", "بعد التواصل مع التاجر على $phone، سجّل طريقة التحقق وتاريخه ونتيجته") { note ->
-            mutate("تم توثيق تحقق الهاتف") {
-                require(note.trim().length in 10..1000) { "اكتب تفاصيل تحقق واضحة بين 10 و1000 حرف" }
+        prompt(getString(R.string.main_16), getString(R.string.main_17, phone)) { note ->
+            mutate(getString(R.string.main_18)) {
+                require(note.trim().length in 10..1000) { getString(R.string.main_19) }
                 AdminApi.rpc("admin_verify_merchant_phone", buildJsonObject {
                     put("p_merchant_id", id); put("p_phone", phone); put("p_note", note.trim())
                 })
@@ -473,8 +473,8 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
     override fun reviewMerchant(row: JsonObject, status: String) {
         val id = row.string("id") ?: return
         if (status == "approved") {
-            confirm("اعتماد التاجر", "سيظهر متجر ${row.string("store_name") ?: "التاجر"} للعملاء.", "اعتماد") {
-                mutate("تم اعتماد التاجر") {
+            confirm(getString(R.string.main_20), "سيظهر متجر ${row.string("store_name") ?: "التاجر"} للعملاء.", getString(R.string.main_21)) {
+                mutate(getString(R.string.main_22)) {
                     AdminApi.rpc("admin_review_merchant_application", buildJsonObject {
                         put("p_merchant_id", id); put("p_status", status); put("p_note", JsonNull)
                     })
@@ -483,12 +483,12 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
             return
         }
         val title = when (status) {
-            "changes_requested" -> "التعديلات المطلوبة"
-            "rejected" -> "سبب رفض التاجر"
-            else -> "سبب تعليق التاجر"
+            "changes_requested" -> getString(R.string.main_23)
+            "rejected" -> getString(R.string.main_24)
+            else -> getString(R.string.main_25)
         }
-        prompt(title, "اكتب سبباً واضحاً يظهر في سجل الإدارة") { note ->
-            mutate("تم تحديث حالة التاجر") {
+        prompt(title, getString(R.string.main_26)) { note ->
+            mutate(getString(R.string.main_27)) {
                 AdminApi.rpc("admin_review_merchant_application", buildJsonObject {
                     put("p_merchant_id", id); put("p_status", status); put("p_note", note)
                 })
@@ -500,7 +500,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
         val id = row.string("id") ?: return
         val dangerous = status in setOf("cancelled", "rejected", "failed")
         val run: (String?) -> Unit = { note ->
-            mutate("تم تحديث حالة الطلب") {
+            mutate(getString(R.string.main_28)) {
                 AdminApi.rpc("transition_order_status", buildJsonObject {
                     put("p_order_id", id); put("p_to_status", status)
                     if (note == null) put("p_note", JsonNull) else put("p_note", note)
@@ -508,9 +508,9 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
             }
         }
         if (dangerous) {
-            prompt("سبب ${AdminUiText.orderStatus(status)}", "السبب مطلوب لحفظ قرار التدخل") { run(it) }
+            prompt(getString(R.string.main_29, (AdminUiText.orderStatus(status))), getString(R.string.main_30)) { run(it) }
         } else {
-            confirm("تحديث حالة الطلب", "نقل الطلب إلى: ${AdminUiText.orderStatus(status)}؟", "تحديث") { run(null) }
+            confirm(getString(R.string.main_31), getString(R.string.main_32, (AdminUiText.orderStatus(status))), getString(R.string.main_33)) { run(null) }
         }
     }
 
@@ -521,7 +521,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
     }
 
     override fun resolveComplaint(id: String) = prompt("حل الشكوى", "سجّل القرار أو الإجراء الذي تم") { resolution ->
-        mutate("تم حل الشكوى") {
+        mutate(getString(R.string.main_34)) {
             AdminApi.patchRow("complaints", id, buildJsonObject {
                 put("status", "resolved"); put("resolution", resolution)
                 put("resolved_at", Instant.now().toString()); put("resolved_by", AdminApi.userId.orEmpty())
@@ -537,9 +537,9 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
     }
 
     override fun reviewRequest(rpc: String, id: String, status: String) {
-        val label = if (status == "approved") "اعتماد" else "رفض"
-        confirm("$label الطلب", "هل أنت متأكد من القرار؟", label, danger = status == "rejected") {
-            mutate("تم تحديث الطلب") {
+        val label = if (status == "approved") getString(R.string.main_21) else getString(R.string.main_35)
+        confirm(getString(R.string.main_36, label), getString(R.string.main_37), label, danger = status == "rejected") {
+            mutate(getString(R.string.main_38)) {
                 AdminApi.rpc(rpc, buildJsonObject {
                     put("p_request_id", id); put("p_status", status); put("p_note", JsonNull)
                 })
@@ -552,7 +552,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
         if (hide) {
             val reviewId = row.string("review_id") ?: return@mutate
             AdminApi.patchRow("reviews", reviewId, buildJsonObject {
-                put("status", "hidden"); put("moderation_reason", row.string("reason") ?: "بلاغ إداري")
+                put("status", "hidden"); put("moderation_reason", row.string("reason") ?: getString(R.string.main_39))
             })
             AdminApi.patchRow("review_reports", reportId, buildJsonObject { put("status", "actioned") })
         } else {
@@ -562,12 +562,12 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
 
     override fun setAccountActive(row: JsonObject, active: Boolean) {
         confirm(
-            if (active) "تنشيط الحساب" else "إيقاف الحساب",
+            if (active) getString(R.string.main_40) else getString(R.string.main_41),
             "الحساب: ${row.string("name") ?: row.string("phone") ?: "مستخدم"}",
-            if (active) "تنشيط" else "إيقاف",
+            if (active) getString(R.string.main_42) else getString(R.string.main_43),
             danger = !active
         ) {
-            mutate("تم تحديث حالة الحساب") {
+            mutate(getString(R.string.main_44)) {
                 AdminApi.rpc("admin_set_account_active", buildJsonObject {
                     put("p_user_id", row.string("id").orEmpty()); put("p_active", active)
                 })
@@ -577,15 +577,15 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
 
     override fun setProductActive(row: JsonObject, active: Boolean) {
         val execute: (String?) -> Unit = { reason ->
-            mutate("تم تحديث ظهور المنتج") {
+            mutate(getString(R.string.main_45)) {
                 AdminApi.rpc("admin_set_product_active", buildJsonObject {
                     put("p_product_id", row.string("id").orEmpty()); put("p_active", active)
                     if (reason == null) put("p_reason", JsonNull) else put("p_reason", reason)
                 })
             }
         }
-        if (active) confirm("إظهار المنتج", "سيعود المنتج للظهور إذا كان مخزونه متاحاً.", "إظهار") { execute(null) }
-        else prompt("سبب إخفاء المنتج", "مثال: منتج مخالف أو بيانات غير دقيقة") { execute(it) }
+        if (active) confirm(getString(R.string.main_46), getString(R.string.main_47), getString(R.string.main_48)) { execute(null) }
+        else prompt(getString(R.string.main_49), getString(R.string.main_50)) { execute(it) }
     }
 
     override fun setCategoryActive(row: JsonObject, active: Boolean) = confirm(
@@ -594,7 +594,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
         if (active) "تفعيل" else "إيقاف",
         danger = !active
     ) {
-        mutate("تم تحديث الفئة") {
+        mutate(getString(R.string.main_51)) {
             AdminApi.rpc("admin_set_category_active", buildJsonObject {
                 put("p_category_id", row.string("id").orEmpty()); put("p_active", active)
             })
@@ -621,7 +621,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
             appendLine("الوقت: ${row.string("created_at") ?: "—"}")
             append("الرسالة: ${row.string("message") ?: "—"}")
         }
-        AlertDialog.Builder(this).setTitle("التفاصيل التقنية").setMessage(details).setPositiveButton("إغلاق", null).show()
+        AlertDialog.Builder(this).setTitle(getString(R.string.main_52)).setMessage(details).setPositiveButton(getString(R.string.main_53), null).show()
     }
 
     override fun openMerchantDocument(merchantId: String) {
@@ -630,7 +630,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
         lifecycleScope.launch {
             runCatchingCancellable {
                 val docs = AdminApi.rows("merchant_identity_documents", "select=storage_path,document_type,created_at&merchant_id=eq.${AdminApi.enc(merchantId)}&order=created_at.desc&limit=1")
-                val path = docs.firstOrNull()?.jsonObject?.string("storage_path") ?: error("لا يوجد مستند هوية")
+                val path = docs.firstOrNull()?.jsonObject?.string("storage_path") ?: error(getString(R.string.main_54))
                 val bytes = AdminApi.downloadPrivateObject(path)
                 val ext = path.substringAfterLast('.', "bin").take(8)
                 val file = File(File(cacheDir, "admin_docs").apply { mkdirs() }, "merchant_${merchantId.take(8)}.$ext")
@@ -640,7 +640,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
                     setDataAndType(uri, URLConnection.guessContentTypeFromName(file.name) ?: "*/*")
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 })
-            }.onFailure { showStatus(it.message ?: "تعذر فتح مستند الهوية") }
+            }.onFailure { showStatus(it.message ?: getString(R.string.main_55)) }
             setLoading(false)
         }
     }
@@ -655,7 +655,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
                     loadSection()
                 }
                 .onFailure {
-                    showStatus(it.message ?: "تعذر تنفيذ العملية")
+                    showStatus(it.message ?: getString(R.string.main_56))
                     setLoading(false)
                 }
         }
@@ -678,13 +678,13 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
         val dialog = AlertDialog.Builder(this)
             .setTitle(title)
             .setView(input)
-            .setNegativeButton("إلغاء", null)
-            .setPositiveButton("حفظ", null)
+            .setNegativeButton(getString(R.string.main_57), null)
+            .setPositiveButton(getString(R.string.main_58), null)
             .create()
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val value = input.text.toString().trim()
-                if (value.isBlank()) input.error = "اكتب السبب أو القرار" else { dialog.dismiss(); submit(value) }
+                if (value.isBlank()) input.error = getString(R.string.main_59) else { dialog.dismiss(); submit(value) }
             }
         }
         dialog.show()
@@ -692,7 +692,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
 
     private fun confirm(title: String, message: String, positive: String, danger: Boolean = false, action: () -> Unit) {
         val dialog = AlertDialog.Builder(this)
-            .setTitle(title).setMessage(message).setNegativeButton("إلغاء", null)
+            .setTitle(title).setMessage(message).setNegativeButton(getString(R.string.main_57), null)
             .setPositiveButton(positive) { _, _ -> action() }.create()
         dialog.setOnShowListener {
             if (danger) dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getColor(R.color.error))
