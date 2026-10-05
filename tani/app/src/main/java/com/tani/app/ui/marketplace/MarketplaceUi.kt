@@ -356,7 +356,7 @@ object MarketplaceUi {
             marginTop(context, 4)
         )
         content.addView(text(context, "${store.city}${store.area?.let { " - $it" } ?: ""}", 13f, false, R.color.text_muted), marginTop(context, 4))
-        content.addView(text(context, context.getString(R.string.marketplace_ui_15, store.product_count), 12f, false, R.color.text_muted), marginTop(context, 4))
+        content.addView(text(context, context.getString(R.string.marketplace_ui_15, store.product_count.toString()), 12f, false, R.color.text_muted), marginTop(context, 4))
 
         card.addView(logo)
         card.addView(content)

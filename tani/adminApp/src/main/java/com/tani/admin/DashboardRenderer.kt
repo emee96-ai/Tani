@@ -93,7 +93,7 @@ class DashboardRenderer(
             Triple(activity.getString(R.string.dashboard_renderer_11), attention["open_alerts"] ?: 0, AdminSection.SYSTEM)
         )
         cards.forEach { (label, count, section) ->
-            actionCard(label, if (count == 0) activity.getString(R.string.dashboard_renderer_12) else activity.getString(R.string.dashboard_renderer_13, count), count > 0) {
+            actionCard(label, if (count == 0) activity.getString(R.string.dashboard_renderer_12) else activity.getString(R.string.dashboard_renderer_13, count.toString()), count > 0) {
                 actions.navigate(section)
             }
         }
@@ -554,7 +554,7 @@ class DashboardRenderer(
             isEnabled = page > 0
             setOnClickListener { actions.previousPage() }
         })
-        row.addView(meta(activity.getString(R.string.dashboard_renderer_133, (page + 1))).apply { setPadding(dp(16), 0, dp(16), 0) })
+        row.addView(meta(activity.getString(R.string.dashboard_renderer_133, (page + 1).toString())).apply { setPadding(dp(16), 0, dp(16), 0) })
         row.addView(MaterialButton(activity).apply {
             text = activity.getString(R.string.dashboard_renderer_134)
             isEnabled = hasNext
