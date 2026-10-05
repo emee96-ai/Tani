@@ -75,7 +75,7 @@ class CategoriesFragment : Fragment(R.layout.fragment_stores) {
                     .onFailure {
                         adapter.submitList(emptyList())
                         loading.visibility = View.VISIBLE
-                        loading.text = "تعذر تحميل المتاجر\n${CustomerErrorMessages.from(it, "حاول مرة أخرى")}"
+                        loading.text = getString(R.string.categories_3, CustomerErrorMessages.from(it, getString(R.string.categories_4)))
                     }
             }
         }

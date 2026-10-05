@@ -184,7 +184,7 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
         val payment = paymentLabel(group.payment_method)
         val paymentState = paymentStatusLabel(group.payment_status)
         card.addView(TextView(context).apply {
-            text = "$payment • $paymentState"
+            text = getString(R.string.orders_26, payment, paymentState)
             textSize = 15f
             setPadding(0, dp(9), 0, 0)
             setTextColor(context.getColor(R.color.text_muted))

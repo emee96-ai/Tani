@@ -27,6 +27,7 @@ import com.tani.app.data.Supabase
 import com.tani.app.ui.auth.AuthFragment
 import com.tani.app.ui.commerce.CheckoutFragment
 import com.tani.app.ui.marketplace.MarketplaceUi
+import java.util.Locale
 import kotlinx.coroutines.launch
 
 class CartFragment : Fragment(R.layout.fragment_cart) {
@@ -206,7 +207,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
             })
         }
         info.addView(TextView(requireContext()).apply {
-            text = "${MarketplaceUi.formatPrice(item.unitPrice)} × ${item.quantity}"
+            text = getString(R.string.cart_14, MarketplaceUi.formatPrice(item.unitPrice), item.quantity.toString())
             textSize = 14f
             setPadding(0, MarketplaceUi.dp(requireContext(), 5), 0, 0)
             setTextColor(requireContext().getColor(R.color.text_muted))
@@ -237,7 +238,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
             }
         }, LinearLayout.LayoutParams(MarketplaceUi.dp(requireContext(), 52), MarketplaceUi.dp(requireContext(), 48)))
         actions.addView(TextView(requireContext()).apply {
-            text = item.quantity.toString()
+            text = String.format(Locale.US, "%d", item.quantity)
             textSize = 16f
             gravity = Gravity.CENTER
             setTextColor(requireContext().getColor(R.color.text_dark))

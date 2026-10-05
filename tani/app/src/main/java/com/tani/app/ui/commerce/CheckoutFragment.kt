@@ -288,7 +288,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
         }
 
         if (merchantsWithChoices == 0) {
-            deliveryHint.text = multiMerchantPrefix() + getString(R.string.checkout_9)
+            deliveryHint.text = withMerchantPrefix(getString(R.string.checkout_9))
         } else {
             updateDeliveryHint()
         }
@@ -308,15 +308,15 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
     private fun updateDeliveryHint() {
         val missing = sellersRequiringZone().count { it !in selectedZones }
         deliveryHint.text = if (missing == 0) {
-            multiMerchantPrefix() + getString(R.string.checkout_10)
+            withMerchantPrefix(getString(R.string.checkout_10))
         } else {
-            multiMerchantPrefix() + "اختر منطقة التوصيل لـ $missing ${if (missing == 1) "متجر" else "متاجر"}."
+            withMerchantPrefix(resources.getQuantityString(R.plurals.checkout_missing_zones, missing, missing.toString()))
         }
     }
 
-    private fun multiMerchantPrefix(): String {
+    private fun withMerchantPrefix(message: String): String {
         val count = Cart.groupedBySeller().size
-        return if (count > 1) getString(R.string.checkout_11, count.toString()) else ""
+        return if (count > 1) getString(R.string.checkout_11, count.toString(), message) else message
     }
 
     private fun renderSummary() {

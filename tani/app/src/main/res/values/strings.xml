@@ -203,10 +203,13 @@
     <string name="cart_11">المجموع %1$s</string>
     <string name="cart_12">وصلت للكمية المتاحة</string>
     <string name="cart_13">حذف</string>
+    <string name="cart_14">%1$s × %2$s</string>
 
     <!-- com/tani/app/ui/categories/CategoriesFragment.kt -->
     <string name="categories_1">جاري تحميل المتاجر…</string>
     <string name="categories_2">لا توجد متاجر مطابقة حالياً</string>
+    <string name="categories_3">تعذر تحميل المتاجر\n%1$s</string>
+    <string name="categories_4">حاول مرة أخرى</string>
 
     <!-- com/tani/app/ui/commerce/AddressesFragment.kt -->
     <string name="addresses_1">تعذر تحميل العناوين</string>
@@ -244,7 +247,7 @@
     <string name="checkout_8">التوصيل: %1$s</string>
     <string name="checkout_9">سنحسب رسوم التوصيل تلقائياً قبل التأكيد.</string>
     <string name="checkout_10">تم اختيار التوصيل لكل متجر ✓</string>
-    <string name="checkout_11">"طلبك موزع على %1$s متاجر • "</string>
+    <string name="checkout_11">طلبك موزع على %1$s متاجر • %2$s</string>
     <string name="checkout_12">\n%1$s منتج • %2$s</string>
     <string name="checkout_13">التوصيل: يُحسب تلقائياً</string>
     <string name="checkout_14">التوصيل: اختر المنطقة</string>
@@ -282,6 +285,14 @@
     <string name="checkout_46">%1$s دقيقة</string>
     <string name="checkout_47">%1$s ساعة</string>
     <string name="checkout_48">%1$sس %2$sد</string>
+    <plurals name="checkout_missing_zones">
+        <item quantity="zero">اختر منطقة التوصيل لـ %1$s متاجر.</item>
+        <item quantity="one">اختر منطقة التوصيل لـ %1$s متجر.</item>
+        <item quantity="two">اختر منطقة التوصيل لـ %1$s متاجر.</item>
+        <item quantity="few">اختر منطقة التوصيل لـ %1$s متاجر.</item>
+        <item quantity="many">اختر منطقة التوصيل لـ %1$s متاجر.</item>
+        <item quantity="other">اختر منطقة التوصيل لـ %1$s متاجر.</item>
+    </plurals>
 
     <!-- com/tani/app/ui/commerce/OrderConfirmationFragment.kt -->
     <string name="order_confirmation_1">رقم العملية: %1$s\n</string>
@@ -506,6 +517,10 @@
     <string name="product_details_39">غير متوفر</string>
     <string name="product_details_40">لا توجد تقييمات بعد</string>
     <string name="product_details_41">لا توجد منتجات مشابهة حالياً</string>
+    <string name="product_details_42">تعذر تحميل المنتج\n%1$s</string>
+    <string name="product_details_43">حاول مرة أخرى</string>
+    <string name="product_details_44">%1$s / %2$s</string>
+    <string name="product_details_45">%1$s%2$s • %3$s</string>
 
     <!-- com/tani/app/ui/marketplace/SearchFragment.kt -->
     <string name="search_1">ما لقينا منتجات مطابقة. جرّب كلمة أبسط أو اختر فئة من الاقتراحات.</string>
@@ -531,6 +546,9 @@
     <string name="store_details_6">رسوم التوصيل تظهر حسب إعدادات المتجر</string>
     <string name="store_details_7">" • حوالي %1$s دقيقة"</string>
     <string name="store_details_8">لا توجد منتجات متاحة في هذا المتجر حالياً</string>
+    <string name="store_details_9">تعذر تحميل المتجر\n%1$s</string>
+    <string name="store_details_10">حاول مرة أخرى</string>
+    <string name="store_details_11">%1$s - %2$s</string>
 
     <!-- com/tani/app/ui/marketplace/StoresFragment.kt -->
     <string name="stores_1">جاري تحميل المتاجر%1$s…</string>
@@ -612,6 +630,7 @@
     <string name="orders_23">بانتظار الدفع</string>
     <string name="orders_24">فشل الدفع</string>
     <string name="orders_25">تم الاسترداد</string>
+    <string name="orders_26">%1$s • %2$s</string>
 
     <!-- com/tani/app/ui/products/ProductsFragment.kt -->
     <string name="products_1">منتجات %1$s</string>
@@ -825,6 +844,7 @@
     <string name="merchant_onboarding_102">معتمد</string>
     <string name="merchant_onboarding_103">تعديلات مطلوبة</string>
     <string name="merchant_onboarding_104">موقوف</string>
+    <string name="merchant_onboarding_105">%1$s: %2$s</string>
 
     <!-- com/tani/app/ui/seller/MerchantOrdersFragment.kt -->
     <string name="merchant_orders_1">طلبات المتجر</string>

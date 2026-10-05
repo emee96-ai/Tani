@@ -5,7 +5,6 @@
     <string name="email">البريد الإلكتروني</string>
     <string name="password">كلمة المرور</string>
     <string name="sign_in">تسجيل الدخول</string>
-    <string name="logout">خروج</string>
     <string name="refresh">تحديث</string>
     <string name="search">بحث</string>
     <string name="header_admin_drawer_label">مركز إدارة تاني</string>
@@ -114,6 +113,7 @@
     <string name="admin_management_dialog_26">تغيير</string>
     <string name="admin_management_dialog_27">تم تحديث الصلاحية</string>
     <string name="admin_management_dialog_28">تعذر تحديث الصلاحية</string>
+    <string name="admin_management_dialog_29">%1$s • %2$s</string>
 
     <!-- com/tani/admin/DashboardRenderer.kt -->
     <string name="dashboard_renderer_1">جاري تحميل البيانات…</string>

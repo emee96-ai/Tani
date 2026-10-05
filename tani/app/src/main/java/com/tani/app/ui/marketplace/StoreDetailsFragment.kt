@@ -51,7 +51,7 @@ class StoreDetailsFragment : Fragment(R.layout.fragment_store_details) {
                 view.findViewById<TextView>(R.id.store_details_status).text =
                     listOfNotNull(trust, if (store.is_open) getString(R.string.store_details_2) else getString(R.string.store_details_3)).joinToString(" • ")
                 view.findViewById<TextView>(R.id.store_details_location).text =
-                    "${store.city}${store.area?.let { " - $it" } ?: ""}"
+                    store.area?.let { getString(R.string.store_details_11, store.city, it) } ?: store.city
                 view.findViewById<TextView>(R.id.store_details_rating).text =
                     if (store.review_count > 0) {
                         String.format(Locale.US, getString(R.string.store_details_4), store.average_rating, store.review_count)
@@ -113,7 +113,7 @@ class StoreDetailsFragment : Fragment(R.layout.fragment_store_details) {
                     Analytics.track("store_view", screen = "store_details", entityType = "store", entityId = store.id)
                 }
             }.onFailure {
-                loading.text = "تعذر تحميل المتجر\n${CustomerErrorMessages.from(it, "حاول مرة أخرى")}"
+                loading.text = getString(R.string.store_details_9, CustomerErrorMessages.from(it, getString(R.string.store_details_10)))
             }
         }
     }

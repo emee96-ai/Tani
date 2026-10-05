@@ -152,7 +152,7 @@ class AdminManagementDialog(private val activity: AppCompatActivity) {
             body.addView(TextView(activity).apply {
                 val name = row.string("name") ?: activity.getString(R.string.admin_management_dialog_8)
                 val phone = row.string("phone") ?: activity.getString(R.string.admin_management_dialog_9)
-                text = "$name • $phone"
+                text = activity.getString(R.string.admin_management_dialog_29, name, phone)
                 textSize = 13f
                 setTextColor(color(R.color.text_muted))
                 setPadding(0, dp(4), 0, 0)
