@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">تاني</string>
-    <string name="app_name_en">TANI</string>
     <string name="brand_slogan">من محلاتنا .. لبابك</string>
     <string name="product_details_quantity_minus" translatable="false">−</string>
     <string name="product_details_quantity_plus" translatable="false">+</string>

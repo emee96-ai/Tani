@@ -1,8 +1,0 @@
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@color/tani_background" />
-    <item
-        android:width="112dp"
-        android:height="112dp"
-        android:gravity="center"
-        android:drawable="@drawable/ic_brand" />
-</layer-list>
