@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.lifecycle.LifecycleCoroutineScope
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.tani.app.data.ProductCard
 import com.tani.app.data.StoreCard
@@ -17,9 +18,7 @@ class ProductListAdapter(
     private val items = mutableListOf<ProductCard>()
 
     fun submitList(values: List<ProductCard>) {
-        items.clear()
-        items.addAll(values)
-        notifyDataSetChanged()
+        replaceItems(this, items, values) { it.id }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ProductHolder {
@@ -67,9 +66,7 @@ class StoreListAdapter(
     private val items = mutableListOf<StoreCard>()
 
     fun submitList(values: List<StoreCard>) {
-        items.clear()
-        items.addAll(values)
-        notifyDataSetChanged()
+        replaceItems(this, items, values) { it.id }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): StoreHolder {
@@ -97,4 +94,22 @@ class StoreListAdapter(
     override fun getItemCount(): Int = items.size
 
     class StoreHolder(val container: FrameLayout) : RecyclerView.ViewHolder(container)
+}
+
+private fun <T> replaceItems(
+    adapter: RecyclerView.Adapter<*>,
+    items: MutableList<T>,
+    values: List<T>,
+    key: (T) -> String
+) {
+    val old = items.toList()
+    val diff = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
+        override fun getOldListSize() = old.size
+        override fun getNewListSize() = values.size
+        override fun areItemsTheSame(oldPosition: Int, newPosition: Int) = key(old[oldPosition]) == key(values[newPosition])
+        override fun areContentsTheSame(oldPosition: Int, newPosition: Int) = old[oldPosition] == values[newPosition]
+    })
+    items.clear()
+    items.addAll(values)
+    diff.dispatchUpdatesTo(adapter)
 }

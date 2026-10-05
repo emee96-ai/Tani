@@ -2,6 +2,7 @@ package com.tani.app.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import com.tani.app.data.cache.AppContentStore
 import java.util.UUID
 
@@ -22,7 +23,7 @@ object PrivateUserData {
     fun clearSessionData(userId: String?) {
         if (!::appContext.isInitialized) return
         appContext.deleteSharedPreferences("merchant_onboarding_draft")
-        userId?.let { runCatching { merchantDraft(it).edit().clear().commit() } }
+        userId?.let { runCatching { merchantDraft(it).edit(commit = true) { clear() } } }
         AppContentStore.clearPrivateData()
     }
 }

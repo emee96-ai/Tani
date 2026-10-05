@@ -1,5 +1,6 @@
 package com.tani.app.ui.seller
 
+import androidx.core.graphics.scale
 import com.tani.app.data.merchantStore
 import com.tani.app.data.updateMerchantStore
 import com.tani.app.data.uploadStoreAsset
@@ -300,7 +301,7 @@ class MerchantStoreFragment : Fragment() {
         val largest = maxOf(bitmap.width, bitmap.height)
         val scaled = if (largest > maxSize) {
             val ratio = maxSize.toFloat() / largest.toFloat()
-            Bitmap.createScaledBitmap(bitmap, (bitmap.width * ratio).toInt().coerceAtLeast(1), (bitmap.height * ratio).toInt().coerceAtLeast(1), true)
+            bitmap.scale((bitmap.width * ratio).toInt().coerceAtLeast(1), (bitmap.height * ratio).toInt().coerceAtLeast(1))
         } else {
             bitmap
         }

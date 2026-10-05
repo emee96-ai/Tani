@@ -11,6 +11,7 @@ import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
@@ -330,7 +331,7 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
         loadMore.setOnClickListener { loadPage(reset = if (retryMode) retryReset else false) }
 
         view.findViewById<Button>(R.id.products_filter_toggle).setOnClickListener {
-            filtersPanel.visibility = if (filtersPanel.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+            filtersPanel.isVisible = !filtersPanel.isVisible
         }
         view.findViewById<Button>(R.id.products_apply).setOnClickListener {
             filtersPanel.visibility = View.GONE

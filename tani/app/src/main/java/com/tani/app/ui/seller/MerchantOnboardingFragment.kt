@@ -1,5 +1,7 @@
 package com.tani.app.ui.seller
 
+import androidx.core.content.edit
+import androidx.core.graphics.scale
 import com.tani.app.data.categories
 import com.tani.app.data.merchantIdentityDocuments
 import com.tani.app.data.merchantProfile
@@ -244,25 +246,25 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
     }
 
     private fun saveDraft() {
-        prefs.edit()
-            .putBoolean("has_draft", true)
-            .putString("business_name", draft.businessName)
-            .putString("description", draft.description)
-            .putString("phone", draft.phone)
-            .putString("whatsapp", draft.whatsapp)
-            .putBoolean("whatsapp_same", draft.whatsappSameAsPhone)
-            .putString("category_id", draft.categoryId)
-            .putString("requested_category", draft.requestedCategory)
-            .putString("store_name", draft.storeName)
-            .putString("store_description", draft.storeDescription)
-            .putString("city", draft.city)
-            .putString("area", draft.area)
-            .putString("delivery_zones", deliveryZonesJson())
-            .putString("document_type", draft.documentType)
-            .putString("identity_path", identityPath)
-            .putBoolean("policies", draft.policiesAccepted)
-            .putInt("step", step)
-            .apply()
+        prefs.edit {
+            putBoolean("has_draft", true)
+            putString("business_name", draft.businessName)
+            putString("description", draft.description)
+            putString("phone", draft.phone)
+            putString("whatsapp", draft.whatsapp)
+            putBoolean("whatsapp_same", draft.whatsappSameAsPhone)
+            putString("category_id", draft.categoryId)
+            putString("requested_category", draft.requestedCategory)
+            putString("store_name", draft.storeName)
+            putString("store_description", draft.storeDescription)
+            putString("city", draft.city)
+            putString("area", draft.area)
+            putString("delivery_zones", deliveryZonesJson())
+            putString("document_type", draft.documentType)
+            putString("identity_path", identityPath)
+            putBoolean("policies", draft.policiesAccepted)
+            putInt("step", step)
+        }
     }
 
     private fun renderStep() {
@@ -600,7 +602,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
                 )
             }.onSuccess {
                 submissionInFlight = false
-                prefs.edit().clear().apply()
+                prefs.edit { clear() }
                 reviewNotice = null
                 renderSubmittedState()
                 Toast.makeText(requireContext(), getString(R.string.merchant_onboarding_76), Toast.LENGTH_LONG).show()
@@ -696,11 +698,9 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         val largest = maxOf(bitmap.width, bitmap.height)
         val scaled = if (largest > 1600) {
             val ratio = 1600f / largest
-            Bitmap.createScaledBitmap(
-                bitmap,
+            bitmap.scale(
                 (bitmap.width * ratio).toInt().coerceAtLeast(1),
-                (bitmap.height * ratio).toInt().coerceAtLeast(1),
-                true
+                (bitmap.height * ratio).toInt().coerceAtLeast(1)
             )
         } else bitmap
         val bytes = ByteArrayOutputStream().use { out ->
@@ -810,7 +810,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
     }
 
     private fun summaryRow(label: String, value: String): TextView = TextView(requireContext()).apply {
-        text = "$label: ${value.ifBlank { "—" }}"
+        text = getString(R.string.merchant_onboarding_105, label, value.ifBlank { "—" })
         textSize = 14f
         setTextColor(ContextCompat.getColor(requireContext(), R.color.text_dark))
         setPadding(0, dp(5), 0, dp(5))

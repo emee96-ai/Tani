@@ -1,5 +1,6 @@
 package com.tani.app.ui.seller
 
+import androidx.core.net.toUri
 import com.tani.app.data.network.CustomerErrorMessages
 
 import com.tani.app.util.runCatchingCancellable
@@ -557,7 +558,7 @@ class MerchantOrdersFragment : Fragment() {
             return
         }
         runCatchingCancellable {
-            startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:${Uri.encode(clean)}")))
+            startActivity(Intent(Intent.ACTION_DIAL, "tel:${Uri.encode(clean)}".toUri()))
         }.onFailure { toast(getString(R.string.merchant_orders_52)) }
     }
 

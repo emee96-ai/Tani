@@ -1,5 +1,6 @@
 package com.tani.app.data
 
+import androidx.core.content.edit
 import com.tani.app.util.runCatchingCancellable
 
 import android.content.Context
@@ -78,7 +79,7 @@ object Supabase {
             secureStorage.putString(REFRESH_TOKEN_KEY, legacy.getString(REFRESH_TOKEN_KEY, null))
             secureStorage.putString(USER_ID_KEY, legacy.getString(USER_ID_KEY, null))
         }
-        legacy.edit().clear().apply()
+        legacy.edit { clear() }
     }
 
     var token: String?

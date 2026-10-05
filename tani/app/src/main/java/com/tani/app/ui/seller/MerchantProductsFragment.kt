@@ -1,5 +1,6 @@
 package com.tani.app.ui.seller
 
+import androidx.core.graphics.scale
 import com.tani.app.util.runCatchingCancellable
 
 import android.content.DialogInterface
@@ -699,11 +700,9 @@ class MerchantProductsFragment : Fragment() {
         val largest = maxOf(bitmap.width, bitmap.height)
         val scaled = if (largest > maxSize) {
             val ratio = maxSize.toFloat() / largest.toFloat()
-            Bitmap.createScaledBitmap(
-                bitmap,
+            bitmap.scale(
                 (bitmap.width * ratio).toInt().coerceAtLeast(1),
-                (bitmap.height * ratio).toInt().coerceAtLeast(1),
-                true
+                (bitmap.height * ratio).toInt().coerceAtLeast(1)
             )
         } else bitmap
         return ByteArrayOutputStream().use { out ->

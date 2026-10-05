@@ -4,6 +4,7 @@ import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import androidx.core.content.edit
 import java.nio.charset.StandardCharsets
 import java.security.KeyStore
 import javax.crypto.Cipher
@@ -29,19 +30,18 @@ class SecureTokenStorage(context: Context) {
 
     fun putString(key: String, value: String?) {
         if (value == null) {
-            prefs.edit().remove(key).apply()
+            prefs.edit { remove(key) }
             return
         }
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, secretKey())
         val encrypted = cipher.doFinal(value.toByteArray(StandardCharsets.UTF_8))
-        prefs.edit().putString(
-            key,
-            Base64.encodeToString(cipher.iv + encrypted, Base64.NO_WRAP)
-        ).apply()
+        prefs.edit {
+            putString(key, Base64.encodeToString(cipher.iv + encrypted, Base64.NO_WRAP))
+        }
     }
 
-    fun clear() = prefs.edit().clear().apply()
+    fun clear() = prefs.edit { clear() }
 
     private fun secretKey(): SecretKey {
         val store = KeyStore.getInstance(KEYSTORE).apply { load(null) }

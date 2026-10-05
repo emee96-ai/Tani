@@ -1,6 +1,7 @@
 package com.tani.app.data.cache
 
 import android.content.Context
+import androidx.core.content.edit
 import com.tani.app.data.HomeFeed
 import com.tani.app.data.ProductCard
 import com.tani.app.data.StoreCard
@@ -56,7 +57,7 @@ class MarketplaceCache(context: Context) {
                 payload = Supabase.json.encodeToString(products)
             )
         )
-        legacyPrefs.edit().remove(key).apply()
+        legacyPrefs.edit { remove(key) }
     }
 
     suspend fun load(
@@ -80,7 +81,7 @@ class MarketplaceCache(context: Context) {
         save(RecommendationCacheKey.forUser(userId), products, nowEpochMs)
         withContext(Dispatchers.IO) {
             dao.delete(RecommendationCacheKey.LEGACY_KEY)
-            legacyPrefs.edit().remove(RecommendationCacheKey.LEGACY_KEY).apply()
+            legacyPrefs.edit { remove(RecommendationCacheKey.LEGACY_KEY) }
         }
     }
 
@@ -110,9 +111,7 @@ class MarketplaceCache(context: Context) {
             listOf(RecommendationCacheKey.forUser(userId), RecommendationCacheKey.LEGACY_KEY)
         }
         if (legacyKeys.isNotEmpty()) {
-            val editor = legacyPrefs.edit()
-            legacyKeys.forEach(editor::remove)
-            editor.apply()
+            legacyPrefs.edit { legacyKeys.forEach { remove(it) } }
         }
     }
 
@@ -128,7 +127,7 @@ class MarketplaceCache(context: Context) {
                 payload = Supabase.json.encodeToString(feed)
             )
         )
-        legacyPrefs.edit().remove(HOME_FEED_KEY).apply()
+        legacyPrefs.edit { remove(HOME_FEED_KEY) }
     }
 
     suspend fun loadHomeFeed(
@@ -159,7 +158,7 @@ class MarketplaceCache(context: Context) {
                 payload = Supabase.json.encodeToString(stores)
             )
         )
-        legacyPrefs.edit().remove(STORES_KEY).apply()
+        legacyPrefs.edit { remove(STORES_KEY) }
     }
 
     suspend fun loadStores(
@@ -201,7 +200,7 @@ class MarketplaceCache(context: Context) {
             Supabase.json.decodeFromString<LegacyMarketplaceCacheEnvelope>(raw)
         }.getOrNull()
         if (envelope == null) {
-            legacyPrefs.edit().remove(key).apply()
+            legacyPrefs.edit { remove(key) }
             return null
         }
 
@@ -212,7 +211,7 @@ class MarketplaceCache(context: Context) {
             payload = Supabase.json.encodeToString(envelope.products)
         )
         dao.upsert(entry)
-        legacyPrefs.edit().remove(key).apply()
+        legacyPrefs.edit { remove(key) }
         return entry
     }
 
@@ -222,7 +221,7 @@ class MarketplaceCache(context: Context) {
             Supabase.json.decodeFromString<LegacyHomeFeedCacheEnvelope>(raw)
         }.getOrNull()
         if (envelope == null) {
-            legacyPrefs.edit().remove(HOME_FEED_KEY).apply()
+            legacyPrefs.edit { remove(HOME_FEED_KEY) }
             return null
         }
 
@@ -233,7 +232,7 @@ class MarketplaceCache(context: Context) {
             payload = Supabase.json.encodeToString(envelope.feed)
         )
         dao.upsert(entry)
-        legacyPrefs.edit().remove(HOME_FEED_KEY).apply()
+        legacyPrefs.edit { remove(HOME_FEED_KEY) }
         return entry
     }
 
@@ -243,7 +242,7 @@ class MarketplaceCache(context: Context) {
             Supabase.json.decodeFromString<LegacyStoresCacheEnvelope>(raw)
         }.getOrNull()
         if (envelope == null) {
-            legacyPrefs.edit().remove(STORES_KEY).apply()
+            legacyPrefs.edit { remove(STORES_KEY) }
             return null
         }
 
@@ -254,7 +253,7 @@ class MarketplaceCache(context: Context) {
             payload = Supabase.json.encodeToString(envelope.stores)
         )
         dao.upsert(entry)
-        legacyPrefs.edit().remove(STORES_KEY).apply()
+        legacyPrefs.edit { remove(STORES_KEY) }
         return entry
     }
 

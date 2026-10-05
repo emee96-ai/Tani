@@ -1,5 +1,6 @@
 package com.tani.app.ui.marketplace
 
+import androidx.core.net.toUri
 import com.tani.app.data.productDetails
 import com.tani.app.data.productImageUrl
 
@@ -8,7 +9,6 @@ import com.tani.app.data.network.CustomerErrorMessages
 import com.tani.app.util.runCatchingCancellable
 
 import android.content.res.ColorStateList
-import android.net.Uri
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
@@ -63,7 +63,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
                     content.visibility = View.VISIBLE
                     bind(view, details)
                 }
-                .onFailure { loading.text = "تعذر تحميل المنتج\n${CustomerErrorMessages.from(it, "حاول مرة أخرى")}" }
+                .onFailure { loading.text = getString(R.string.product_details_42, CustomerErrorMessages.from(it, getString(R.string.product_details_43))) }
         }
     }
 
@@ -135,7 +135,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
         activeVideo = video
 
         counter.visibility = if (mediaItems.isEmpty()) View.GONE else View.VISIBLE
-        if (mediaItems.isNotEmpty()) counter.text = "${selectedMediaIndex + 1} / ${mediaItems.size}"
+        if (mediaItems.isNotEmpty()) counter.text = getString(R.string.product_details_44, (selectedMediaIndex + 1).toString(), mediaItems.size.toString())
 
         if (mediaItems.isEmpty()) {
             runCatchingCancellable { video.stopPlayback() }
@@ -168,7 +168,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
             Toast.makeText(requireContext(), getString(R.string.product_details_7), Toast.LENGTH_SHORT).show()
             return
         }
-        video.setVideoURI(Uri.parse(url))
+        video.setVideoURI(url.toUri())
         video.setOnPreparedListener { player ->
             player.isLooping = false
             runCatchingCancellable { video.seekTo(1) }
@@ -325,7 +325,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
         fun refreshQuantityUi() {
             val available = availableToAdd()
             quantity = quantity.coerceIn(1, available.coerceAtLeast(1))
-            quantityText.text = quantity.toString()
+            quantityText.text = String.format(Locale.US, "%d", quantity)
             val price = unitPrice()
             mainPrice.text = MarketplaceUi.formatPrice(price)
             stickyPrice.text = MarketplaceUi.formatPrice(price)
@@ -445,7 +445,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
                 val availability = if (variant.stock > 0) getString(R.string.product_details_38, variant.stock.toString()) else getString(R.string.product_details_39)
                 val selected = selectedVariant?.id == variant.id
                 val button = MaterialButton(requireContext()).apply {
-                    text = "${variant.name}$price • $availability"
+                    text = getString(R.string.product_details_45, variant.name, price, availability)
                     isCheckable = true
                     isChecked = selected
                     isEnabled = variant.stock > 0

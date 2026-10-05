@@ -2,6 +2,7 @@ package com.tani.app.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.jsonPrimitive
@@ -100,6 +101,7 @@ object Cart {
                 val quantity = item.quantity - (purchased[key] ?: 0)
                 item.copy(quantity = quantity).takeIf { quantity > 0 }
             }
+            //noinspection UseKtx: check() needs the result of commit()
             check(storage.edit().putString(ITEMS_KEY, Supabase.json.encodeToString(remaining))
                 .putBoolean(marker, true).commit()) { "تعذر حفظ السلة بعد الطلب" }
             map.clear()
@@ -144,14 +146,14 @@ object Cart {
             map.clear()
             items.forEach { item -> map[item.key] = item }
         }.onFailure {
-            prefs?.edit()?.remove(ITEMS_KEY)?.apply()
+            prefs?.edit { remove(ITEMS_KEY) }
         }
     }
 
     private fun persist() {
         val storage = prefs ?: return
         runCatching { Supabase.json.encodeToString(map.values.toList()) }
-            .onSuccess { storage.edit().putString(ITEMS_KEY, it).apply() }
+            .onSuccess { storage.edit { putString(ITEMS_KEY, it) } }
     }
 
     private fun key(productId: String, variantId: String?): String =
