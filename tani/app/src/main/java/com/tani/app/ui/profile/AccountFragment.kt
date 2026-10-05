@@ -1,5 +1,6 @@
 package com.tani.app.ui.profile
 
+import androidx.core.graphics.scale
 import com.tani.app.data.network.CustomerErrorMessages
 
 import com.tani.app.util.runCatchingCancellable
@@ -57,7 +58,7 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
 
         progress = view.findViewById(R.id.account_progress)
         content = view.findViewById(R.id.account_content)
-        avatar = view.findViewById(R.id.account_avatar)
+        avatar = view.findViewById<ImageView>(R.id.account_avatar).apply { clipToOutline = true }
         editButton = view.findViewById(R.id.account_edit)
         changeAvatarButton = view.findViewById(R.id.account_change_avatar)
         saveButton = view.findViewById(R.id.account_save)
@@ -232,7 +233,7 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
         val ratio = maxSize.toFloat() / largest.toFloat()
         val width = (bitmap.width * ratio).toInt().coerceAtLeast(1)
         val height = (bitmap.height * ratio).toInt().coerceAtLeast(1)
-        return Bitmap.createScaledBitmap(bitmap, width, height, true)
+        return bitmap.scale(width, height)
     }
 
     private fun setLoading(loading: Boolean) {

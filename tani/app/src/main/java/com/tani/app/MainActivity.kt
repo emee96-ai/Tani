@@ -76,6 +76,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(R.style.Theme_Tani)
         super.onCreate(savedInstanceState)
+        // Screens rely on the window background instead of painting their own
+        window.setBackgroundDrawableResource(R.color.tani_background)
         selectedPrimaryItemId = savedInstanceState?.getInt(STATE_SELECTED_PRIMARY, R.id.home) ?: R.id.home
 
         Supabase.init(this)
@@ -228,7 +230,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupDrawerAccountHeader() {
         drawerAccountHeader = drawerNav.getHeaderView(0)
-        drawerAccountAvatar = drawerAccountHeader.findViewById(R.id.drawer_account_avatar)
+        drawerAccountAvatar = drawerAccountHeader.findViewById<ImageView>(R.id.drawer_account_avatar).apply { clipToOutline = true }
         drawerAccountName = drawerAccountHeader.findViewById(R.id.drawer_account_name)
         drawerAccountEmail = drawerAccountHeader.findViewById(R.id.drawer_account_email)
         drawerAccountHeader.setOnClickListener {

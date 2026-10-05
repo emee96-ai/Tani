@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/drawer_account_header"
     android:layout_width="match_parent"
     android:layout_height="196dp"
@@ -8,6 +9,7 @@
     android:gravity="bottom|start"
     android:padding="22dp"
     android:background="@color/brand_soft"
+    tools:ignore="Overdraw"
     android:clickable="true"
     android:focusable="true">
 
@@ -31,7 +33,6 @@
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:background="@drawable/bg_avatar"
-            android:clipToOutline="true"
             android:contentDescription="@string/drawer_account_avatar_desc"
             android:padding="12dp"
             android:scaleType="centerCrop"
