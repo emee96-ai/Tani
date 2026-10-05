@@ -26,7 +26,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
-import java.net.URL
+import com.tani.app.ui.marketplace.MarketplaceImageLoader
 
 class AccountFragment : Fragment(R.layout.fragment_account) {
 
@@ -206,12 +206,9 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
     }
 
     private fun loadRemoteAvatar(url: String) {
+        val appContext = requireContext().applicationContext
         viewLifecycleOwner.lifecycleScope.launch {
-            val bitmap = withContext(Dispatchers.IO) {
-                runCatchingCancellable {
-                    URL(url).openStream().use { BitmapFactory.decodeStream(it) }
-                }.getOrNull()
-            }
+            val bitmap = MarketplaceImageLoader.loadBitmap(appContext, url)
             if (bitmap != null && isAdded) {
                 avatar.setPadding(0, 0, 0, 0)
                 avatar.setImageBitmap(bitmap)

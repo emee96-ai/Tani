@@ -20,9 +20,24 @@ val hasReleaseSigning = listOf(
     taniReleaseKeyPassword
 ).all { !it.isNullOrBlank() }
 
+val taniSupabaseUrl = providers.gradleProperty("TANI_SUPABASE_URL")
+    .orElse("https://sihttimibjzoahvwuwbm.supabase.co")
+    .get().trimEnd('/')
+val taniSupabaseKey = providers.gradleProperty("TANI_SUPABASE_PUBLISHABLE_KEY")
+    .orElse("sb_publishable_9syQMNqMr0q9V0_Z4W-jvA_OQjhHj1Y")
+    .get()
+require(taniSupabaseUrl.startsWith("https://")) { "TANI_SUPABASE_URL must use HTTPS" }
+require(taniSupabaseKey.startsWith("sb_publishable_")) {
+    "TANI_SUPABASE_PUBLISHABLE_KEY must be a publishable key, never a server key"
+}
+
 android {
     namespace = "com.tani.admin"
     compileSdk = 36
+
+    buildFeatures {
+        buildConfig = true
+    }
 
     defaultConfig {
         applicationId = "com.tani.admin"
@@ -30,6 +45,8 @@ android {
         targetSdk = 36
         versionCode = taniAdminVersionCode
         versionName = taniAdminVersionName
+        buildConfigField("String", "SUPABASE_URL", "\"$taniSupabaseUrl\"")
+        buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"$taniSupabaseKey\"")
     }
 
     signingConfigs {

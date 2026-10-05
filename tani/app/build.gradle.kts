@@ -5,6 +5,16 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
+val taniSupabaseUrl = providers.gradleProperty("TANI_SUPABASE_URL")
+    .orElse("https://sihttimibjzoahvwuwbm.supabase.co")
+    .get().trimEnd('/')
+val taniSupabaseKey = providers.gradleProperty("TANI_SUPABASE_PUBLISHABLE_KEY")
+    .orElse("sb_publishable_9syQMNqMr0q9V0_Z4W-jvA_OQjhHj1Y")
+    .get()
+require(taniSupabaseUrl.startsWith("https://")) { "TANI_SUPABASE_URL must use HTTPS" }
+require(taniSupabaseKey.startsWith("sb_publishable_")) {
+    "TANI_SUPABASE_PUBLISHABLE_KEY must be a publishable key, never a server key"
+}
 val taniResetRedirect = providers.gradleProperty("TANI_RESET_REDIRECT")
     .orElse("https://tani.invalid/auth/reset")
     .get()
@@ -74,6 +84,8 @@ android {
         testInstrumentationRunnerArguments["disableAnalytics"] = "true"
 
         buildConfigField("String", "PASSWORD_RESET_REDIRECT", "\"$taniResetRedirect\"")
+        buildConfigField("String", "SUPABASE_URL", "\"$taniSupabaseUrl\"")
+        buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"$taniSupabaseKey\"")
         buildConfigField("String", "APP_LINK_HOST", "\"$taniAppLinkHost\"")
         listOf("API_KEY", "APPLICATION_ID", "PROJECT_ID", "SENDER_ID").forEach { field ->
             val value = providers.gradleProperty("TANI_FIREBASE_$field").orElse("").get()

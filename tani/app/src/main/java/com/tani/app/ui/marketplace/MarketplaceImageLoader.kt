@@ -64,6 +64,13 @@ object MarketplaceImageLoader {
         }
     }
 
+    /** Size-capped, timeout-bound download for single images such as profile avatars. */
+    suspend fun loadBitmap(context: Context, rawUrl: String): Bitmap? {
+        val url = rawUrl.trim()
+        if (url.isEmpty()) return null
+        return requestBitmap(context.applicationContext, url).await()
+    }
+
     private fun requestBitmap(context: Context, url: String): Deferred<Bitmap?> {
         inFlight[url]?.let { return it }
 

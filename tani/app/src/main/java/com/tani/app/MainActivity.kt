@@ -6,7 +6,6 @@ import android.content.Intent
 import android.Manifest
 import android.os.Build
 import androidx.activity.result.contract.ActivityResultContracts
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
@@ -49,11 +48,9 @@ import com.tani.app.ui.profile.ProfileFragment
 import com.tani.app.ui.seller.MerchantOnboardingFragment
 import com.tani.app.ui.seller.SellerFragment
 import com.tani.app.ui.trust.SupportCenterFragment
-import java.net.URL
 import java.net.URLDecoder
-import kotlinx.coroutines.Dispatchers
+import com.tani.app.ui.marketplace.MarketplaceImageLoader
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
 
@@ -271,11 +268,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
         lifecycleScope.launch {
-            val bitmap = withContext(Dispatchers.IO) {
-                runCatchingCancellable {
-                    URL(avatarUrl).openStream().use { BitmapFactory.decodeStream(it) }
-                }.getOrNull()
-            }
+            val bitmap = MarketplaceImageLoader.loadBitmap(this@MainActivity, avatarUrl)
             if (bitmap != null) {
                 drawerAccountAvatar.setPadding(0, 0, 0, 0)
                 drawerAccountAvatar.setImageBitmap(bitmap)

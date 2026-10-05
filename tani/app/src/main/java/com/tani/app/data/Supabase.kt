@@ -35,8 +35,8 @@ import kotlinx.serialization.json.put
 
 object Supabase {
 
-    const val URL = "https://sihttimibjzoahvwuwbm.supabase.co"
-    const val KEY = "sb_publishable_9syQMNqMr0q9V0_Z4W-jvA_OQjhHj1Y"
+    const val URL = BuildConfig.SUPABASE_URL
+    const val KEY = BuildConfig.SUPABASE_PUBLISHABLE_KEY
     val PASSWORD_RESET_REDIRECT: String get() = BuildConfig.PASSWORD_RESET_REDIRECT
 
     private const val ACCESS_TOKEN_KEY = "access_token"

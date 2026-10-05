@@ -107,7 +107,7 @@ printf 'apikey: %s\nAuthorization: Bearer %s\nContent-Type: application/json\n' 
   "$TANI_SUPABASE_SERVICE_KEY" "$TANI_SUPABASE_SERVICE_KEY" > "$TANI_GATE_DIR/headers"
 curl -fsS --proto '=https' --connect-timeout 10 --max-time 20 \
   --header @"$TANI_GATE_DIR/headers" --data '{}' \
-  https://sihttimibjzoahvwuwbm.supabase.co/rest/v1/rpc/maintenance_launch_gate \
+  "${TANI_SUPABASE_URL:-https://sihttimibjzoahvwuwbm.supabase.co}/rest/v1/rpc/maintenance_launch_gate" \
   -o "$TANI_GATE_DIR/gate.json" || fail "server launch readiness could not be verified"
 python3 - "$TANI_GATE_DIR/gate.json" <<'PY' || fail "server launch requirements are not approved"
 import json,sys
