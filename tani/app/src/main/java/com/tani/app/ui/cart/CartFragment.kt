@@ -1,5 +1,6 @@
 package com.tani.app.ui.cart
 
+import androidx.core.content.ContextCompat
 import com.tani.app.data.productImageUrl
 import com.tani.app.data.remoteCart
 import com.tani.app.data.syncCart
@@ -94,7 +95,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
                 MarketplaceUi.dp(requireContext(), 16),
                 MarketplaceUi.dp(requireContext(), 16)
             )
-            background = requireContext().getDrawable(R.drawable.bg_card)
+            background = ContextCompat.getDrawable(requireContext(), R.drawable.bg_card)
         }
         summary.addView(summaryLine(getString(R.string.cart_3), MarketplaceUi.formatPrice(Cart.subtotal())))
         summary.addView(summaryLine(getString(R.string.cart_4), MarketplaceUi.formatPrice(Cart.deliveryTotal())))
@@ -145,7 +146,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
                 MarketplaceUi.dp(requireContext(), 16),
                 MarketplaceUi.dp(requireContext(), 16)
             )
-            background = requireContext().getDrawable(R.drawable.bg_card)
+            background = ContextCompat.getDrawable(requireContext(), R.drawable.bg_card)
 
             addView(TextView(requireContext()).apply {
                 text = storeName

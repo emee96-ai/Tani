@@ -1,5 +1,6 @@
 package com.tani.app
 
+import androidx.core.content.ContextCompat
 import com.tani.app.data.merchantProfile
 
 import com.tani.app.util.runCatchingCancellable
@@ -559,7 +560,7 @@ class MainActivity : AppCompatActivity() {
         toolbar.visibility = View.VISIBLE
         toolbar.setNavigationIcon(R.drawable.ic_menu)
         if (fragment is HomeFragment) {
-            toolbar.logo = getDrawable(R.drawable.ic_brand)
+            toolbar.logo = ContextCompat.getDrawable(this, R.drawable.ic_brand)
             toolbar.title = getString(R.string.main_10)
         } else {
             toolbar.logo = null

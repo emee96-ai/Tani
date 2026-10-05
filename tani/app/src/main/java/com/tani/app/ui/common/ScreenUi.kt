@@ -7,6 +7,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import com.tani.app.R
 
 object ScreenUi {
@@ -25,7 +26,7 @@ object ScreenUi {
 
     fun card(context: Context) = LinearLayout(context).apply {
         orientation = LinearLayout.VERTICAL
-        background = context.getDrawable(R.drawable.bg_card)
+        background = ContextCompat.getDrawable(context, R.drawable.bg_card)
         setPadding(dp(context,16), dp(context,16), dp(context,16), dp(context,16))
         layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
             bottomMargin = dp(context,12)
@@ -41,7 +42,7 @@ object ScreenUi {
     }
 
     fun input(context: Context, hint: String, multiline: Boolean = false) = EditText(context).apply {
-        this.hint = hint; background = context.getDrawable(R.drawable.bg_field); setPadding(dp(context,14), dp(context,10), dp(context,14), dp(context,10))
+        this.hint = hint; background = ContextCompat.getDrawable(context, R.drawable.bg_field); setPadding(dp(context,14), dp(context,10), dp(context,14), dp(context,10))
         minHeight = dp(context,52); if (multiline) { minLines = 3; maxLines = 6 } else isSingleLine = true
         layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = dp(context,10) }
     }

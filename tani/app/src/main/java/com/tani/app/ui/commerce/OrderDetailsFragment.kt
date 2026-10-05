@@ -1,5 +1,6 @@
 package com.tani.app.ui.commerce
 
+import androidx.core.content.ContextCompat
 import com.tani.app.data.cancelOrderGroup
 import com.tani.app.data.orderGroupDetails
 
@@ -212,7 +213,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
                     setLineSpacing(0f, 1.15f)
                     setPadding(dp(10), dp(9), dp(10), dp(9))
                     setTextColor(context.getColor(R.color.text_dark))
-                    background = context.getDrawable(R.drawable.bg_chip)
+                    background = ContextCompat.getDrawable(context, R.drawable.bg_chip)
                 }, LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
@@ -258,7 +259,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
     private fun sectionCard() = LinearLayout(requireContext()).apply {
         orientation = LinearLayout.VERTICAL
         setPadding(dp(18), dp(18), dp(18), dp(18))
-        background = requireContext().getDrawable(R.drawable.bg_card)
+        background = ContextCompat.getDrawable(requireContext(), R.drawable.bg_card)
     }
 
     private fun sectionLabel(value: String) = TextView(requireContext()).apply {

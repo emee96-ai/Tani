@@ -1,5 +1,6 @@
 package com.tani.app.ui.orders
 
+import androidx.core.content.ContextCompat
 import com.tani.app.data.orderGroups
 
 import com.tani.app.data.network.CustomerErrorMessages
@@ -126,7 +127,7 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
         val card = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(18), dp(18), dp(18), dp(18))
-            background = context.getDrawable(R.drawable.bg_card)
+            background = ContextCompat.getDrawable(context, R.drawable.bg_card)
             isClickable = true
             isFocusable = true
             setOnClickListener { openDetails(group.id) }
@@ -232,7 +233,7 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
         orientation = LinearLayout.VERTICAL
         gravity = Gravity.CENTER
         setPadding(dp(18), dp(38), dp(18), dp(38))
-        background = requireContext().getDrawable(R.drawable.bg_card)
+        background = ContextCompat.getDrawable(requireContext(), R.drawable.bg_card)
         addView(TextView(requireContext()).apply {
             text = when (filter) {
                 Filter.ALL -> getString(R.string.orders_6)

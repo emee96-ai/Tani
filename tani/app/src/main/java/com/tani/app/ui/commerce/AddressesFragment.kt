@@ -1,5 +1,6 @@
 package com.tani.app.ui.commerce
 
+import androidx.core.content.ContextCompat
 import com.tani.app.data.addAddress
 import com.tani.app.data.addresses
 import com.tani.app.data.deleteAddress
@@ -76,7 +77,7 @@ class AddressesFragment : Fragment(R.layout.fragment_addresses) {
             val card = LinearLayout(requireContext()).apply {
                 orientation = LinearLayout.VERTICAL
                 setPadding(16, 16, 16, 16)
-                background = requireContext().getDrawable(R.drawable.bg_card)
+                background = ContextCompat.getDrawable(requireContext(), R.drawable.bg_card)
             }
             card.addView(TextView(requireContext()).apply {
                 text = buildString {

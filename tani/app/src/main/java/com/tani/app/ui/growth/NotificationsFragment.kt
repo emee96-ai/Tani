@@ -1,5 +1,6 @@
 package com.tani.app.ui.growth
 
+import androidx.core.content.ContextCompat
 import com.tani.app.data.merchantProfile
 
 import com.tani.app.data.network.CustomerErrorMessages
@@ -301,7 +302,7 @@ class NotificationsFragment : Fragment() {
                 setTextColor(context.getColor(R.color.success))
                 setTypeface(typeface, Typeface.BOLD)
                 setPadding(ScreenUi.dp(context, 8), ScreenUi.dp(context, 4), ScreenUi.dp(context, 8), ScreenUi.dp(context, 4))
-                background = context.getDrawable(R.drawable.bg_chip)
+                background = ContextCompat.getDrawable(context, R.drawable.bg_chip)
             })
         }
         card.addView(top)
