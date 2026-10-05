@@ -93,13 +93,13 @@ android {
 }
 
 dependencies {
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
-    implementation("androidx.core:core-ktx:1.15.0")
-    implementation("androidx.appcompat:appcompat:1.7.0")
-    implementation("androidx.activity:activity-ktx:1.10.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+    implementation("androidx.core:core-ktx:1.18.0")
+    implementation("androidx.appcompat:appcompat:1.8.0")
+    implementation("androidx.activity:activity-ktx:1.13.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.11.0")
     implementation("androidx.drawerlayout:drawerlayout:1.2.0")
-    implementation("com.google.android.material:material:1.12.0")
+    implementation("com.google.android.material:material:1.14.0")
     implementation("io.ktor:ktor-client-android:3.0.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
     testImplementation("junit:junit:4.13.2")
