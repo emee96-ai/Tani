@@ -110,8 +110,14 @@ function statusText(v){return ({pending:"قيد المراجعة",changes_reques
 async function loadMerchants() {
   const rows = await restRows("merchant_profiles","select=id,business_name,store_name,phone,phone_verified_at,verification_status,review_note,submitted_at,created_at&order=created_at.desc&limit=50");
   const body=$("merchantsBody"); body.replaceChildren();
+  const latestDocs=new Map();
+  if(rows.length){
+    const ids=rows.map(m=>encodeURIComponent(m.id)).join(",");
+    const allDocs=await restRows("merchant_identity_documents",`select=merchant_id,storage_path,document_type,created_at&merchant_id=in.(${ids})&order=created_at.desc`);
+    for(const d of allDocs) if(!latestDocs.has(d.merchant_id)) latestDocs.set(d.merchant_id,d);
+  }
   for (const m of rows) {
-    const docs = await restRows("merchant_identity_documents",`select=storage_path,document_type,created_at&merchant_id=eq.${encodeURIComponent(m.id)}&order=created_at.desc&limit=1`);
+    const docs = latestDocs.has(m.id) ? [latestDocs.get(m.id)] : [];
     const tr=document.createElement("tr");
     const values=[m.business_name,m.store_name||"—",`${m.phone||"—"}${m.phone_verified_at?" ✓":""}`,statusText(m.verification_status)];
     values.forEach(value=>{const td=document.createElement("td");td.textContent=value;tr.append(td)});
@@ -184,7 +190,7 @@ async function loadLists(){
 
 async function loadDashboard(){
   $("dashboardStatus").textContent="";
-  try{await Promise.all([loadMetrics(),loadMerchants(),loadLists()])}
+  try{await Promise.all([loadMetrics(),loadMerchants(),loadLists(),loadAdvanced()])}
   catch(e){$("dashboardStatus").textContent=e.message||"تعذر تحميل لوحة الإدارة"}
 }
 
@@ -280,9 +286,3 @@ async function reviewFeatured(id,status){
   try{await rpc("admin_review_featured_request",{p_request_id:id,p_status:status,p_note:null});$("dashboardStatus").textContent="تم تحديث طلب الظهور";await loadAdvanced()}catch(e){$("dashboardStatus").textContent=e.message}
 }
 
-const originalLoadDashboard = loadDashboard;
-loadDashboard = async function(){
-  $("dashboardStatus").textContent="";
-  try{await Promise.all([loadMetrics(),loadMerchants(),loadLists(),loadAdvanced()])}
-  catch(e){$("dashboardStatus").textContent=e.message||"تعذر تحميل لوحة الإدارة"}
-};
