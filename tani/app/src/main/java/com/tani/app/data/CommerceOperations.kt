@@ -152,49 +152,6 @@ suspend fun Repository.quoteCart(
     )
 }
 
-suspend fun Repository.checkout(
-    addressId: String,
-    phone: String,
-    notes: String,
-    items: List<CartItem>,
-    idempotencyKey: String
-): String {
-    require(items.isNotEmpty()) { "السلة فارغة" }
-    require(phone.trim().length in 7..30) { "رقم الهاتف غير صحيح" }
-    require(idempotencyKey.length in 16..100) { "تعذر تجهيز الطلب. حاول مرة أخرى" }
-
-    val payload = buildJsonArray {
-        items.forEach { item ->
-            add(buildJsonObject {
-                put("product_id", item.product.id)
-                put("quantity", item.quantity)
-            })
-        }
-    }
-
-    val groupId: String = Supabase.post(
-        "rpc/checkout_create_order_group",
-        buildJsonObject {
-            put("p_address_id", addressId)
-            put("p_phone", phone.trim())
-            put("p_notes", notes.trim())
-            put("p_items", payload)
-            put("p_idempotency_key", idempotencyKey)
-        }.toString()
-    )
-    Analytics.track(
-        "order_group_created",
-        screen = "checkout",
-        entityType = "order_group",
-        entityId = groupId,
-        metadata = buildJsonObject {
-            put("merchant_count", items.map { it.product.seller_id }.distinct().size)
-            put("item_count", items.sumOf { it.quantity })
-        }
-    )
-    return groupId
-}
-
 suspend fun Repository.orderGroups(): List<OrderGroup> {
     val uid = Supabase.userId ?: return emptyList()
     return Supabase.get(
