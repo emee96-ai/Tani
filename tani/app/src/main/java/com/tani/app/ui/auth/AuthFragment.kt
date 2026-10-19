@@ -33,6 +33,7 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
         private const val ARG_RECOVERY_TOKEN = "recovery_token"
         private const val ARG_RECOVERY_REFRESH_TOKEN = "recovery_refresh_token"
         private const val ARG_RECOVERY_ERROR = "recovery_error"
+        private const val ARG_NOTICE = "notice"
         private const val ARG_AFTER_AUTH = "after_auth"
         private const val AFTER_AUTH_CHECKOUT = "checkout"
         private const val AFTER_AUTH_MERCHANT = "merchant"
@@ -47,6 +48,11 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
                 putString(ARG_RECOVERY_REFRESH_TOKEN, refreshToken)
                 putString(ARG_RECOVERY_ERROR, error)
             }
+        }
+
+        /** شاشة تسجيل الدخول مع رسالة، مثل تأكيد البريد الإلكتروني. */
+        fun newNoticeInstance(notice: String) = AuthFragment().apply {
+            arguments = Bundle().apply { putString(ARG_NOTICE, notice) }
         }
 
         fun newCheckoutInstance() = AuthFragment().apply {
@@ -233,7 +239,7 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
             when {
                 recoveryError != null -> getString(R.string.auth_23, recoveryError)
                 mode == Mode.RESET && (recoveryToken.isBlank() || recoveryRefreshToken.isBlank()) -> getString(R.string.auth_24)
-                else -> ""
+                else -> arguments?.getString(ARG_NOTICE).orEmpty()
             }
         )
     }

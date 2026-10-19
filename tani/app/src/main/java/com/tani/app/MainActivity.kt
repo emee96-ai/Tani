@@ -376,13 +376,14 @@ class MainActivity : AppCompatActivity() {
             return true
         }
 
-        if (
-            (type == "signup" || type == "email") &&
-            !token.isNullOrBlank() &&
-            !refreshToken.isNullOrBlank()
-        ) {
-            Supabase.saveSession(token, refreshToken, null)
-            showApp()
+        if (type == "signup" || type == "email") {
+            // لا نقبل توكن قادماً من رابط خارجي كجلسة دخول، فرابط مصنوع يدوياً
+            // كان سيدخل الضحية إلى حساب المهاجم. يؤكد الخادم البريد، ثم يسجّل المستخدم دخوله بنفسه.
+            setDrawerEnabled(false)
+            nav.visibility = View.GONE
+            toolbar.visibility = View.GONE
+            show(AuthFragment.newNoticeInstance(getString(R.string.auth_31)), addToBackStack = false)
+            hideLaunchSplash()
             return true
         }
 

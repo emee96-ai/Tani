@@ -188,6 +188,7 @@
     <string name="auth_28">كلمة المرور لا تحقق متطلبات الأمان</string>
     <string name="auth_29">تمت محاولات كثيرة. حاول مرة أخرى لاحقاً</string>
     <string name="auth_30">حدث خطأ غير متوقع. حاول مرة أخرى</string>
+    <string name="auth_31">تم تأكيد بريدك الإلكتروني. سجّل الدخول للمتابعة</string>
 
     <!-- com/tani/app/ui/cart/CartFragment.kt -->
     <string name="cart_1">السلة فارغة 🛍️\nأضف منتجات من المتاجر ثم ارجع هنا.</string>
