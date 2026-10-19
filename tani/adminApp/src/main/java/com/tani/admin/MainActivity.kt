@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
+import android.view.WindowManager
 import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -69,6 +70,8 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // اللوحة تعرض مستندات هوية وبيانات شخصية: نمنع لقطات الشاشة وظهورها في قائمة التطبيقات الأخيرة.
+        window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
         AdminApi.init(this)
         if (AdminApi.hasSession()) restoreSession() else showLogin()
     }
@@ -278,6 +281,10 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
                     AdminSection.SYSTEM -> loadSystem()
                 }
             }.onFailure { error ->
+                if (!AdminApi.hasSession()) {
+                    showLogin(error = getString(R.string.main_1))
+                    return@launch
+                }
                 if (requested == currentSection) showStatus(error.message ?: getString(R.string.main_13))
             }
             if (requested == currentSection) setLoading(false)

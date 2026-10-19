@@ -6,6 +6,7 @@ import android.util.Patterns
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ProgressBar
@@ -85,6 +86,8 @@ class AdminManagementDialog(private val activity: AppCompatActivity) {
             .setView(root)
             .setNegativeButton(activity.getString(R.string.admin_management_dialog_4), null)
             .create()
+        // نافذة الحوار لا ترث FLAG_SECURE من النشاط، وهي تعرض بيانات الحسابات.
+        dialog?.window?.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
 
         dialog?.show()
         val metrics = activity.resources.displayMetrics
