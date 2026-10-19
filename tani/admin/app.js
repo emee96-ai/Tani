@@ -273,8 +273,7 @@ async function updateTicket(id,status){
 }
 async function moderateReviewReport(report,action){
   try{
-    if(action==="hide"){await patchRow("reviews",report.review_id,{status:"hidden",moderation_reason:report.reason});await patchRow("review_reports",report.id,{status:"actioned"})}
-    else await patchRow("review_reports",report.id,{status:"dismissed"});
+    await rpc("admin_moderate_review_report",{p_report_id:report.id,p_action:action});
     $("dashboardStatus").textContent="تمت معالجة البلاغ";await loadAdvanced();
   }catch(e){$("dashboardStatus").textContent=e.message}
 }

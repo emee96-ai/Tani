@@ -556,15 +556,9 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
 
     override fun moderateReview(row: JsonObject, hide: Boolean) = mutate("تمت معالجة البلاغ") {
         val reportId = row.string("id") ?: return@mutate
-        if (hide) {
-            val reviewId = row.string("review_id") ?: return@mutate
-            AdminApi.patchRow("reviews", reviewId, buildJsonObject {
-                put("status", "hidden"); put("moderation_reason", row.string("reason") ?: getString(R.string.main_39))
-            })
-            AdminApi.patchRow("review_reports", reportId, buildJsonObject { put("status", "actioned") })
-        } else {
-            AdminApi.patchRow("review_reports", reportId, buildJsonObject { put("status", "dismissed") })
-        }
+        AdminApi.rpc("admin_moderate_review_report", buildJsonObject {
+            put("p_report_id", reportId); put("p_action", if (hide) "hide" else "dismiss")
+        })
     }
 
     override fun setAccountActive(row: JsonObject, active: Boolean) {
