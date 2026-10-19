@@ -145,25 +145,36 @@ jobs:
             "-PTANI_RELEASE_KEY_PASSWORD=$TANI_RELEASE_KEY_PASSWORD"
           )
           ./gradlew "${TANI_GRADLE_ARGS[@]}" :app:testReleaseUnitTest :adminApp:testReleaseUnitTest :app:lintRelease :adminApp:lintRelease
-          ./gradlew "${TANI_GRADLE_ARGS[@]}" :app:bundleRelease :adminApp:bundleRelease
+          ./gradlew "${TANI_GRADLE_ARGS[@]}" :app:bundleRelease :adminApp:bundleRelease :app:assembleRelease
 
       - name: Verify signed release outputs
         run: |
           CUSTOMER_AAB="app/build/outputs/bundle/release/app-release.aab"
           ADMIN_AAB="adminApp/build/outputs/bundle/release/adminApp-release.aab"
+          CUSTOMER_APK="app/build/outputs/apk/release/app-release.apk"
           test -s "$CUSTOMER_AAB"
           test -s "$ADMIN_AAB"
+          test -s "$CUSTOMER_APK"
           test -s app/build/outputs/mapping/release/mapping.txt
           test -s adminApp/build/outputs/mapping/release/mapping.txt
           jarsigner -verify "$CUSTOMER_AAB" >/dev/null
           jarsigner -verify "$ADMIN_AAB" >/dev/null
-          python3 qa/verify_native_page_size.py "$CUSTOMER_AAB" "$ADMIN_AAB"
+          APKSIGNER="$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)"
+          "$APKSIGNER" verify --print-certs "$CUSTOMER_APK"
+          python3 qa/verify_native_page_size.py "$CUSTOMER_AAB" "$ADMIN_AAB" "$CUSTOMER_APK"
 
       - name: Upload signed customer AAB
         uses: actions/upload-artifact@v4
         with:
           name: tani-production-signed-aab-${{ inputs.version_name }}
           path: tani/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+
+      - name: Upload signed customer APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tani-production-signed-apk-${{ inputs.version_name }}
+          path: tani/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
 
       - name: Upload signed admin AAB
