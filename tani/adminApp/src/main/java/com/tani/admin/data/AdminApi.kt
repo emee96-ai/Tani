@@ -242,6 +242,12 @@ object AdminApi {
                 }
                 setBody(buildJsonObject { put("refresh_token", refresh) }.toString())
             }
+            if (response.status.value in 400..499 && response.status.value != 408 && response.status.value != 429) {
+                // الخادم ألغى الجلسة: لا فائدة من إعادة المحاولة، والمطلوب تسجيل دخول جديد.
+                response.bodyAsText()
+                clearSession()
+                return@withLock false
+            }
             val root = parseObject(response)
             accessToken = root.string("access_token") ?: error("تعذر تجديد الجلسة")
             refreshToken = root.string("refresh_token") ?: refresh

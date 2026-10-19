@@ -6,6 +6,7 @@ import com.tani.app.util.runCatchingCancellable
 import android.content.Context
 import android.util.Base64
 import com.tani.app.BuildConfig
+import com.tani.app.data.network.SessionRefreshPolicy
 import com.tani.app.security.SecureTokenStorage
 import com.tani.app.data.notifications.PushMessaging
 import io.ktor.client.HttpClient
@@ -153,12 +154,21 @@ object Supabase {
         val currentRefreshToken = refreshToken ?: return@withLock false
 
         return@withLock runCatchingCancellable {
-            val response: AuthResponse = authPost(
-                "token?grant_type=refresh_token",
-                buildJsonObject {
-                    put("refresh_token", currentRefreshToken)
-                }.toString()
-            )
+            val httpResponse = client.post("$URL/auth/v1/token?grant_type=refresh_token") {
+                headers {
+                    append("apikey", KEY)
+                    append(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                }
+                setBody(buildJsonObject { put("refresh_token", currentRefreshToken) }.toString())
+            }
+            if (SessionRefreshPolicy.isSessionRejected(httpResponse.status.value)) {
+                // الخادم ألغى الجلسة: نخرج المستخدم بدل أن تفشل كل الطلبات برسالة "تحقق من الاتصال".
+                httpResponse.bodyAsText()
+                Cart.clear()
+                clearSession()
+                return@withLock false
+            }
+            val response: AuthResponse = parse(httpResponse)
 
             val newAccessToken = response.access_token
                 ?: error("تعذر تجديد جلسة تسجيل الدخول")
@@ -266,7 +276,8 @@ object Supabase {
      */
     @PublishedApi
     internal suspend fun sendWithSessionRetry(request: suspend () -> HttpResponse): HttpResponse {
-        if (token != null && !ensureFreshSession()) error(SESSION_REFRESH_FAILED)
+        // إذا ألغى الخادم الجلسة أثناء التجديد يصبح token فارغاً ويستمر الطلب كزائر.
+        if (token != null && !ensureFreshSession() && token != null) error(SESSION_REFRESH_FAILED)
         val response = request()
         if (response.status.value == 401 && token != null && refreshToken != null) {
             response.bodyAsText() // استهلاك الاستجابة قبل إعادة المحاولة
