@@ -40,5 +40,10 @@ class SearchPreferences(context: Context) {
         private const val KEY_RECENT = "recent_queries"
         private const val RECENT_SEPARATOR = "\u001F"
         private const val MAX_RECENT = 6
+
+        /** سجل البحث يخص صاحب الجلسة؛ المدينة المختارة تبقى لأنها إعداد للجهاز. */
+        fun clearHistory(context: Context) {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit { remove(KEY_RECENT) }
+        }
     }
 }

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.tani.app.data.cache.AppContentStore
+import com.tani.app.data.cache.SearchPreferences
 import java.util.UUID
 
 /** Account-specific drafts must never be restored for another signed-in user. */
@@ -24,6 +25,7 @@ object PrivateUserData {
         if (!::appContext.isInitialized) return
         appContext.deleteSharedPreferences("merchant_onboarding_draft")
         userId?.let { runCatching { merchantDraft(it).edit(commit = true) { clear() } } }
+        SearchPreferences.clearHistory(appContext)
         AppContentStore.clearPrivateData()
     }
 }
