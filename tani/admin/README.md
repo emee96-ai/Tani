@@ -10,6 +10,7 @@ Security model:
 - Merchant approve/reject uses the protected `admin_set_merchant_status` RPC.
 - No `service_role` or secret key is stored in these files.
 - Session tokens are kept in `sessionStorage`, not committed to source.
+- `index.html` sets a Content-Security-Policy; changing `SUPABASE_URL` in `app.js` requires updating its `connect-src`.
 
 Current foundation surfaces:
 - Marketplace counts.
