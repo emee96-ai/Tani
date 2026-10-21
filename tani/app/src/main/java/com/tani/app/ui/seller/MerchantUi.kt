@@ -111,7 +111,7 @@ object MerchantUi {
         setTextColor(context.getColor(R.color.tani_surface))
     }
     fun compactButton(context: Context, label: String, onClick: () -> Unit) = secondaryButton(context, label, onClick).apply {
-        minHeight = dp(context, 42); minimumHeight = dp(context, 42); textSize = 12.5f
+        minHeight = dp(context, 48); minimumHeight = dp(context, 48); textSize = 13f
         layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
     }
 

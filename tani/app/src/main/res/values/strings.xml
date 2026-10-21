@@ -206,6 +206,8 @@
     <string name="cart_12">وصلت للكمية المتاحة</string>
     <string name="cart_13">حذف</string>
     <string name="cart_14">%1$s × %2$s</string>
+    <string name="cart_15">تم حذف المنتج من السلة</string>
+    <string name="cart_16">تراجع</string>
 
     <!-- com/tani/app/ui/categories/CategoriesFragment.kt -->
     <string name="categories_1">جاري تحميل المتاجر…</string>
@@ -908,6 +910,7 @@
     <string name="merchant_orders_57">جاري التجهيز</string>
     <string name="merchant_orders_58">جاهز</string>
     <string name="merchant_orders_59">مع المندوب</string>
+    <string name="merchant_orders_cancel">إلغاء الطلب</string>
     <string name="merchant_orders_60">الطلب اتحدث بالفعل إلى حالة نهائية. حدّث القائمة.</string>
     <string name="merchant_orders_61">الحالة الحالية للطلب اتغيرت. حدّث القائمة وجرب من جديد.</string>
     <string name="merchant_orders_62">اكتب سبباً واضحاً قبل المتابعة.</string>

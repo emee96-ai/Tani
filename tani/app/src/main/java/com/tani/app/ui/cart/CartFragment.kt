@@ -17,6 +17,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.snackbar.Snackbar
 import com.tani.app.MainActivity
 import com.tani.app.R
 import com.tani.app.data.Analytics
@@ -246,7 +247,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
         actions.addView(Button(requireContext()).apply {
             text = "−"
             minWidth = 0
-            setOnClickListener { Cart.decrease(item.key); render(); syncSilent() }
+            setOnClickListener { changeWithUndo(item.key) { Cart.decrease(item.key) } }
         }, LinearLayout.LayoutParams(MarketplaceUi.dp(requireContext(), 52), MarketplaceUi.dp(requireContext(), 48)))
         actions.addView(TextView(requireContext()).apply {
             text = getString(R.string.cart_13)
@@ -256,7 +257,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
             setTextColor(requireContext().getColor(R.color.error))
             isClickable = true
             isFocusable = true
-            setOnClickListener { Cart.remove(item.key); render(); syncSilent() }
+            setOnClickListener { changeWithUndo(item.key) { Cart.remove(item.key) } }
         }, LinearLayout.LayoutParams(0, MarketplaceUi.dp(requireContext(), 48), 1f))
         row.addView(actions)
         return row
@@ -278,6 +279,22 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
             setTextColor(requireContext().getColor(R.color.text_dark))
             setTypeface(typeface, android.graphics.Typeface.BOLD)
         })
+    }
+
+    /** حذف منتج من السلة بلمسة واحدة يحتاج طريقة سريعة للتراجع عنه. */
+    private fun changeWithUndo(itemKey: String, change: () -> Unit) {
+        val before = Cart.all()
+        change()
+        render(); syncSilent()
+        if (Cart.all().any { it.key == itemKey }) return
+        Snackbar.make(requireView(), getString(R.string.cart_15), Snackbar.LENGTH_LONG)
+            .apply { activity?.findViewById<View>(R.id.bottom_nav)?.takeIf { it.isShown }?.let { anchorView = it } }
+            .setAction(R.string.cart_16) {
+                if (view == null) return@setAction
+                Cart.replace(before)
+                render(); syncSilent()
+            }
+            .show()
     }
 
     private fun syncSilent() {

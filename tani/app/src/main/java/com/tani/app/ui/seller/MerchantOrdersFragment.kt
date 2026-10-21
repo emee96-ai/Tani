@@ -534,15 +534,15 @@ class MerchantOrdersFragment : Fragment() {
         )
         "accepted" -> listOf(
             OrderAction(getString(R.string.merchant_orders_47), "preparing"),
-            OrderAction(getString(R.string.addresses_19), "cancelled", true)
+            OrderAction(getString(R.string.merchant_orders_cancel), "cancelled", true)
         )
         "preparing" -> listOf(
             OrderAction(getString(R.string.merchant_orders_48), "ready"),
-            OrderAction(getString(R.string.addresses_19), "cancelled", true)
+            OrderAction(getString(R.string.merchant_orders_cancel), "cancelled", true)
         )
         "ready" -> listOf(
             OrderAction(getString(R.string.merchant_orders_49), "out_for_delivery"),
-            OrderAction(getString(R.string.addresses_19), "cancelled", true)
+            OrderAction(getString(R.string.merchant_orders_cancel), "cancelled", true)
         )
         "out_for_delivery" -> listOf(
             OrderAction(getString(R.string.merchant_analytics_5), "delivered"),
