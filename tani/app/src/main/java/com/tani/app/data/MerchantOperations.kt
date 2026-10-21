@@ -357,7 +357,9 @@ suspend fun Repository.updateMerchantProduct(
             put("updated_at", java.time.Instant.now().toString())
         }.toString()
     )
-    return rows.firstOrNull() ?: error("تعذر تحديث المنتج")
+    val row = rows.firstOrNull() ?: error("تعذر تحديث المنتج")
+    check(!active || row.is_active) { "حُفظت التعديلات، لكن المنتج موقوف من الإدارة ولن يظهر للعملاء. تواصل مع الدعم لمعرفة السبب" }
+    return row
 }
 
 suspend fun Repository.deactivateMerchantProduct(productId: String, active: Boolean): Product {
@@ -369,7 +371,10 @@ suspend fun Repository.deactivateMerchantProduct(productId: String, active: Bool
             put("updated_at", java.time.Instant.now().toString())
         }.toString()
     )
-    return rows.firstOrNull() ?: error("تعذر تحديث حالة المنتج")
+    val row = rows.firstOrNull() ?: error("تعذر تحديث حالة المنتج")
+    // الخادم يُبقي المنتج الذي أوقفته الإدارة مخفياً مهما طلب التاجر.
+    check(!active || row.is_active) { "هذا المنتج موقوف من الإدارة ولا يمكن إظهاره. تواصل مع الدعم لمعرفة السبب" }
+    return row
 }
 
 suspend fun Repository.deleteMerchantProduct(productId: String) {

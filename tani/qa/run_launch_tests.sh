@@ -22,4 +22,5 @@ done
 "${PSQL[@]}" -f "$ROOT/qa/database/launch_worker_regression.sql"
 "${PSQL[@]}" -f "$ROOT/qa/database/launch_merchant_verification_regression.sql"
 "${PSQL[@]}" -f "$ROOT/qa/database/review_moderation_regression.sql"
+"${PSQL[@]}" -f "$ROOT/qa/database/product_moderation_regression.sql"
 echo 'PASS: full-schema launch regression suite'
