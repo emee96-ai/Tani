@@ -374,19 +374,21 @@ object Supabase {
     }
 
     suspend fun signOut() {
-        val access = token
-        if (!access.isNullOrBlank()) {
-            runCatchingCancellable {
-                val response = client.post("$URL/auth/v1/logout") {
-                    headers {
-                        append("apikey", KEY)
-                        append("Authorization", "Bearer $access")
-                    }
-                }
-                response.bodyAsText()
-            }
-        }
+        token?.takeIf { it.isNotBlank() }?.let { revokeSessions(it) }
         clearSession()
+    }
+
+    /** يلغي جلسات الحساب على الخادم (أفضل جهد، والفشل لا يمنع المتابعة). */
+    suspend fun revokeSessions(accessToken: String) {
+        runCatchingCancellable {
+            val response = client.post("$URL/auth/v1/logout") {
+                headers {
+                    append("apikey", KEY)
+                    append("Authorization", "Bearer $accessToken")
+                }
+            }
+            response.bodyAsText()
+        }
     }
 
     suspend inline fun <reified T> authPost(

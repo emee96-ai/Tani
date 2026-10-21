@@ -91,15 +91,17 @@ class Repository {
         require(recoveryRefreshToken.isNotBlank()) { "رابط الاستعادة لا يحتوي جلسة كاملة. اطلب رابطاً جديداً" }
         validateNewPassword(password, confirmPassword)
 
-        val user: AuthUser = Supabase.authPut(
+        Supabase.authPut<AuthUser>(
             "user",
             buildJsonObject { put("password", password) }.toString(),
             recoveryToken
         )
 
-        // جلسة recovery تحتوي access + refresh token. نحفظ الاثنين حتى تبقى
-        // الجلسة قابلة للتجديد بعد تغيير كلمة المرور.
-        Supabase.saveSession(recoveryToken, recoveryRefreshToken, user.id)
+        // لا نعتمد جلسة قادمة من رابط خارجي كجلسة دخول: رابط مصنوع بتوكن حساب المهاجم
+        // كان سيُدخل الضحية إلى ذلك الحساب. نلغي جلسات الحساب (فتخرج الأجهزة الأخرى
+        // بعد تغيير كلمة المرور) ويسجّل المستخدم دخوله بكلمة المرور الجديدة.
+        Supabase.revokeSessions(recoveryToken)
+        if (Supabase.token != null) logout()
         Analytics.track("password_reset_completed", screen = "auth")
     }
 

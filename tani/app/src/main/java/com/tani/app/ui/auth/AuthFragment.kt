@@ -223,7 +223,14 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
                 }.onSuccess { result ->
                     when (result) {
                         "LOGIN_OK", "SIGNUP_OK" -> continueAfterAuthentication(afterAuth)
-                        "RESET_OK" -> (activity as? MainActivity)?.showApp()
+                        "RESET_OK" -> {
+                            // التوكنات أُلغيت على الخادم؛ لا نعيد فتح شاشة الاستعادة عند إعادة الإنشاء.
+                            arguments?.remove(ARG_RECOVERY_TOKEN)
+                            arguments?.remove(ARG_RECOVERY_REFRESH_TOKEN)
+                            recoveryToken = ""
+                            recoveryRefreshToken = ""
+                            goLogin(getString(R.string.auth_32))
+                        }
                         "RECOVERY_SENT" -> {
                             status.text = getString(R.string.auth_22)
                         }
