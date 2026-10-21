@@ -12,4 +12,7 @@
     <color name="warning">#FFC16B</color>
     <color name="error">#FF909B</color>
     <color name="brand_soft">#26233D</color>
+    <!-- The night primary is light, so text on it must be dark. -->
+    <color name="on_primary">#14112E</color>
+    <color name="on_primary_muted">#2B2560</color>
 </resources>

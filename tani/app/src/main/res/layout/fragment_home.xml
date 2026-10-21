@@ -49,7 +49,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/home_label"
-                android:textColor="@color/white"
+                android:textColor="@color/on_primary"
                 android:textSize="20sp"
                 android:textStyle="bold" />
 
@@ -59,7 +59,7 @@
                 android:layout_marginTop="4dp"
                 android:maxLines="2"
                 android:text="@string/home_label_2"
-                android:textColor="#EDEBFF"
+                android:textColor="@color/on_primary_muted"
                 android:textSize="12.5sp" />
 
             <TextView
@@ -72,7 +72,7 @@
                 android:focusable="true"
                 android:gravity="center"
                 android:text="@string/home_hero_cta"
-                android:textColor="@color/tani_primary_dark"
+                android:textColor="@color/tani_primary"
                 android:textSize="12.5sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -90,20 +90,15 @@
                 android:layout_weight="1"
                 android:text="@string/home_label_3"
                 android:textColor="@color/text_dark"
-                android:textSize="18sp"
+                android:textSize="19sp"
                 android:textStyle="bold" />
 
-            <TextView
+            <Button
                 android:id="@+id/home_all_categories"
+                style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:clickable="true"
-                android:focusable="true"
-                android:padding="4dp"
-                android:text="@string/home_all_categories"
-                android:textColor="@color/tani_primary"
-                android:textSize="12.5sp"
-                android:textStyle="bold" />
+                android:layout_height="48dp"
+                android:text="@string/home_all_categories" />
         </LinearLayout>
 
         <HorizontalScrollView
@@ -176,7 +171,7 @@
                 android:id="@+id/home_all_products"
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
-                android:layout_height="42dp"
+                android:layout_height="48dp"
                 android:text="@string/home_all_categories" />
         </LinearLayout>
 
@@ -223,7 +218,7 @@
                 android:id="@+id/home_all_stores"
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
-                android:layout_height="42dp"
+                android:layout_height="48dp"
                 android:text="@string/home_all_categories" />
         </LinearLayout>
 

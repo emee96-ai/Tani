@@ -397,11 +397,11 @@
             android:layout_marginTop="8dp"
             android:enabled="false"
             android:text="@string/product_details_add"
-            android:textColor="@color/white"
+            android:textColor="@color/on_primary"
             app:backgroundTint="@color/tani_primary"
             app:cornerRadius="16dp"
             app:icon="@drawable/ic_cart_plus"
             app:iconGravity="textStart"
-            app:iconTint="@color/white" />
+            app:iconTint="@color/on_primary" />
     </LinearLayout>
 </FrameLayout>

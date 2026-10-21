@@ -866,7 +866,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         content.addView(MaterialButton(requireContext()).apply {
             text = label
             isAllCaps = false
-            setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.on_primary))
             backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.tani_primary)
             setOnClickListener { action() }
         }, matchWrapWithMargins())

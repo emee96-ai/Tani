@@ -207,7 +207,7 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
             text = if (isActive(group)) getString(R.string.orders_10) else getString(R.string.orders_11)
             textSize = 16f
             setTypeface(typeface, Typeface.BOLD)
-            setTextColor(context.getColor(R.color.white))
+            setTextColor(context.getColor(R.color.on_primary))
             backgroundTintList = ColorStateList.valueOf(context.getColor(R.color.tani_primary))
             setOnClickListener { openDetails(group.id) }
         }, LinearLayout.LayoutParams(

@@ -246,7 +246,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
                 text = getString(R.string.order_details_16)
                 textSize = 15.5f
                 setTypeface(typeface, Typeface.BOLD)
-                setTextColor(context.getColor(R.color.white))
+                setTextColor(context.getColor(R.color.on_primary))
                 backgroundTintList = ColorStateList.valueOf(context.getColor(R.color.tani_primary))
                 setOnClickListener { showReviewDialog(order, items) }
             }, LinearLayout.LayoutParams(
