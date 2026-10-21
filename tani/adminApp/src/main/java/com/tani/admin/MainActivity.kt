@@ -90,6 +90,8 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
 
     private fun showLogin(loading: Boolean = false, error: String? = null) {
         loadJob?.cancel()
+        // مستندات الهوية المفتوحة تبقى في الكاش؛ لا نتركها على الجهاز بعد الخروج أو انتهاء الجلسة.
+        File(cacheDir, "admin_docs").deleteRecursively()
         setContentView(R.layout.activity_login)
         val email = findViewById<TextInputEditText>(R.id.emailInput)
         val password = findViewById<TextInputEditText>(R.id.passwordInput)
@@ -633,7 +635,7 @@ class MainActivity : AppCompatActivity(), DashboardRenderer.Actions {
                 val docs = AdminApi.rows("merchant_identity_documents", "select=storage_path,document_type,created_at&merchant_id=eq.${AdminApi.enc(merchantId)}&order=created_at.desc&limit=1")
                 val path = docs.firstOrNull()?.jsonObject?.string("storage_path") ?: error(getString(R.string.main_54))
                 val bytes = AdminApi.downloadPrivateObject(path)
-                val ext = path.substringAfterLast('.', "bin").take(8)
+                val ext = path.substringAfterLast('.', "bin").filter { it.isLetterOrDigit() }.take(8).ifEmpty { "bin" }
                 val file = File(File(cacheDir, "admin_docs").apply { mkdirs() }, "merchant_${merchantId.take(8)}.$ext")
                 file.writeBytes(bytes)
                 val uri = FileProvider.getUriForFile(this@MainActivity, "$packageName.files", file)
