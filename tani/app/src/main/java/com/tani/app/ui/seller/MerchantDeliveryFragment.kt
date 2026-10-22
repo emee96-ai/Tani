@@ -90,8 +90,8 @@ class MerchantDeliveryFragment : Fragment() {
         root.addView(MerchantUi.subtitle(context, getString(R.string.merchant_delivery_4)))
 
         root.addView(MerchantUi.card(context, soft = true).apply {
-            addView(MerchantUi.text(context, getString(R.string.merchant_delivery_5), 14.5f, true))
-            addView(MerchantUi.muted(context, getString(R.string.merchant_delivery_6), 12.5f).apply {
+            addView(MerchantUi.text(context, getString(R.string.merchant_delivery_5), 14f, true))
+            addView(MerchantUi.muted(context, getString(R.string.merchant_delivery_6), 12f).apply {
                 setPadding(0, MerchantUi.dp(context, 5), 0, 0)
             })
         })
@@ -118,7 +118,7 @@ class MerchantDeliveryFragment : Fragment() {
             isChecked = initialActive
         }
         root.addView(MerchantUi.card(context).apply {
-            addView(MerchantUi.text(context, getString(R.string.merchant_delivery_13), 14.5f, true))
+            addView(MerchantUi.text(context, getString(R.string.merchant_delivery_13), 14f, true))
             addView(active.apply { setPadding(0, MerchantUi.dp(context, 6), 0, MerchantUi.dp(context, 10)) })
             addView(MerchantUi.muted(context, getString(R.string.merchant_delivery_14), 12f))
             addView(MerchantUi.muted(context, getString(R.string.merchant_delivery_15), 12f).apply { setPadding(0, MerchantUi.dp(context, 12), 0, MerchantUi.dp(context, 5)) })
@@ -163,7 +163,7 @@ class MerchantDeliveryFragment : Fragment() {
         card.addView(LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
-            addView(MerchantUi.text(context, getString(R.string.merchant_delivery_27), 15.5f, true), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(MerchantUi.text(context, getString(R.string.merchant_delivery_27), 16f, true), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
             addView(MerchantUi.compactButton(context, getString(R.string.cart_13)) {
                 if (zoneEditors.size <= 1) return@compactButton toast(getString(R.string.merchant_delivery_28))
                 val target = zoneEditors.firstOrNull { it.card === card } ?: return@compactButton

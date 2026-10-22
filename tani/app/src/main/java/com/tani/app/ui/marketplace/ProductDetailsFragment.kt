@@ -231,7 +231,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
                 val videoThumb = TextView(requireContext()).apply {
                     text = getString(R.string.product_details_11)
                     gravity = Gravity.CENTER
-                    textSize = 13f
+                    textSize = 14f
                     setTextColor(ContextCompat.getColor(requireContext(), R.color.tani_primary))
                     setTypeface(typeface, android.graphics.Typeface.BOLD)
                 }

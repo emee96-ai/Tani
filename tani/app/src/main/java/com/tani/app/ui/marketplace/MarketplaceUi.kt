@@ -157,7 +157,7 @@ object MarketplaceUi {
             setPadding(dp(context, 12), dp(context, 10), dp(context, 12), dp(context, 12))
         }
 
-        val title = text(context, product.name, 15f, true, R.color.text_dark).apply {
+        val title = text(context, product.name, 16f, true, R.color.text_dark).apply {
             maxLines = 2
             ellipsize = TextUtils.TruncateAt.END
         }
@@ -167,7 +167,7 @@ object MarketplaceUi {
                 append(product.store_name)
                 verificationLabel(product.verification_status)?.let { append(" • $it") }
             },
-            11.5f,
+            11f,
             false,
             R.color.text_muted
         ).apply {
@@ -210,7 +210,7 @@ object MarketplaceUi {
                 }, LinearLayout.LayoutParams(dp(context, 44), dp(context, 44)))
             }
             product.has_variants -> {
-                footer.addView(text(context, context.getString(R.string.marketplace_ui_9), 11.5f, true, R.color.tani_primary).apply {
+                footer.addView(text(context, context.getString(R.string.marketplace_ui_9), 11f, true, R.color.tani_primary).apply {
                     background = ContextCompat.getDrawable(context, R.drawable.bg_chip)
                     gravity = Gravity.CENTER
                     setPadding(dp(context, 10), dp(context, 7), dp(context, 10), dp(context, 7))
@@ -344,23 +344,23 @@ object MarketplaceUi {
             String.format(Locale.US, "★ %.1f (%d)", store.average_rating, store.review_count)
         } else context.getString(R.string.marketplace_ui_1)
         val trust = verificationLabel(store.verification_status)
-        content.addView(text(context, store.name, 18f, true, R.color.text_dark))
+        content.addView(text(context, store.name, 22f, true, R.color.text_dark))
         content.addView(
             text(
                 context,
                 listOfNotNull(trust, status, rating).joinToString(" • "),
-                13f,
+                14f,
                 false,
                 R.color.text_muted
             ),
             marginTop(context, 4)
         )
-        content.addView(text(context, "${store.city}${store.area?.let { " - $it" } ?: ""}", 13f, false, R.color.text_muted), marginTop(context, 4))
+        content.addView(text(context, "${store.city}${store.area?.let { " - $it" } ?: ""}", 14f, false, R.color.text_muted), marginTop(context, 4))
         content.addView(text(context, context.getString(R.string.marketplace_ui_15, store.product_count.toString()), 12f, false, R.color.text_muted), marginTop(context, 4))
 
         card.addView(logo)
         card.addView(content)
-        card.addView(text(context, context.getString(R.string.marketplace_ui_16), 13f, true, R.color.tani_primary).apply {
+        card.addView(text(context, context.getString(R.string.marketplace_ui_16), 14f, true, R.color.tani_primary).apply {
             setPadding(dp(context, 8), dp(context, 12), dp(context, 8), dp(context, 12))
         })
         return card
@@ -400,7 +400,7 @@ object MarketplaceUi {
     fun empty(context: Context, value: String): TextView = text(
         context,
         value,
-        15f,
+        16f,
         false,
         R.color.text_muted
     ).apply {

@@ -188,7 +188,7 @@ class MerchantOrdersFragment : Fragment() {
                     addView(MerchantUi.text(context, getString(R.string.order_details_1, (order.id.take(8).uppercase())), 16f, true))
                     order.created_at?.let {
                         addView(
-                            MerchantUi.muted(context, CommerceUi.formatDate(it), 11.5f).apply {
+                            MerchantUi.muted(context, CommerceUi.formatDate(it), 11f).apply {
                                 setPadding(0, MerchantUi.dp(context, 3), 0, 0)
                             }
                         )
@@ -198,7 +198,7 @@ class MerchantOrdersFragment : Fragment() {
             })
 
             addView(
-                MerchantUi.text(context, getString(R.string.monetization_8, (money(order.total))), 18f, true).apply {
+                MerchantUi.text(context, getString(R.string.monetization_8, (money(order.total))), 22f, true).apply {
                     setPadding(0, MerchantUi.dp(context, 9), 0, MerchantUi.dp(context, 4))
                 }
             )
@@ -217,14 +217,14 @@ class MerchantOrdersFragment : Fragment() {
             }
 
             addView(MerchantUi.sectionTitle(context, getString(R.string.merchant_orders_14)))
-            addView(MerchantUi.text(context, order.customer_name_snapshot ?: getString(R.string.merchant_orders_15), 14.5f, true))
+            addView(MerchantUi.text(context, order.customer_name_snapshot ?: getString(R.string.merchant_orders_15), 14f, true))
             addView(
-                MerchantUi.muted(context, getString(R.string.merchant_orders_16, order.phone), 12.5f).apply {
+                MerchantUi.muted(context, getString(R.string.merchant_orders_16, order.phone), 12f).apply {
                     setPadding(0, MerchantUi.dp(context, 3), 0, 0)
                 }
             )
             addView(
-                MerchantUi.muted(context, getString(R.string.merchant_orders_17, order.address), 12.5f).apply {
+                MerchantUi.muted(context, getString(R.string.merchant_orders_17, order.address), 12f).apply {
                     setPadding(0, MerchantUi.dp(context, 3), 0, 0)
                 }
             )
@@ -250,9 +250,9 @@ class MerchantOrdersFragment : Fragment() {
             order.customer_note?.takeIf { it.isNotBlank() }?.let { note ->
                 addView(
                     MerchantUi.card(context, soft = true).apply {
-                        addView(MerchantUi.muted(context, getString(R.string.merchant_orders_20), 11.5f))
+                        addView(MerchantUi.muted(context, getString(R.string.merchant_orders_20), 11f))
                         addView(
-                            MerchantUi.text(context, note, 13f, true).apply {
+                            MerchantUi.text(context, note, 14f, true).apply {
                                 setPadding(0, MerchantUi.dp(context, 3), 0, 0)
                             }
                         )
@@ -289,7 +289,7 @@ class MerchantOrdersFragment : Fragment() {
             if (transitioningOrderIds.contains(order.id)) {
                 addView(
                     MerchantUi.card(context, soft = true).apply {
-                        addView(MerchantUi.text(context, getString(R.string.merchant_orders_23), 13.5f, true))
+                        addView(MerchantUi.text(context, getString(R.string.merchant_orders_23), 14f, true))
                     }
                 )
             } else if (actions.isNotEmpty()) {
@@ -343,7 +343,7 @@ class MerchantOrdersFragment : Fragment() {
                                         append(item.product_name_snapshot ?: getString(R.string.order_details_13))
                                         variant?.let { append(getString(R.string.merchant_orders_25, it)) }
                                     },
-                                    14.5f,
+                                    14f,
                                     true
                                 )
                             )
@@ -383,13 +383,13 @@ class MerchantOrdersFragment : Fragment() {
                         box.addView(MerchantUi.card(context, soft = true).apply {
                             addView(MerchantUi.text(context, statusText(event.to_status), 14f, true))
                             addView(
-                                MerchantUi.muted(context, CommerceUi.formatDate(event.created_at), 11.5f).apply {
+                                MerchantUi.muted(context, CommerceUi.formatDate(event.created_at), 11f).apply {
                                     setPadding(0, MerchantUi.dp(context, 3), 0, 0)
                                 }
                             )
                             event.note?.takeIf { it.isNotBlank() }?.let { note ->
                                 addView(
-                                    MerchantUi.text(context, note, 12.5f).apply {
+                                    MerchantUi.text(context, note, 12f).apply {
                                         setPadding(0, MerchantUi.dp(context, 5), 0, 0)
                                     }
                                 )

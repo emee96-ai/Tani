@@ -22,7 +22,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/drawer_header_label"
                 android:textColor="@color/text_dark"
-                android:textSize="20sp"
+                android:textSize="22sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -31,7 +31,7 @@
                 android:layout_marginTop="4dp"
                 android:text="@string/profile_label"
                 android:textColor="@color/text_muted"
-                android:textSize="13sp" />
+                android:textSize="14sp" />
 
             <Button
                 android:id="@+id/profile_account"
@@ -63,7 +63,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/profile_label_2"
                 android:textColor="@color/text_dark"
-                android:textSize="20sp"
+                android:textSize="22sp"
                 android:textStyle="bold" />
 
             <Button
@@ -89,7 +89,7 @@
             android:layout_marginTop="22dp"
             android:text="@string/profile_label_3"
             android:textColor="@color/text_muted"
-            android:textSize="13sp" />
+            android:textSize="14sp" />
 
         <Button
             android:id="@+id/profile_logout"

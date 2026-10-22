@@ -48,8 +48,8 @@ class AboutFragment : Fragment() {
     private fun LinearLayout.addSection(title: String, body: String) {
         val context = this.context
         addView(ScreenUi.card(context).apply {
-            addView(ScreenUi.text(context, title, 18f, true))
-            addView(ScreenUi.text(context, body, 15f))
+            addView(ScreenUi.text(context, title, 22f, true))
+            addView(ScreenUi.text(context, body, 16f))
         })
     }
 }

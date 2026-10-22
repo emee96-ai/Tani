@@ -74,9 +74,9 @@ class MerchantInsightsFragment : Fragment() {
                 root.addView(rateCard(getString(R.string.merchant_insights_14), metrics?.conversion_rate ?: 0.0, getString(R.string.merchant_insights_15)))
                 root.addView(rateCard(getString(R.string.merchant_insights_16), metrics?.cancellation_rate ?: 0.0, getString(R.string.merchant_insights_17)))
                 root.addView(MerchantUi.card(context).apply {
-                    addView(MerchantUi.text(context, getString(R.string.merchant_insights_18), 15f, true))
+                    addView(MerchantUi.text(context, getString(R.string.merchant_insights_18), 16f, true))
                     val rating = metrics?.average_rating ?: 0.0
-                    addView(MerchantUi.text(context, if (rating > 0) "${money(rating)} / 5" else "—", 21f, true).apply {
+                    addView(MerchantUi.text(context, if (rating > 0) "${money(rating)} / 5" else "—", 22f, true).apply {
                         setPadding(0, MerchantUi.dp(context, 5), 0, 0)
                     })
                 })
@@ -125,10 +125,10 @@ class MerchantInsightsFragment : Fragment() {
             gravity = android.view.Gravity.CENTER_VERTICAL
             addView(LinearLayout(context).apply {
                 orientation = LinearLayout.VERTICAL
-                addView(MerchantUi.text(context, label, 15f, true))
+                addView(MerchantUi.text(context, label, 16f, true))
                 addView(MerchantUi.muted(context, note, 12f).apply { setPadding(0, MerchantUi.dp(context, 3), 0, 0) })
             }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-            addView(MerchantUi.text(context, "${money(rate)}%", 20f, true))
+            addView(MerchantUi.text(context, "${money(rate)}%", 22f, true))
         })
     }
 
@@ -138,7 +138,7 @@ class MerchantInsightsFragment : Fragment() {
         layoutDirection = View.LAYOUT_DIRECTION_RTL
         gravity = android.view.Gravity.CENTER_VERTICAL
         setPadding(0, MerchantUi.dp(context, 10), 0, 0)
-        addView(MerchantUi.text(context, label, 13.5f), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        addView(MerchantUi.text(context, label, 14f), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         addView(MerchantUi.pill(context, value.toString(), if (value == 0) MerchantUi.Tone.SUCCESS else tone))
     }
 

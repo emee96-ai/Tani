@@ -9,12 +9,12 @@ import com.tani.app.BuildConfig
 object ShareHelper {
     fun product(context: Context, productId: String, name: String) = share(
         context,
-        "شوف $name على تاني\n${link("product",productId)}"
+        "شاهد $name على تاني\n${link("product",productId)}"
     )
 
     fun store(context: Context, storeId: String, name: String) = share(
         context,
-        "شوف متجر $name على تاني\n${link("store",storeId)}"
+        "تصفّح متجر $name على تاني\n${link("store",storeId)}"
     )
 
     fun referral(context: Context, code: String) = share(

@@ -86,7 +86,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
 
                 addView(TextView(requireContext()).apply {
                     text = getString(R.string.order_details_3)
-                    textSize = 20f
+                    textSize = 22f
                     setTypeface(typeface, Typeface.BOLD)
                     setTextColor(requireContext().getColor(R.color.text_dark))
                 }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
@@ -96,7 +96,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
 
             addView(TextView(requireContext()).apply {
                 text = CommerceUi.formatDate(group.created_at)
-                textSize = 14.5f
+                textSize = 14f
                 setPadding(0, dp(7), 0, dp(13))
                 setTextColor(requireContext().getColor(R.color.text_muted))
             })
@@ -114,13 +114,13 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
                 addView(divider())
                 addView(TextView(requireContext()).apply {
                     text = getString(R.string.order_details_9)
-                    textSize = 15f
+                    textSize = 16f
                     setTypeface(typeface, Typeface.BOLD)
                     setTextColor(requireContext().getColor(R.color.text_dark))
                 })
                 addView(TextView(requireContext()).apply {
                     text = note
-                    textSize = 15f
+                    textSize = 16f
                     setPadding(0, dp(5), 0, 0)
                     setTextColor(requireContext().getColor(R.color.text_muted))
                 })
@@ -159,7 +159,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
 
             addView(TextView(context).apply {
                 text = order.store_name_snapshot ?: getString(R.string.main_18)
-                textSize = 21f
+                textSize = 22f
                 setTypeface(typeface, Typeface.BOLD)
                 setTextColor(context.getColor(R.color.text_dark))
             }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
@@ -176,7 +176,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
         })
         addView(TextView(context).apply {
             text = getString(R.string.checkout_8, (MarketplaceUi.formatPrice(order.delivery_fee)))
-            textSize = 15f
+            textSize = 16f
             setPadding(0, dp(5), 0, 0)
             setTextColor(context.getColor(R.color.text_muted))
         })
@@ -185,13 +185,13 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
         addView(sectionLabel(getString(R.string.order_details_11)))
         addView(TextView(context).apply {
             text = order.address
-            textSize = 15.5f
+            textSize = 16f
             setPadding(0, dp(7), 0, 0)
             setTextColor(context.getColor(R.color.text_dark))
         })
         addView(TextView(context).apply {
             text = getString(R.string.order_details_12, order.phone)
-            textSize = 15f
+            textSize = 16f
             setPadding(0, dp(5), 0, 0)
             setTextColor(context.getColor(R.color.text_muted))
         })
@@ -209,7 +209,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
                         variant?.let { append(" • $it") }
                         append("\n${item.quantity} × ${MarketplaceUi.formatPrice(item.unit_price)} = ${MarketplaceUi.formatPrice(line)}")
                     }
-                    textSize = 15f
+                    textSize = 16f
                     setLineSpacing(0f, 1.15f)
                     setPadding(dp(10), dp(9), dp(10), dp(9))
                     setTextColor(context.getColor(R.color.text_dark))
@@ -232,7 +232,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
         addView(divider())
         addView(Button(context).apply {
             text = getString(R.string.order_details_15)
-            textSize = 15.5f
+            textSize = 16f
             setOnClickListener {
                 (activity as? MainActivity)?.show(SupportCenterFragment.newComplaint(order.id, order.seller_id))
             }
@@ -244,7 +244,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
         if (order.status == "delivered" && !order.seller_id.isNullOrBlank()) {
             addView(Button(context).apply {
                 text = getString(R.string.order_details_16)
-                textSize = 15.5f
+                textSize = 16f
                 setTypeface(typeface, Typeface.BOLD)
                 setTextColor(context.getColor(R.color.on_primary))
                 backgroundTintList = ColorStateList.valueOf(context.getColor(R.color.tani_primary))
@@ -264,7 +264,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
 
     private fun sectionLabel(value: String) = TextView(requireContext()).apply {
         text = value
-        textSize = 18f
+        textSize = 22f
         setTypeface(typeface, Typeface.BOLD)
         setTextColor(requireContext().getColor(R.color.text_dark))
     }
@@ -278,14 +278,14 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
 
             addView(TextView(requireContext()).apply {
                 text = label
-                textSize = if (emphasis) 16f else 15f
+                textSize = if (emphasis) 16f else 16f
                 if (emphasis) setTypeface(typeface, Typeface.BOLD)
                 setTextColor(requireContext().getColor(if (emphasis) R.color.text_dark else R.color.text_muted))
             }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
 
             addView(TextView(requireContext()).apply {
                 text = value
-                textSize = if (emphasis) 20f else 15.5f
+                textSize = if (emphasis) 22f else 16f
                 setTypeface(typeface, Typeface.BOLD)
                 setTextColor(requireContext().getColor(if (emphasis) R.color.tani_primary else R.color.text_dark))
             })
@@ -293,7 +293,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
 
     private fun statusChip(status: String) = TextView(requireContext()).apply {
         text = CommerceUi.statusLabel(status)
-        textSize = 13.5f
+        textSize = 14f
         setTypeface(typeface, Typeface.BOLD)
         setTextColor(requireContext().getColor(statusColor(status)))
         setBackgroundResource(R.drawable.bg_chip)
@@ -311,7 +311,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
 
         addView(TextView(requireContext()).apply {
             text = if (current) "●" else "○"
-            textSize = 18f
+            textSize = 22f
             gravity = Gravity.CENTER
             setTextColor(requireContext().getColor(if (current) statusColor(event.to_status) else R.color.text_muted))
         }, LinearLayout.LayoutParams(dp(28), LinearLayout.LayoutParams.WRAP_CONTENT))
@@ -320,13 +320,13 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
             orientation = LinearLayout.VERTICAL
             addView(TextView(requireContext()).apply {
                 text = CommerceUi.statusLabel(event.to_status)
-                textSize = 15.5f
+                textSize = 16f
                 setTypeface(typeface, if (current) Typeface.BOLD else Typeface.NORMAL)
                 setTextColor(requireContext().getColor(R.color.text_dark))
             })
             addView(TextView(requireContext()).apply {
                 text = CommerceUi.formatDate(event.created_at)
-                textSize = 13.5f
+                textSize = 14f
                 setPadding(0, dp(2), 0, 0)
                 setTextColor(requireContext().getColor(R.color.text_muted))
             })

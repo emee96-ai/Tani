@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:text="@string/products_title"
         android:textColor="@color/text_dark"
-        android:textSize="26sp"
+        android:textSize="28sp"
         android:textStyle="bold" />
 
     <TextView
@@ -67,7 +67,7 @@
         android:layout_marginTop="6dp"
         android:text="@string/products_filter_summary"
         android:textColor="@color/text_muted"
-        android:textSize="13sp" />
+        android:textSize="14sp" />
 
     <LinearLayout
         android:id="@+id/products_filters_panel"

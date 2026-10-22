@@ -32,7 +32,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/orders_label"
                     android:textColor="@color/text_dark"
-                    android:textSize="30sp"
+                    android:textSize="28sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -53,7 +53,7 @@
                 android:layout_height="50dp"
                 android:minWidth="72dp"
                 android:text="@string/orders_refresh"
-                android:textSize="15sp" />
+                android:textSize="16sp" />
         </LinearLayout>
 
         <HorizontalScrollView
@@ -77,7 +77,7 @@
                     android:paddingStart="18dp"
                     android:paddingEnd="18dp"
                     android:text="@string/orders_all"
-                    android:textSize="15sp" />
+                    android:textSize="16sp" />
 
                 <Button
                     android:id="@+id/orders_active"
@@ -89,7 +89,7 @@
                     android:paddingStart="18dp"
                     android:paddingEnd="18dp"
                     android:text="@string/orders_active"
-                    android:textSize="15sp" />
+                    android:textSize="16sp" />
 
                 <Button
                     android:id="@+id/orders_completed"
@@ -101,7 +101,7 @@
                     android:paddingStart="18dp"
                     android:paddingEnd="18dp"
                     android:text="@string/orders_completed"
-                    android:textSize="15sp" />
+                    android:textSize="16sp" />
 
                 <Button
                     android:id="@+id/orders_cancelled"
@@ -113,7 +113,7 @@
                     android:paddingStart="18dp"
                     android:paddingEnd="18dp"
                     android:text="@string/orders_cancelled"
-                    android:textSize="15sp" />
+                    android:textSize="16sp" />
             </LinearLayout>
         </HorizontalScrollView>
 

@@ -25,7 +25,7 @@
             android:gravity="center"
             android:text="@string/order_confirmation_confirmation_message"
             android:textColor="@color/text_dark"
-            android:textSize="17sp" />
+            android:textSize="16sp" />
         <ProgressBar
             android:id="@+id/confirmation_progress"
             android:layout_width="42dp"

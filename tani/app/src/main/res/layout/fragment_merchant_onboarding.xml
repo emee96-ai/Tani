@@ -21,7 +21,7 @@
             android:layout_height="wrap_content"
             android:text="@string/merchant_onboarding_title"
             android:textColor="@color/text_dark"
-            android:textSize="25sp"
+            android:textSize="24sp"
             android:textStyle="bold"
             android:gravity="start" />
 

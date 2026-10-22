@@ -63,11 +63,11 @@ class MonetizationFragment : Fragment() {
                             addView(LinearLayout(context).apply {
                                 orientation = LinearLayout.HORIZONTAL
                                 layoutDirection = View.LAYOUT_DIRECTION_RTL
-                                addView(MerchantUi.text(context, plan.name, 17f, true), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+                                addView(MerchantUi.text(context, plan.name, 16f, true), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
                                 addView(MerchantUi.pill(context, getString(R.string.monetization_8, (money(plan.price))), MerchantUi.Tone.BRAND))
                             })
                             plan.description.takeIf { it.isNotBlank() }?.let {
-                                addView(MerchantUi.muted(context, it, 12.5f).apply { setPadding(0, MerchantUi.dp(context, 6), 0, 0) })
+                                addView(MerchantUi.muted(context, it, 12f).apply { setPadding(0, MerchantUi.dp(context, 6), 0, 0) })
                             }
                             addView(MerchantUi.muted(context, getString(R.string.monetization_9, plan.duration_days.toString()), 12f).apply {
                                 setPadding(0, MerchantUi.dp(context, 5), 0, MerchantUi.dp(context, 8))
@@ -92,7 +92,7 @@ class MonetizationFragment : Fragment() {
                             addView(LinearLayout(context).apply {
                                 orientation = LinearLayout.HORIZONTAL
                                 layoutDirection = View.LAYOUT_DIRECTION_RTL
-                                addView(MerchantUi.text(context, getString(R.string.monetization_16), 15f, true), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+                                addView(MerchantUi.text(context, getString(R.string.monetization_16), 16f, true), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
                                 addView(MerchantUi.pill(context, statusLabel(item.status), statusTone(item.status)))
                             })
                             addView(MerchantUi.muted(context, "${dateLabel(item.starts_at)} → ${item.ends_at?.let(::dateLabel) ?: "بدون تاريخ نهاية"}", 12f).apply {
@@ -105,7 +105,7 @@ class MonetizationFragment : Fragment() {
                 root.addView(MerchantUi.sectionTitle(context, getString(R.string.monetization_17)))
                 root.addView(MerchantUi.card(context, soft = true).apply {
                     addView(MerchantUi.text(context, getString(R.string.monetization_18), 16f, true))
-                    addView(MerchantUi.muted(context, getString(R.string.monetization_19), 12.5f).apply {
+                    addView(MerchantUi.muted(context, getString(R.string.monetization_19), 12f).apply {
                         setPadding(0, MerchantUi.dp(context, 5), 0, MerchantUi.dp(context, 9))
                     })
                     addView(MerchantUi.primaryButton(context, getString(R.string.monetization_20)) {
@@ -118,7 +118,7 @@ class MonetizationFragment : Fragment() {
                 })
 
                 if (featured.isNotEmpty()) {
-                    root.addView(MerchantUi.text(context, getString(R.string.monetization_23), 14.5f, true).apply { setPadding(0, 0, 0, MerchantUi.dp(context, 7)) })
+                    root.addView(MerchantUi.text(context, getString(R.string.monetization_23), 14f, true).apply { setPadding(0, 0, 0, MerchantUi.dp(context, 7)) })
                     featured.take(10).forEach { item ->
                         root.addView(MerchantUi.card(context).apply {
                             addView(LinearLayout(context).apply {
@@ -127,7 +127,7 @@ class MonetizationFragment : Fragment() {
                                 addView(MerchantUi.text(context, placementLabel(item.placement), 14f, true), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
                                 addView(MerchantUi.pill(context, statusLabel(item.status), statusTone(item.status)))
                             })
-                            item.created_at?.let { addView(MerchantUi.muted(context, dateLabel(it), 11.5f).apply { setPadding(0, MerchantUi.dp(context, 5), 0, 0) }) }
+                            item.created_at?.let { addView(MerchantUi.muted(context, dateLabel(it), 11f).apply { setPadding(0, MerchantUi.dp(context, 5), 0, 0) }) }
                         })
                     }
                 }
@@ -135,7 +135,7 @@ class MonetizationFragment : Fragment() {
                 root.addView(MerchantUi.sectionTitle(context, getString(R.string.monetization_24)))
                 root.addView(MerchantUi.card(context).apply {
                     addView(MerchantUi.text(context, getString(R.string.monetization_25), 16f, true))
-                    addView(MerchantUi.muted(context, getString(R.string.monetization_26), 12.5f).apply {
+                    addView(MerchantUi.muted(context, getString(R.string.monetization_26), 12f).apply {
                         setPadding(0, MerchantUi.dp(context, 5), 0, MerchantUi.dp(context, 9))
                     })
                     addView(MerchantUi.secondaryButton(context, getString(R.string.monetization_27)) {

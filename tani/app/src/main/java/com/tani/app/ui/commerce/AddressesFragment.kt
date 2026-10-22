@@ -84,7 +84,7 @@ class AddressesFragment : Fragment(R.layout.fragment_addresses) {
                     append(address.label)
                     if (address.is_default) append(getString(R.string.addresses_3))
                 }
-                textSize = 18f
+                textSize = 22f
                 setTextColor(requireContext().getColor(R.color.text_dark))
             })
             card.addView(TextView(requireContext()).apply {
@@ -94,7 +94,7 @@ class AddressesFragment : Fragment(R.layout.fragment_addresses) {
                     address.landmark?.takeIf { it.isNotBlank() }?.let { append(getString(R.string.addresses_5, it)) }
                     address.phone?.takeIf { it.isNotBlank() }?.let { append(getString(R.string.addresses_6, it)) }
                 }
-                textSize = 15f
+                textSize = 16f
                 setPadding(0, 8, 0, 8)
             })
             val actions = LinearLayout(requireContext()).apply { orientation = LinearLayout.HORIZONTAL }

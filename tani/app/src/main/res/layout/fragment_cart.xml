@@ -20,7 +20,7 @@
             android:layout_height="wrap_content"
             android:text="@string/cart_label"
             android:textColor="@color/text_dark"
-            android:textSize="26sp"
+            android:textSize="28sp"
             android:textStyle="bold" />
 
         <TextView
@@ -29,7 +29,7 @@
             android:layout_marginTop="4dp"
             android:text="@string/cart_label_2"
             android:textColor="@color/text_muted"
-            android:textSize="13sp" />
+            android:textSize="14sp" />
 
         <LinearLayout
             android:id="@+id/cart_box"

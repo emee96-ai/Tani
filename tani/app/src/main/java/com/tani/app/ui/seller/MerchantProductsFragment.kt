@@ -114,7 +114,7 @@ class MerchantProductsFragment : Fragment() {
         if (data.categories.isEmpty()) {
             root.addView(MerchantUi.card(context, soft = true).apply {
                 addView(MerchantUi.text(context, getString(R.string.merchant_products_4), 14f, true))
-                addView(MerchantUi.muted(context, getString(R.string.merchant_products_5), 12.5f).apply {
+                addView(MerchantUi.muted(context, getString(R.string.merchant_products_5), 12f).apply {
                     setPadding(0, MerchantUi.dp(context, 4), 0, 0)
                 })
             })
@@ -170,8 +170,8 @@ class MerchantProductsFragment : Fragment() {
                     layoutDirection = View.LAYOUT_DIRECTION_RTL
                     addView(LinearLayout(context).apply {
                         orientation = LinearLayout.VERTICAL
-                        addView(MerchantUi.text(context, product.name, 16.5f, true))
-                        addView(MerchantUi.text(context, getString(R.string.monetization_8, (money(product.price))), 15f, true).apply {
+                        addView(MerchantUi.text(context, product.name, 16f, true))
+                        addView(MerchantUi.text(context, getString(R.string.monetization_8, (money(product.price))), 16f, true).apply {
                             setPadding(0, MerchantUi.dp(context, 4), 0, 0)
                         })
                     }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
@@ -183,7 +183,7 @@ class MerchantProductsFragment : Fragment() {
                 } else {
                     getString(R.string.merchant_products_19, product.stock.toString())
                 }
-                addView(MerchantUi.muted(context, stockLabel, 12.5f).apply {
+                addView(MerchantUi.muted(context, stockLabel, 12f).apply {
                     setPadding(0, MerchantUi.dp(context, 7), 0, MerchantUi.dp(context, 8))
                 })
 
@@ -232,7 +232,7 @@ class MerchantProductsFragment : Fragment() {
                 topMargin = MerchantUi.dp(context, 6)
                 bottomMargin = MerchantUi.dp(context, 6)
             })
-            pendingCreateImageStatus = MerchantUi.muted(context, getString(R.string.merchant_products_26), 12.5f).also {
+            pendingCreateImageStatus = MerchantUi.muted(context, getString(R.string.merchant_products_26), 12f).also {
                 content.addView(it, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
                     bottomMargin = MerchantUi.dp(context, 12)
                 })
@@ -466,7 +466,7 @@ class MerchantProductsFragment : Fragment() {
                             pickImage.launch("image/*")
                         })
                     } else {
-                        content.addView(MerchantUi.muted(context, getString(R.string.merchant_products_56, MAX_PRODUCT_IMAGES.toString()), 12.5f))
+                        content.addView(MerchantUi.muted(context, getString(R.string.merchant_products_56, MAX_PRODUCT_IMAGES.toString()), 12f))
                     }
 
                     if (images.isEmpty()) {
@@ -581,7 +581,7 @@ class MerchantProductsFragment : Fragment() {
                 addView(LinearLayout(context).apply {
                     orientation = LinearLayout.HORIZONTAL
                     layoutDirection = View.LAYOUT_DIRECTION_RTL
-                    addView(MerchantUi.text(context, variant.name, 14.5f, true), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+                    addView(MerchantUi.text(context, variant.name, 14f, true), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
                     addView(MerchantUi.pill(context, if (variant.is_active) getString(R.string.merchant_products_76) else getString(R.string.merchant_products_14), if (variant.is_active) MerchantUi.Tone.SUCCESS else MerchantUi.Tone.NEUTRAL))
                 })
                 addView(MerchantUi.muted(context, "المخزون ${variant.stock}${variant.price?.let { " • ${money(it)} جنيه" } ?: ""}", 12f).apply {

@@ -27,7 +27,7 @@ class ReferralFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch { runCatchingCancellable { repository.referralCode() to repository.referrals() }.onSuccess { (code,rows)->
             root.addView(ScreenUi.card(c).apply{addView(ScreenUi.text(c,code,22f,true));addView(ScreenUi.button(c,getString(R.string.referral_3)){ShareHelper.referral(c,code)})})
             val input=ScreenUi.input(c,getString(R.string.referral_4));root.addView(input);root.addView(ScreenUi.button(c,getString(R.string.referral_5)) { viewLifecycleOwner.lifecycleScope.launch { runCatching{repository.applyReferralCode(input.text.toString())}.onSuccess{Toast.makeText(c,if(it)getString(R.string.referral_6) else getString(R.string.referral_7),Toast.LENGTH_SHORT).show();load()}.onFailure{Toast.makeText(c,CustomerErrorMessages.from(it, getString(R.string.referral_8)),Toast.LENGTH_LONG).show()} } })
-            root.addView(ScreenUi.text(c,getString(R.string.referral_9),18f,true));if(rows.isEmpty())root.addView(ScreenUi.muted(c,getString(R.string.referral_10)));rows.forEach{r->root.addView(ScreenUi.muted(c,"${r.status} • ${r.created_at?:""}"))}
+            root.addView(ScreenUi.text(c,getString(R.string.referral_9),22f,true));if(rows.isEmpty())root.addView(ScreenUi.muted(c,getString(R.string.referral_10)));rows.forEach{r->root.addView(ScreenUi.muted(c,"${r.status} • ${r.created_at?:""}"))}
         }.onFailure{root.addView(ScreenUi.muted(c,CustomerErrorMessages.from(it, getString(R.string.referral_11))))} }
     }
 }

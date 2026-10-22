@@ -20,6 +20,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.snackbar.Snackbar
 import com.tani.app.MainActivity
 import com.tani.app.R
 import com.tani.app.data.*
@@ -101,7 +102,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
                 confirm.text = getString(R.string.checkout_2)
                 confirm.isEnabled = true
                 confirm.setOnClickListener { recoverCheckout() }
-                Toast.makeText(requireContext(), CustomerErrorMessages.from(it, getString(R.string.checkout_3)), Toast.LENGTH_LONG).show()
+                showError(CustomerErrorMessages.from(it, getString(R.string.checkout_3)))
             }
         }
     }
@@ -167,11 +168,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
                 updateConfirmState()
                 requestQuoteRefresh()
             }.onFailure {
-                Toast.makeText(
-                    requireContext(),
-                    CustomerErrorMessages.from(it, getString(R.string.checkout_4)),
-                    Toast.LENGTH_LONG
-                ).show()
+                showError(CustomerErrorMessages.from(it, getString(R.string.checkout_4)))
             }
             progress.visibility = View.GONE
             updateConfirmState()
@@ -352,7 +349,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
                         }
                     }
                 }
-                textSize = 15f
+                textSize = 16f
                 setTextColor(requireContext().getColor(R.color.text_dark))
                 setPadding(0, dp(8), 0, dp(8))
             })
@@ -452,7 +449,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
     private fun submit() {
         val addressId = selectedAddressId
         if (addressId == null) {
-            Toast.makeText(requireContext(), getString(R.string.checkout_29), Toast.LENGTH_SHORT).show()
+            showError(getString(R.string.checkout_29))
             return
         }
         val phoneValue = phone.text.toString().trim()
@@ -464,7 +461,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
         val missingSeller = sellersRequiringZone().firstOrNull { it !in selectedZones }
         if (missingSeller != null) {
             val store = Cart.groupedBySeller()[missingSeller]?.firstOrNull()?.product?.store_name ?: getString(R.string.main_18)
-            Toast.makeText(requireContext(), getString(R.string.checkout_31, store), Toast.LENGTH_LONG).show()
+            showError(getString(R.string.checkout_31, store))
             return
         }
 
@@ -487,11 +484,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
                 renderSummary()
                 showQuoteConfirmation(addressId, quote)
             }.onFailure {
-                Toast.makeText(
-                    requireContext(),
-                    CustomerErrorMessages.from(it, getString(R.string.checkout_33)),
-                    Toast.LENGTH_LONG
-                ).show()
+                showError(CustomerErrorMessages.from(it, getString(R.string.checkout_33)))
             }
             progress.visibility = View.GONE
             updateConfirmState()
@@ -594,11 +587,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
                 clearQuote()
                 renderSummary()
                 requestQuoteRefresh()
-                Toast.makeText(
-                    requireContext(),
-                    CustomerErrorMessages.from(it, getString(R.string.checkout_44)),
-                    Toast.LENGTH_LONG
-                ).show()
+                showError(CustomerErrorMessages.from(it, getString(R.string.checkout_44)))
             }
             progress.visibility = View.GONE
             updateConfirmState()
@@ -657,10 +646,20 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
         else -> getString(R.string.checkout_48, (minutes / 60).toString(), (minutes % 60).toString())
     }
 
+    // Checkout errors stay on screen long enough to read, then dismiss themselves.
+    private fun showError(message: String) {
+        val root = view ?: return
+        Snackbar.make(root, message, ERROR_DURATION_MS)
+            .setTextMaxLines(5)
+            .apply { activity?.findViewById<View>(R.id.bottom_nav)?.takeIf { it.isShown }?.let { anchorView = it } }
+            .show()
+    }
+
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
     private companion object {
         const val STATE_ADDRESS_ID = "checkout_selected_address_id"
         const val STATE_ZONE_IDS = "checkout_selected_zone_ids"
+        const val ERROR_DURATION_MS = 8_000
     }
 }

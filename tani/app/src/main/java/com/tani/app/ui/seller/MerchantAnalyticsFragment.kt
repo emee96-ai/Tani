@@ -67,14 +67,14 @@ class MerchantAnalyticsFragment : Fragment() {
         root.addView(rateCard(getString(R.string.merchant_analytics_11), m.completion_rate, getString(R.string.merchant_analytics_12)))
         root.addView(rateCard(getString(R.string.merchant_insights_16), m.cancellation_rate, getString(R.string.merchant_analytics_13)))
         root.addView(MerchantUi.card(context).apply {
-            addView(MerchantUi.text(context, getString(R.string.merchant_insights_18), 14.5f, true))
-            addView(MerchantUi.text(context, if (m.average_rating > 0) "${money(m.average_rating)} / 5" else "—", 21f, true).apply {
+            addView(MerchantUi.text(context, getString(R.string.merchant_insights_18), 14f, true))
+            addView(MerchantUi.text(context, if (m.average_rating > 0) "${money(m.average_rating)} / 5" else "—", 22f, true).apply {
                 setPadding(0, MerchantUi.dp(context, 5), 0, 0)
             })
         })
         root.addView(MerchantUi.card(context).apply {
-            addView(MerchantUi.text(context, getString(R.string.merchant_analytics_14), 14.5f, true))
-            addView(MerchantUi.text(context, m.average_response_seconds?.let { getString(R.string.checkout_46, ((it / 60.0).roundToInt()).toString()) } ?: "—", 21f, true).apply {
+            addView(MerchantUi.text(context, getString(R.string.merchant_analytics_14), 14f, true))
+            addView(MerchantUi.text(context, m.average_response_seconds?.let { getString(R.string.checkout_46, ((it / 60.0).roundToInt()).toString()) } ?: "—", 22f, true).apply {
                 setPadding(0, MerchantUi.dp(context, 5), 0, 0)
             })
         })
@@ -90,7 +90,7 @@ class MerchantAnalyticsFragment : Fragment() {
                     addView(LinearLayout(context).apply {
                         orientation = LinearLayout.HORIZONTAL; layoutDirection = View.LAYOUT_DIRECTION_RTL
                         addView(MerchantUi.pill(context, "${index + 1}", MerchantUi.Tone.BRAND))
-                        addView(MerchantUi.text(context, item.name, 15.5f, true), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = MerchantUi.dp(context, 10) })
+                        addView(MerchantUi.text(context, item.name, 16f, true), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = MerchantUi.dp(context, 10) })
                     })
                     addView(MerchantUi.muted(context, getString(R.string.merchant_analytics_20, item.units.toString(), (money(item.revenue)), item.views.toString()), 12f).apply {
                         setPadding(0, MerchantUi.dp(context, 7), 0, 0)
@@ -116,10 +116,10 @@ class MerchantAnalyticsFragment : Fragment() {
             gravity = android.view.Gravity.CENTER_VERTICAL
             addView(LinearLayout(context).apply {
                 orientation = LinearLayout.VERTICAL
-                addView(MerchantUi.text(context, label, 14.5f, true))
-                addView(MerchantUi.muted(context, note, 11.5f).apply { setPadding(0, MerchantUi.dp(context, 3), 0, 0) })
+                addView(MerchantUi.text(context, label, 14f, true))
+                addView(MerchantUi.muted(context, note, 11f).apply { setPadding(0, MerchantUi.dp(context, 3), 0, 0) })
             }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-            addView(MerchantUi.text(context, "${money(value)}%", 21f, true))
+            addView(MerchantUi.text(context, "${money(value)}%", 22f, true))
         })
     }
 

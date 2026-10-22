@@ -68,7 +68,7 @@ class SupportCenterFragment : Fragment() {
             runCatchingCancellable { repository.tickets() to repository.complaints() }
                 .onSuccess { (tickets, complaints) ->
                     val context = requireContext()
-                    root.addView(ScreenUi.text(context, getString(R.string.support_center_6), 19f, true))
+                    root.addView(ScreenUi.text(context, getString(R.string.support_center_6), 22f, true))
                     if (tickets.isEmpty()) root.addView(ScreenUi.muted(context, getString(R.string.support_center_7)))
                     tickets.take(15).forEach { ticket ->
                         root.addView(ScreenUi.card(context).apply {
@@ -79,7 +79,7 @@ class SupportCenterFragment : Fragment() {
                         })
                     }
                     root.addView(ScreenUi.spacer(context, 10))
-                    root.addView(ScreenUi.text(context, getString(R.string.support_center_9), 19f, true))
+                    root.addView(ScreenUi.text(context, getString(R.string.support_center_9), 22f, true))
                     if (complaints.isEmpty()) root.addView(ScreenUi.muted(context, getString(R.string.support_center_10)))
                     complaints.take(15).forEach { item ->
                         root.addView(ScreenUi.card(context).apply {
@@ -194,7 +194,7 @@ class SupportCenterFragment : Fragment() {
             messages.distinctBy { it.id }.sortedWith(compareBy({ it.created_at }, { it.id })).forEach { item ->
                 messagesBox.addView(ScreenUi.card(context).apply {
                     addView(ScreenUi.text(context, if (item.sender_id == Supabase.userId) getString(R.string.support_center_43) else getString(R.string.support_center_44), 14f, true))
-                    addView(ScreenUi.text(context, item.body, 15f))
+                    addView(ScreenUi.text(context, item.body, 16f))
                     addView(ScreenUi.muted(context, item.created_at.orEmpty()))
                 })
             }

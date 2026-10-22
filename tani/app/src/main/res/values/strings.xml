@@ -40,13 +40,13 @@
     <string name="checkout_label_7">الدفع عند الاستلام (COD)</string>
     <string name="checkout_confirm">مراجعة وتأكيد الطلب</string>
     <string name="home_search_hint">ابحث عن منتج، متجر أو فئة…</string>
-    <string name="home_label">اكتشف حاجات بتحبها</string>
+    <string name="home_label">اكتشف منتجات تحبها</string>
     <string name="home_label_2">منتجات سودانية موثوقة—كلها في مكان واحد.</string>
     <string name="home_hero_cta">اكتشف الآن ←</string>
     <string name="home_label_3">تسوق حسب الفئة</string>
     <string name="home_all_categories">عرض الكل</string>
     <string name="home_featured_title">مختارات مميزة</string>
-    <string name="home_recommended_title">مختارات ليك</string>
+    <string name="home_recommended_title">مختارات لك</string>
     <string name="home_label_4">وصل حديثاً</string>
     <string name="home_label_5">الأعلى تقييماً</string>
     <string name="home_label_6">متاجر موثوقة</string>
@@ -343,9 +343,9 @@
 
     <!-- com/tani/app/ui/growth/MerchantInsightsFragment.kt -->
     <string name="merchant_insights_1">صحة المتجر</string>
-    <string name="merchant_insights_2">المؤشرات التي تساعدك تعرف أين يحتاج المتجر انتباهك.</string>
+    <string name="merchant_insights_2">المؤشرات التي تساعدك على معرفة أين يحتاج المتجر إلى انتباهك.</string>
     <string name="merchant_insights_3">جاري تجهيز المؤشرات…</string>
-    <string name="merchant_insights_4">ركّز على التنبيهات أولاً، وبعدها تابع النمو.</string>
+    <string name="merchant_insights_4">ركّز على التنبيهات أولاً، ثم تابع النمو.</string>
     <string name="merchant_insights_5">الطلبات والمبيعات</string>
     <string name="merchant_insights_6">كل الطلبات</string>
     <string name="merchant_insights_7">الطلبات المكتملة</string>
@@ -377,24 +377,24 @@
     <string name="notifications_4">حاول مرة أخرى</string>
     <string name="notifications_5">إعادة المحاولة</string>
     <string name="notifications_6">افصل بين إشعارات مشترياتك وإشعارات متجرك.</string>
-    <string name="notifications_7">عندك %1$s إشعار غير مقروء</string>
+    <string name="notifications_7">لديك %1$s إشعار غير مقروء</string>
     <string name="notifications_8">كل الإشعارات مقروءة</string>
-    <string name="notifications_9">إشعاراتك كتاجرة</string>
-    <string name="notifications_10">إشعاراتك كزبونة</string>
-    <string name="notifications_11">ما عندك إشعارات في القسم ده حتى الآن.</string>
+    <string name="notifications_9">إشعاراتك كتاجر</string>
+    <string name="notifications_10">إشعاراتك كزبون</string>
+    <string name="notifications_11">لا توجد إشعارات في هذا القسم حتى الآن.</string>
     <string name="notifications_12">%1$s إشعار • %2$s غير مقروء</string>
     <string name="notifications_13">%1$s إشعار • كلها مقروءة</string>
     <string name="notifications_14">الكل (%1$s)</string>
     <string name="notifications_15">غير المقروء (%1$s)</string>
     <string name="notifications_16">تحديد إشعارات القسم كمقروءة</string>
     <string name="notifications_17">تحديث الإشعارات</string>
-    <string name="notifications_18">ما عندك إشعارات جديدة 🎉</string>
+    <string name="notifications_18">لا توجد إشعارات جديدة 🎉</string>
     <string name="notifications_19">لا توجد إشعارات حالياً</string>
-    <string name="notifications_20">أي إشعار جديد حيظهر هنا مباشرة.</string>
-    <string name="notifications_21">الطلبات الجديدة وتنبيهات المخزون وتحديثات المتجر حتظهر هنا.</string>
-    <string name="notifications_22">تحديثات طلباتك وعروضك ورسائلك حتظهر هنا.</string>
-    <string name="notifications_23">كزبونة</string>
-    <string name="notifications_24">كتاجرة</string>
+    <string name="notifications_20">سيظهر هنا أي إشعار جديد مباشرة.</string>
+    <string name="notifications_21">ستظهر هنا الطلبات الجديدة وتنبيهات المخزون وتحديثات المتجر.</string>
+    <string name="notifications_22">ستظهر هنا تحديثات طلباتك وعروضك ورسائلك.</string>
+    <string name="notifications_23">كزبون</string>
+    <string name="notifications_24">كتاجر</string>
     <string name="notifications_25">جديد</string>
     <string name="notifications_26">اضغط على الإشعار لفتح التفاصيل</string>
     <string name="notifications_27">تحديد كمقروء</string>
@@ -424,7 +424,7 @@
     <string name="referral_1">دعوة الأصدقاء</string>
     <string name="referral_2">كود الإحالة يربط الدعوة بالحساب، وتكتمل الإحالة بعد أول طلب يتم تسليمه.</string>
     <string name="referral_3">مشاركة الكود</string>
-    <string name="referral_4">عندك كود إحالة؟ أدخله هنا</string>
+    <string name="referral_4">لديك كود إحالة؟ أدخله هنا</string>
     <string name="referral_5">تطبيق الكود</string>
     <string name="referral_6">تم تطبيق الكود</string>
     <string name="referral_7">الكود مطبق مسبقاً</string>
@@ -467,7 +467,7 @@
     <!-- com/tani/app/ui/legal/AboutFragment.kt -->
     <string name="about_1">تاني — من محلاتنا لبابك</string>
     <string name="about_2">عن تاني</string>
-    <string name="about_3">تاني سوق إلكتروني سوداني يجمع المتاجر والمشاريع المحلية في مكان واحد، عشان تكتشف المنتجات وتطلبها بصورة أسهل وأوضح وأكثر ثقة.</string>
+    <string name="about_3">تاني سوق إلكتروني سوداني يجمع المتاجر والمشاريع المحلية في مكان واحد، لتكتشف المنتجات وتطلبها بصورة أسهل وأوضح وأكثر ثقة.</string>
     <string name="about_4">رسالتنا</string>
     <string name="about_5">نسهّل الشراء من التجار المحليين، ونساعد أصحاب المشاريع على عرض منتجاتهم وتنظيم طلباتهم والوصول لعملاء جدد.</string>
     <string name="about_6">كيف نعمل؟</string>
@@ -527,14 +527,14 @@
     <string name="product_details_45">%1$s%2$s • %3$s</string>
 
     <!-- com/tani/app/ui/marketplace/SearchFragment.kt -->
-    <string name="search_1">ما لقينا منتجات مطابقة. جرّب كلمة أبسط أو اختر فئة من الاقتراحات.</string>
+    <string name="search_1">لم نجد منتجات مطابقة. جرّب كلمة أبسط أو اختر فئة من الاقتراحات.</string>
     <string name="search_2">لا توجد متاجر مطابقة</string>
     <string name="search_3">اكتب حرفين على الأقل للبحث</string>
     <string name="search_4">نتائج محفوظة%1$s • جاري التحديث…</string>
     <string name="search_5">بدون اتصال%1$s • %2$s منتج • %3$s متجر محفوظ</string>
     <string name="search_6">جاري البحث%1$s…</string>
     <string name="search_7">لا يوجد اتصال ولا توجد نتائج محفوظة لهذا البحث%1$s</string>
-    <string name="search_8">ما لقينا نتائج لـ «%1$s»%2$s</string>
+    <string name="search_8">لم نجد نتائج لـ «%1$s»%2$s</string>
     <string name="search_9">%1$s منتج • %2$s متجر%3$s</string>
     <string name="search_10">تعذر التحديث%1$s • نعرض آخر نتائج محفوظة</string>
     <string name="search_11">تعذر البحث. حاول مرة أخرى.</string>
@@ -614,17 +614,17 @@
     <string name="orders_3">النشطة (%1$s)</string>
     <string name="orders_4">المكتملة (%1$s)</string>
     <string name="orders_5">الملغاة (%1$s)</string>
-    <string name="orders_6">ما عندك طلبات لسه</string>
+    <string name="orders_6">لا توجد طلبات بعد</string>
     <string name="orders_7">كل طلباتك الحالية مكتملة أو منتهية</string>
     <string name="orders_8">التوصيل %1$s</string>
     <string name="orders_9">الخصم %1$s</string>
     <string name="orders_10">متابعة الطلب</string>
     <string name="orders_11">عرض التفاصيل</string>
-    <string name="orders_12">ما عندك طلبات نشطة حالياً</string>
-    <string name="orders_13">ما عندك طلبات مكتملة لسه</string>
-    <string name="orders_14">ما عندك طلبات ملغاة</string>
-    <string name="orders_15">أي طلب جديد حيظهر هنا وتقدر تتابع حالته.</string>
-    <string name="orders_16">اختر قسم تاني لعرض بقية الطلبات.</string>
+    <string name="orders_12">لا توجد طلبات نشطة حالياً</string>
+    <string name="orders_13">لا توجد طلبات مكتملة بعد</string>
+    <string name="orders_14">لا توجد طلبات ملغاة</string>
+    <string name="orders_15">سيظهر هنا أي طلب جديد ويمكنك متابعة حالته.</string>
+    <string name="orders_16">اختر قسماً آخر لعرض بقية الطلبات.</string>
     <string name="orders_17">الدفع عند الاستلام</string>
     <string name="orders_18">تحويل بنكي</string>
     <string name="orders_19">محفظة إلكترونية</string>
@@ -647,7 +647,7 @@
     <string name="products_8">حتى %1$s</string>
     <string name="products_9">المتوفر فقط</string>
     <string name="products_10">جاري تحميل المنتجات…</string>
-    <string name="products_11">ما لقينا نتائج مطابقة. جرّب تغيير البحث أو الفلاتر.</string>
+    <string name="products_11">لم نجد نتائج مطابقة. جرّب تغيير البحث أو الفلاتر.</string>
     <string name="products_12">جاري التحميل…</string>
     <string name="products_13">عرض المزيد</string>
     <string name="products_14">لا يوجد اتصال بالإنترنت ولا توجد نتائج محفوظة لهذه الفلاتر</string>
@@ -685,7 +685,7 @@
     <!-- com/tani/app/ui/seller/MerchantAnalyticsFragment.kt -->
     <string name="merchant_analytics_1">أداء المتجر</string>
     <string name="merchant_analytics_2">جاري حساب المؤشرات…</string>
-    <string name="merchant_analytics_3">أرقام بسيطة وواضحة تساعدك تعرف شغلك ماشي كيف.</string>
+    <string name="merchant_analytics_3">أرقام بسيطة وواضحة تساعدك على معرفة أداء متجرك.</string>
     <string name="merchant_analytics_4">المبيعات والطلبات</string>
     <string name="merchant_analytics_5">تم التسليم</string>
     <string name="merchant_analytics_6">إجمالي المبيعات</string>
@@ -700,8 +700,8 @@
     <string name="merchant_analytics_15">المنتجات النشطة</string>
     <string name="merchant_analytics_16">%1$s من %2$s</string>
     <string name="merchant_analytics_17">الأكثر مبيعاً</string>
-    <string name="merchant_analytics_18">لسه ما في بيانات كفاية</string>
-    <string name="merchant_analytics_19">بعد أول مبيعات حتظهر المنتجات الأفضل هنا.</string>
+    <string name="merchant_analytics_18">لا توجد بيانات كافية بعد</string>
+    <string name="merchant_analytics_19">ستظهر هنا المنتجات الأفضل بعد أول مبيعات.</string>
     <string name="merchant_analytics_20">%1$s وحدة • %2$s جنيه • %3$s مشاهدة</string>
 
     <!-- com/tani/app/ui/seller/MerchantDeliveryFragment.kt -->
@@ -759,14 +759,14 @@
     <string name="merchant_onboarding_13">التالي</string>
     <string name="merchant_onboarding_14">مطلوب منك تعديل</string>
     <string name="merchant_onboarding_15">بيانات النشاط</string>
-    <string name="merchant_onboarding_16">خلّي البيانات الأساسية واضحة. رقم الهاتف للتواصل والمراجعة فقط، بدون رمز OTP.</string>
+    <string name="merchant_onboarding_16">اجعل البيانات الأساسية واضحة. رقم الهاتف للتواصل والمراجعة فقط، بدون رمز OTP.</string>
     <string name="merchant_onboarding_17">اسم النشاط</string>
     <string name="merchant_onboarding_18">وصف النشاط</string>
     <string name="merchant_onboarding_19">رقم الهاتف</string>
     <string name="merchant_onboarding_20">واتساب (اختياري)</string>
     <string name="merchant_onboarding_21">رقم الواتساب هو نفس رقم الهاتف</string>
     <string name="merchant_onboarding_22">بيانات المتجر</string>
-    <string name="merchant_onboarding_23">دي البيانات البتظهر للعميل بعد اعتماد الحساب.</string>
+    <string name="merchant_onboarding_23">هذه البيانات تظهر للعميل بعد اعتماد الحساب.</string>
     <string name="merchant_onboarding_24">تعذر تحديث قائمة الفئات الآن. يمكنك كتابة اسم الفئة في خانة «الفئة غير موجودة» ومواصلة التسجيل.</string>
     <string name="merchant_onboarding_25">اسم المتجر</string>
     <string name="merchant_onboarding_26">فئة المتجر</string>
@@ -853,14 +853,14 @@
     <!-- com/tani/app/ui/seller/MerchantOrdersFragment.kt -->
     <string name="merchant_orders_1">طلبات المتجر</string>
     <string name="merchant_orders_2">جاري تحميل الطلبات…</string>
-    <string name="merchant_orders_3">الطلبات الجديدة أولاً. سجّل كل خطوة عشان العميل يعرف طلبه وصل وين.</string>
+    <string name="merchant_orders_3">الطلبات الجديدة أولاً. سجّل كل خطوة ليعرف العميل أين وصل طلبه.</string>
     <string name="merchant_orders_4">جديدة</string>
     <string name="merchant_orders_5">قيد التنفيذ</string>
     <string name="merchant_orders_6">تصفية الطلبات</string>
-    <string name="merchant_orders_7">ما في طلبات لسه</string>
-    <string name="merchant_orders_8">ما في طلبات في القسم دا</string>
-    <string name="merchant_orders_9">أول طلب حيظهر هنا ومعاه كل التفاصيل المطلوبة للتنفيذ.</string>
-    <string name="merchant_orders_10">اختر قسم تاني أو ارجع لكل الطلبات.</string>
+    <string name="merchant_orders_7">لا توجد طلبات بعد</string>
+    <string name="merchant_orders_8">لا توجد طلبات في هذا القسم</string>
+    <string name="merchant_orders_9">سيظهر هنا أول طلب مع كل التفاصيل المطلوبة للتنفيذ.</string>
+    <string name="merchant_orders_10">اختر قسماً آخر أو ارجع إلى كل الطلبات.</string>
     <string name="merchant_orders_11">المنتجات %1$s</string>
     <string name="merchant_orders_12">" • التوصيل %1$s"</string>
     <string name="merchant_orders_13">" • الخصم %1$s"</string>
@@ -911,13 +911,13 @@
     <string name="merchant_orders_58">جاهز</string>
     <string name="merchant_orders_59">مع المندوب</string>
     <string name="merchant_orders_cancel">إلغاء الطلب</string>
-    <string name="merchant_orders_60">الطلب اتحدث بالفعل إلى حالة نهائية. حدّث القائمة.</string>
-    <string name="merchant_orders_61">الحالة الحالية للطلب اتغيرت. حدّث القائمة وجرب من جديد.</string>
+    <string name="merchant_orders_60">تم تحديث الطلب بالفعل إلى حالة نهائية. حدّث القائمة.</string>
+    <string name="merchant_orders_61">تغيّرت الحالة الحالية للطلب. حدّث القائمة وحاول من جديد.</string>
     <string name="merchant_orders_62">اكتب سبباً واضحاً قبل المتابعة.</string>
     <string name="merchant_orders_63">حدد زمن الوصول المتوقع بعد تسليم الطلب للمندوب.</string>
-    <string name="merchant_orders_64">ما عندك صلاحية لتحديث الطلب دا.</string>
-    <string name="merchant_orders_65">الطلب ما عاد موجوداً أو ما عندك صلاحية لعرضه.</string>
-    <string name="merchant_orders_66">الشبكة ضعيفة أو مقطوعة. تأكد من الاتصال وحاول تاني.</string>
+    <string name="merchant_orders_64">ليست لديك صلاحية لتحديث هذا الطلب.</string>
+    <string name="merchant_orders_65">الطلب لم يعد موجوداً أو ليست لديك صلاحية لعرضه.</string>
+    <string name="merchant_orders_66">الشبكة ضعيفة أو مقطوعة. تأكد من الاتصال وحاول مرة أخرى.</string>
     <string name="merchant_orders_67">تعذر تنفيذ العملية. حاول مرة أخرى.</string>
 
     <!-- com/tani/app/ui/seller/MerchantProductsFragment.kt -->
@@ -925,15 +925,15 @@
     <string name="merchant_products_2">جاري تحميل المنتجات…</string>
     <string name="merchant_products_3">أضف المنتجات، حدّث المخزون، وأوقف المنتج مؤقتاً بدل حذفه عند الحاجة.</string>
     <string name="merchant_products_4">الفئات غير متاحة الآن</string>
-    <string name="merchant_products_5">تقدر تدير منتجاتك الحالية، لكن تغيير الفئة قد يكون محدوداً لحد ما ترجع الشبكة.</string>
+    <string name="merchant_products_5">يمكنك إدارة منتجاتك الحالية، لكن تغيير الفئة قد يكون محدوداً حتى يعود الاتصال.</string>
     <string name="merchant_products_6">كل المنتجات</string>
     <string name="merchant_products_7">المنشورة</string>
     <string name="merchant_products_8">مخزون منخفض</string>
     <string name="merchant_products_9">1–%1$s وحدات</string>
     <string name="merchant_products_10">+ إضافة منتج جديد</string>
     <string name="merchant_products_11">منتجاتك</string>
-    <string name="merchant_products_12">ما عندك منتجات لسه</string>
-    <string name="merchant_products_13">أضف أول منتج عشان يبدأ متجرك يظهر للعملاء.</string>
+    <string name="merchant_products_12">لا توجد منتجات بعد</string>
+    <string name="merchant_products_13">أضف أول منتج ليبدأ متجرك في الظهور للعملاء.</string>
     <string name="merchant_products_14">متوقف</string>
     <string name="merchant_products_15">بدون خيارات</string>
     <string name="merchant_products_16">نفد</string>
@@ -1086,7 +1086,7 @@
     <string name="seller_31">فعّل التوصيل عندما تكون جاهزاً لاستقبال الطلبات</string>
     <string name="seller_32">أضف أو فعّل منتجاً واحداً على الأقل</string>
     <string name="seller_33">يحتاج انتباهك</string>
-    <string name="seller_34">كمّل إعداد المتجر</string>
+    <string name="seller_34">أكمل إعداد المتجر</string>
     <string name="seller_35">فتح بيانات المتجر</string>
     <string name="seller_36">إعادة التحقق من المتجر</string>
     <string name="seller_37">إعداد التوصيل</string>
@@ -1104,7 +1104,7 @@
     <string name="seller_49">متوسط تقييم المنتجات</string>
     <string name="seller_50">تعذر تحديث مؤشرات الأداء الآن، لكن أدوات إدارة المتجر ما زالت متاحة.</string>
     <string name="seller_51">إعادة تحديث اللوحة</string>
-    <string name="seller_52">الشغل اليومي</string>
+    <string name="seller_52">العمل اليومي</string>
     <string name="seller_53">%1$s جاري</string>
     <string name="seller_54">استلام الطلبات وتحديث حالة التجهيز والتوصيل</string>
     <string name="seller_55">إضافة المنتجات والأسعار والصور والمخزون</string>
@@ -1119,11 +1119,11 @@
     <string name="seller_64">المتجر مفتوح الآن ✓</string>
     <string name="seller_65">تم إغلاق المتجر مؤقتاً</string>
     <string name="seller_66">تعذر تحديث حالة المتجر. حاول مرة أخرى.</string>
-    <string name="seller_67">لسه ما بدأت تسجيل التاجر</string>
+    <string name="seller_67">لم تبدأ تسجيل التاجر بعد</string>
     <string name="seller_68">ابدأ التسجيل وأكمل بيانات النشاط والمتجر والتوصيل والهوية.</string>
     <string name="seller_69">ابدأ التسجيل</string>
-    <string name="seller_70">بنراجع بيانات المتجر والهوية. حتظهر لوحة المتجر كاملة بعد الاعتماد.</string>
-    <string name="seller_71">في تعديلات مطلوبة</string>
+    <string name="seller_70">نراجع بيانات المتجر والهوية. ستظهر لوحة المتجر كاملة بعد الاعتماد.</string>
+    <string name="seller_71">توجد تعديلات مطلوبة</string>
     <string name="seller_72">راجع بيانات الطلب وأعد الإرسال.</string>
     <string name="seller_73">الطلب يحتاج مراجعة</string>
     <string name="seller_74">يمكنك تعديل البيانات وإعادة الإرسال.</string>

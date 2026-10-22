@@ -837,7 +837,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
 
     private fun sectionText(value: String) = TextView(requireContext()).apply {
         text = value
-        textSize = 18f
+        textSize = 22f
         setTypeface(typeface, android.graphics.Typeface.BOLD)
         setTextColor(ContextCompat.getColor(requireContext(), R.color.text_dark))
         setPadding(0, 0, 0, dp(8))
@@ -845,7 +845,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
 
     private fun smallText(value: String) = TextView(requireContext()).apply {
         text = value
-        textSize = 13f
+        textSize = 14f
         setTextColor(ContextCompat.getColor(requireContext(), R.color.text_muted))
     }
 

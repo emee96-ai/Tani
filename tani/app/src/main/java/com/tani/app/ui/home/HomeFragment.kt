@@ -93,7 +93,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     minHeight = 0
                     minimumHeight = 0
                     gravity = Gravity.CENTER
-                    textSize = 12.5f
+                    textSize = 12f
                     setTextColor(ContextCompat.getColor(requireContext(), R.color.text_dark))
                     setPadding(
                         MarketplaceUi.dp(requireContext(), 8),

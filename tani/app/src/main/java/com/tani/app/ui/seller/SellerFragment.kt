@@ -130,7 +130,7 @@ class SellerFragment : Fragment() {
                 layoutDirection = View.LAYOUT_DIRECTION_RTL
                 addView(LinearLayout(context).apply {
                     orientation = LinearLayout.VERTICAL
-                    addView(MerchantUi.text(context, storeStateTitle, 17f, true))
+                    addView(MerchantUi.text(context, storeStateTitle, 16f, true))
                     addView(MerchantUi.muted(context, if (profile.trust_badge) getString(R.string.seller_18) else getString(R.string.seller_19), 12f).apply {
                         setPadding(0, MerchantUi.dp(context, 4), 0, 0)
                     })
@@ -164,7 +164,7 @@ class SellerFragment : Fragment() {
             addView(LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
                 layoutDirection = View.LAYOUT_DIRECTION_RTL
-                addView(MerchantUi.text(context, getString(R.string.seller_23), 15.5f, true), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+                addView(MerchantUi.text(context, getString(R.string.seller_23), 16f, true), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
                 addView(MerchantUi.pill(
                     context,
                     "${readiness.completed}/${readiness.total}",
@@ -175,7 +175,7 @@ class SellerFragment : Fragment() {
                 context,
                 if (readiness.completed == readiness.total) getString(R.string.seller_24)
                 else getString(R.string.seller_25),
-                12.5f
+                12f
             ).apply { setPadding(0, MerchantUi.dp(context, 6), 0, 0) })
         })
 
@@ -192,9 +192,9 @@ class SellerFragment : Fragment() {
         if (setupIssues.isNotEmpty()) {
             root.addView(MerchantUi.sectionTitle(context, getString(R.string.seller_33)))
             root.addView(MerchantUi.card(context).apply {
-                addView(MerchantUi.text(context, getString(R.string.seller_34), 15.5f, true))
+                addView(MerchantUi.text(context, getString(R.string.seller_34), 16f, true))
                 setupIssues.forEach { issue ->
-                    addView(MerchantUi.muted(context, "• $issue", 13f).apply {
+                    addView(MerchantUi.muted(context, "• $issue", 14f).apply {
                         setPadding(0, MerchantUi.dp(context, 5), 0, 0)
                     })
                 }
@@ -235,7 +235,7 @@ class SellerFragment : Fragment() {
             })
         } else {
             root.addView(MerchantUi.card(context, soft = true).apply {
-                addView(MerchantUi.muted(context, getString(R.string.seller_50), 13f))
+                addView(MerchantUi.muted(context, getString(R.string.seller_50), 14f))
                 addView(MerchantUi.compactButton(context, getString(R.string.seller_51)) { load() })
             })
         }
@@ -315,10 +315,10 @@ class SellerFragment : Fragment() {
             addView(LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
                 layoutDirection = View.LAYOUT_DIRECTION_RTL
-                addView(MerchantUi.text(context, title, 17f, true), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+                addView(MerchantUi.text(context, title, 16f, true), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
                 addView(MerchantUi.pill(context, statusText(profile.verification_status), tone))
             })
-            addView(MerchantUi.muted(context, message, 13f).apply { setPadding(0, MerchantUi.dp(context, 7), 0, 0) })
+            addView(MerchantUi.muted(context, message, 14f).apply { setPadding(0, MerchantUi.dp(context, 7), 0, 0) })
         })
         if (profile.verification_status in setOf("changes_requested", "rejected")) {
             root.addView(MerchantUi.primaryButton(context, getString(R.string.seller_78)) { open(MerchantOnboardingFragment()) })

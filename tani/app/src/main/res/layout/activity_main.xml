@@ -87,7 +87,7 @@
                     android:layout_marginTop="8dp"
                     android:text="@string/main_launch_loading_text"
                     android:textColor="@color/text_muted"
-                    android:textSize="13sp" />
+                    android:textSize="14sp" />
             </LinearLayout>
         </FrameLayout>
     </FrameLayout>

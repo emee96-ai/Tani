@@ -101,7 +101,7 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
 
         summary.text = when {
             groups.isEmpty() -> getString(R.string.orders_6)
-            activeCount > 0 -> "عندك $activeCount ${if (activeCount == 1) "طلب قيد المتابعة" else "طلبات قيد المتابعة"}"
+            activeCount > 0 -> "لديك $activeCount ${if (activeCount == 1) "طلب قيد المتابعة" else "طلبات قيد المتابعة"}"
             else -> getString(R.string.orders_7)
         }
 
@@ -140,13 +140,13 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
         }
         header.addView(TextView(context).apply {
             text = getString(R.string.order_details_1, (group.id.take(8).uppercase()))
-            textSize = 18f
+            textSize = 22f
             setTypeface(typeface, Typeface.BOLD)
             setTextColor(context.getColor(R.color.text_dark))
         }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         header.addView(TextView(context).apply {
             text = CommerceUi.statusLabel(group.status)
-            textSize = 13.5f
+            textSize = 14f
             setTypeface(typeface, Typeface.BOLD)
             setTextColor(context.getColor(statusColor(group.status)))
             setBackgroundResource(R.drawable.bg_chip)
@@ -156,7 +156,7 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
 
         card.addView(TextView(context).apply {
             text = CommerceUi.formatDate(group.created_at)
-            textSize = 14.5f
+            textSize = 14f
             setPadding(0, dp(8), 0, 0)
             setTextColor(context.getColor(R.color.text_muted))
         })
@@ -170,12 +170,12 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
         }
         totalRow.addView(TextView(context).apply {
             text = getString(R.string.order_details_6)
-            textSize = 15.5f
+            textSize = 16f
             setTextColor(context.getColor(R.color.text_muted))
         }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         totalRow.addView(TextView(context).apply {
             text = MarketplaceUi.formatPrice(group.grand_total)
-            textSize = 20f
+            textSize = 22f
             setTypeface(typeface, Typeface.BOLD)
             setTextColor(context.getColor(R.color.text_dark))
         })
@@ -185,7 +185,7 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
         val paymentState = paymentStatusLabel(group.payment_status)
         card.addView(TextView(context).apply {
             text = getString(R.string.orders_26, payment, paymentState)
-            textSize = 15f
+            textSize = 16f
             setPadding(0, dp(9), 0, 0)
             setTextColor(context.getColor(R.color.text_muted))
         })
@@ -241,14 +241,14 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
                 Filter.COMPLETED -> getString(R.string.orders_13)
                 Filter.CANCELLED -> getString(R.string.orders_14)
             }
-            textSize = 19f
+            textSize = 22f
             setTypeface(typeface, Typeface.BOLD)
             gravity = Gravity.CENTER
             setTextColor(requireContext().getColor(R.color.text_dark))
         })
         addView(TextView(requireContext()).apply {
             text = if (filter == Filter.ALL) getString(R.string.orders_15) else getString(R.string.orders_16)
-            textSize = 15f
+            textSize = 16f
             gravity = Gravity.CENTER
             setPadding(0, dp(8), 0, 0)
             setTextColor(requireContext().getColor(R.color.text_muted))
@@ -266,7 +266,7 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
             val selected = type == filter
             button.alpha = if (selected) 1f else 0.78f
             button.setTypeface(button.typeface, if (selected) Typeface.BOLD else Typeface.NORMAL)
-            button.textSize = 15f
+            button.textSize = 16f
         }
     }
 

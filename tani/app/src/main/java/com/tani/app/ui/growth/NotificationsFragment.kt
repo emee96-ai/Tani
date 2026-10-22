@@ -149,7 +149,7 @@ class NotificationsFragment : Fragment() {
             ScreenUi.text(
                 context,
                 if (hasMerchantAccount && audience == Audience.MERCHANT) getString(R.string.notifications_9) else getString(R.string.notifications_10),
-                18f,
+                22f,
                 true
             )
         )
@@ -202,7 +202,7 @@ class NotificationsFragment : Fragment() {
                 ScreenUi.text(
                     context,
                     if (filter == Filter.UNREAD) getString(R.string.notifications_18) else getString(R.string.notifications_19),
-                    17f,
+                    16f,
                     true
                 )
             )
@@ -259,7 +259,7 @@ class NotificationsFragment : Fragment() {
             text = if (unread > 0) "$label ($unread)" else label
             isAllCaps = false
             minHeight = ScreenUi.dp(requireContext(), 52)
-            textSize = 15f
+            textSize = 16f
             alpha = if (selected) 1f else 0.66f
             setTypeface(typeface, if (selected) Typeface.BOLD else Typeface.NORMAL)
             setOnClickListener { onClick() }
@@ -324,7 +324,7 @@ class NotificationsFragment : Fragment() {
     private fun preferencesCard(prefs: NotificationPreferences): View {
         val context = requireContext()
         val card = ScreenUi.card(context)
-        card.addView(ScreenUi.text(context, getString(R.string.notifications_28), 18f, true))
+        card.addView(ScreenUi.text(context, getString(R.string.notifications_28), 22f, true))
         card.addView(ScreenUi.muted(context, getString(R.string.notifications_29)))
 
         val enabled = CheckBox(context).apply {

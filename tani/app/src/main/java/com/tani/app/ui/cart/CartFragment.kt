@@ -64,7 +64,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
         if (items.isEmpty()) {
             box.addView(TextView(requireContext()).apply {
                 text = getString(R.string.cart_1)
-                textSize = 17f
+                textSize = 16f
                 gravity = Gravity.CENTER
                 setPadding(10, MarketplaceUi.dp(requireContext(), 38), 10, MarketplaceUi.dp(requireContext(), 38))
                 setTextColor(requireContext().getColor(R.color.text_muted))
@@ -74,7 +74,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
 
         box.addView(TextView(requireContext()).apply {
             text = getString(R.string.cart_2, Cart.itemCount().toString(), (Cart.groupedBySeller().size).toString())
-            textSize = 15f
+            textSize = 16f
             setTextColor(requireContext().getColor(R.color.text_muted))
             setPadding(0, 0, 0, MarketplaceUi.dp(requireContext(), 12))
         })
@@ -103,13 +103,13 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
         summary.addView(summaryLine(getString(R.string.cart_4), MarketplaceUi.formatPrice(Cart.deliveryTotal())))
         summary.addView(TextView(requireContext()).apply {
             text = getString(R.string.cart_5, (MarketplaceUi.formatPrice(Cart.grandTotal())))
-            textSize = 21f
+            textSize = 22f
             setTextColor(requireContext().getColor(R.color.tani_primary))
             setPadding(0, MarketplaceUi.dp(requireContext(), 12), 0, MarketplaceUi.dp(requireContext(), 6))
         })
         summary.addView(TextView(requireContext()).apply {
             text = getString(R.string.cart_6)
-            textSize = 13f
+            textSize = 14f
             setTextColor(requireContext().getColor(R.color.text_muted))
         })
         box.addView(summary)
@@ -152,7 +152,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
 
             addView(TextView(requireContext()).apply {
                 text = storeName
-                textSize = 18f
+                textSize = 22f
                 setTextColor(requireContext().getColor(R.color.text_dark))
             })
             items.forEach { addView(itemRow(it)) }
@@ -195,7 +195,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
         }
         info.addView(TextView(requireContext()).apply {
             text = item.product.name
-            textSize = 17f
+            textSize = 16f
             setTextColor(requireContext().getColor(R.color.text_dark))
             setTypeface(typeface, android.graphics.Typeface.BOLD)
         })

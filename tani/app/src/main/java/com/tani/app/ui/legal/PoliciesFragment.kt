@@ -15,7 +15,7 @@ class PoliciesFragment : Fragment() {
         val c=requireContext(); val root=ScreenUi.root(c)
         root.addView(ScreenUi.title(c,getString(R.string.main_27)))
         root.addView(ScreenUi.subtitle(c,getString(R.string.policies_1)))
-        policies.forEach { (title,body) -> root.addView(ScreenUi.card(c).apply { addView(ScreenUi.text(c,title,17f,true)); addView(ScreenUi.muted(c,body)) }) }
+        policies.forEach { (title,body) -> root.addView(ScreenUi.card(c).apply { addView(ScreenUi.text(c,title,16f,true)); addView(ScreenUi.muted(c,body)) }) }
         return ScrollView(c).apply { setBackgroundColor(c.getColor(R.color.tani_background)); addView(root) }
     }
     private val policies=listOf(
