@@ -1,5 +1,7 @@
 package com.tani.app.ui.seller
 
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.os.Bundle
@@ -42,14 +44,14 @@ class MerchantDeliveryFragment : Fragment() {
     private fun load() {
         val context = requireContext()
         root.removeAllViews()
-        root.addView(MerchantUi.title(context, "التوصيل"))
+        root.addView(MerchantUi.title(context, getString(R.string.order_details_4)))
         root.addView(MerchantUi.card(context, soft = true).apply {
-            addView(MerchantUi.text(context, "جاري تحميل مناطق التوصيل…", 14f, true))
+            addView(MerchantUi.text(context, getString(R.string.merchant_delivery_1), 14f, true))
         })
 
         viewLifecycleOwner.lifecycleScope.launch {
             runCatchingCancellable {
-                val seller = repository.seller() ?: error("حساب التاجر غير مكتمل")
+                val seller = repository.seller() ?: error(getString(R.string.merchant_delivery_2))
                 coroutineScope {
                     val zones = async { repository.merchantDeliveryZones(seller.id) }
                     val settings = async { repository.merchantDeliverySettings(seller.id) }
@@ -76,7 +78,7 @@ class MerchantDeliveryFragment : Fragment() {
                     )
                 }
                 render(values, settings?.notes.orEmpty(), settings?.is_active ?: true)
-            }.onFailure { showError(it.message ?: "تعذر تحميل إعدادات التوصيل") }
+            }.onFailure { showError(CustomerErrorMessages.from(it, getString(R.string.merchant_delivery_3))) }
         }
     }
 
@@ -84,22 +86,22 @@ class MerchantDeliveryFragment : Fragment() {
         val context = requireContext()
         root.removeAllViews()
         zoneEditors.clear()
-        root.addView(MerchantUi.title(context, "التوصيل"))
-        root.addView(MerchantUi.subtitle(context, "حددي المناطق المتاحة وسعر وزمن الوصول لكل منطقة. الزمن يبدأ بعد تسليم الطلب للمندوب."))
+        root.addView(MerchantUi.title(context, getString(R.string.order_details_4)))
+        root.addView(MerchantUi.subtitle(context, getString(R.string.merchant_delivery_4)))
 
         root.addView(MerchantUi.card(context, soft = true).apply {
-            addView(MerchantUi.text(context, "كيف تعمل الإعدادات؟", 14.5f, true))
-            addView(MerchantUi.muted(context, "يمكن إيقاف منطقة مؤقتاً بدون حذفها. وإيقاف التوصيل العام يمنع الطلبات الجديدة مع الاحتفاظ بكل المناطق والرسوم.", 12.5f).apply {
+            addView(MerchantUi.text(context, getString(R.string.merchant_delivery_5), 14f, true))
+            addView(MerchantUi.muted(context, getString(R.string.merchant_delivery_6), 12f).apply {
                 setPadding(0, MerchantUi.dp(context, 5), 0, 0)
             })
         })
 
         val zonesBox = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
-        root.addView(MerchantUi.sectionTitle(context, "مناطق ورسوم التوصيل"))
+        root.addView(MerchantUi.sectionTitle(context, getString(R.string.merchant_delivery_7)))
         root.addView(zonesBox)
 
         fun appendZone(value: MerchantDeliveryZoneUpdateInput? = null) {
-            if (zoneEditors.size >= 20) return toast("الحد الأقصى 20 منطقة")
+            if (zoneEditors.size >= 20) return toast(getString(R.string.merchant_delivery_8))
             val editor = createZoneEditor(value, zonesBox)
             zoneEditors += editor
             zonesBox.addView(editor.card)
@@ -107,23 +109,23 @@ class MerchantDeliveryFragment : Fragment() {
 
         initialZones.filter { it.area.isNotBlank() || it.fee > 0 }.forEach(::appendZone)
         if (zoneEditors.isEmpty()) appendZone()
-        root.addView(MerchantUi.secondaryButton(context, "+ إضافة منطقة أخرى") { appendZone() })
+        root.addView(MerchantUi.secondaryButton(context, getString(R.string.merchant_delivery_9)) { appendZone() })
 
-        root.addView(MerchantUi.sectionTitle(context, "إعدادات عامة"))
-        val notes = field("مثلاً: التوصيل بعد الساعة 4 عصراً", initialNotes, multiline = true)
+        root.addView(MerchantUi.sectionTitle(context, getString(R.string.merchant_delivery_10)))
+        val notes = field(getString(R.string.merchant_delivery_11), initialNotes, multiline = true)
         val active = CheckBox(context).apply {
-            text = "التوصيل متاح حالياً"
+            text = getString(R.string.merchant_delivery_12)
             isChecked = initialActive
         }
         root.addView(MerchantUi.card(context).apply {
-            addView(MerchantUi.text(context, "حالة التوصيل", 14.5f, true))
+            addView(MerchantUi.text(context, getString(R.string.merchant_delivery_13), 14f, true))
             addView(active.apply { setPadding(0, MerchantUi.dp(context, 6), 0, MerchantUi.dp(context, 10)) })
-            addView(MerchantUi.muted(context, "عند إيقافه لن يستطيع العملاء تأكيد طلبات توصيل جديدة، ولن تتغير الطلبات التي تم إنشاؤها سابقاً.", 12f))
-            addView(MerchantUi.muted(context, "ملاحظات التوصيل", 12f).apply { setPadding(0, MerchantUi.dp(context, 12), 0, MerchantUi.dp(context, 5)) })
+            addView(MerchantUi.muted(context, getString(R.string.merchant_delivery_14), 12f))
+            addView(MerchantUi.muted(context, getString(R.string.merchant_delivery_15), 12f).apply { setPadding(0, MerchantUi.dp(context, 12), 0, MerchantUi.dp(context, 5)) })
             addView(notes)
         })
 
-        root.addView(MerchantUi.primaryButton(context, "حفظ إعدادات التوصيل") {
+        root.addView(MerchantUi.primaryButton(context, getString(R.string.merchant_delivery_16)) {
             val values = mutableListOf<MerchantDeliveryZoneUpdateInput>()
             zoneEditors.forEach { editor ->
                 val area = editor.area.text.toString().trim()
@@ -131,18 +133,18 @@ class MerchantDeliveryFragment : Fragment() {
                 val minutesText = editor.minutes.text.toString().trim()
                 val minutes = minutesText.takeIf { it.isNotEmpty() }?.toIntOrNull()
                 when {
-                    area.isBlank() -> return@primaryButton toast("اكتبي اسم كل منطقة توصيل")
-                    fee == null || fee < 0 -> return@primaryButton toast("راجعي رسوم التوصيل")
-                    minutesText.isNotBlank() && minutes == null -> return@primaryButton toast("راجعي زمن الوصول")
-                    minutes != null && minutes !in 1..1440 -> return@primaryButton toast("زمن الوصول يجب أن يكون بين دقيقة و24 ساعة")
+                    area.isBlank() -> return@primaryButton toast(getString(R.string.merchant_delivery_17))
+                    fee == null || fee < 0 -> return@primaryButton toast(getString(R.string.merchant_delivery_18))
+                    minutesText.isNotBlank() && minutes == null -> return@primaryButton toast(getString(R.string.merchant_delivery_19))
+                    minutes != null && minutes !in 1..1440 -> return@primaryButton toast(getString(R.string.merchant_delivery_20))
                 }
                 values += MerchantDeliveryZoneUpdateInput(area, fee, minutes, editor.available.isChecked)
             }
             if (values.map { it.area.lowercase() }.distinct().size != values.size) {
-                return@primaryButton toast("لا تكرري نفس منطقة التوصيل")
+                return@primaryButton toast(getString(R.string.merchant_delivery_21))
             }
             if (active.isChecked && values.none { it.isActive }) {
-                return@primaryButton toast("فعّلي منطقة توصيل واحدة على الأقل أو أوقفي التوصيل العام")
+                return@primaryButton toast(getString(R.string.merchant_delivery_22))
             }
             save(values, notes.text.toString(), active.isChecked)
         })
@@ -151,38 +153,38 @@ class MerchantDeliveryFragment : Fragment() {
     private fun createZoneEditor(value: MerchantDeliveryZoneUpdateInput?, parent: LinearLayout): ZoneEditor {
         val context = requireContext()
         val card = MerchantUi.card(context)
-        val area = field("اسم المنطقة / الحي", value?.area)
-        val fee = field("الرسوم بالجنيه", value?.fee?.takeIf { value.area.isNotBlank() || it > 0 }?.let(::numberText), decimal = true)
-        val minutes = field("زمن الوصول بالدقائق", value?.estimatedMinutes?.toString(), number = true)
+        val area = field(getString(R.string.merchant_delivery_23), value?.area)
+        val fee = field(getString(R.string.merchant_delivery_24), value?.fee?.takeIf { value.area.isNotBlank() || it > 0 }?.let(::numberText), decimal = true)
+        val minutes = field(getString(R.string.merchant_delivery_25), value?.estimatedMinutes?.toString(), number = true)
         val available = CheckBox(context).apply {
-            text = "المنطقة متاحة للطلب"
+            text = getString(R.string.merchant_delivery_26)
             isChecked = value?.isActive ?: true
         }
         card.addView(LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
-            addView(MerchantUi.text(context, "منطقة توصيل", 15.5f, true), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-            addView(MerchantUi.compactButton(context, "حذف") {
-                if (zoneEditors.size <= 1) return@compactButton toast("يجب أن توجد منطقة توصيل واحدة على الأقل")
+            addView(MerchantUi.text(context, getString(R.string.merchant_delivery_27), 16f, true), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(MerchantUi.compactButton(context, getString(R.string.cart_13)) {
+                if (zoneEditors.size <= 1) return@compactButton toast(getString(R.string.merchant_delivery_28))
                 val target = zoneEditors.firstOrNull { it.card === card } ?: return@compactButton
                 zoneEditors.remove(target)
                 parent.removeView(card)
             })
         })
         card.addView(available.apply { setPadding(0, MerchantUi.dp(context, 6), 0, 0) })
-        addLabeled(card, "المنطقة", area)
+        addLabeled(card, getString(R.string.addresses_11), area)
         val row = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
         }
         val feeBox = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            addView(MerchantUi.muted(context, "الرسوم", 12f))
+            addView(MerchantUi.muted(context, getString(R.string.merchant_delivery_29), 12f))
             addView(fee)
         }
         val timeBox = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            addView(MerchantUi.muted(context, "الوصول بعد تسليم الطلب للمندوب", 12f))
+            addView(MerchantUi.muted(context, getString(R.string.merchant_delivery_30), 12f))
             addView(minutes)
         }
         row.addView(feeBox, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = MerchantUi.dp(context, 4) })
@@ -192,18 +194,18 @@ class MerchantDeliveryFragment : Fragment() {
     }
 
     private fun save(zones: List<MerchantDeliveryZoneUpdateInput>, notes: String, active: Boolean) {
-        toast("جاري حفظ التوصيل…")
+        toast(getString(R.string.merchant_delivery_31))
         viewLifecycleOwner.lifecycleScope.launch {
             runCatchingCancellable {
                 repository.saveMerchantDeliveryConfiguration(zones, notes, active)
             }.onSuccess {
-                toast(if (active) "تم حفظ إعدادات التوصيل ✓" else "تم إيقاف التوصيل مع حفظ المناطق ✓")
+                toast(if (active) getString(R.string.merchant_delivery_32) else getString(R.string.merchant_delivery_33))
                 load()
             }.onFailure { error ->
                 val message = when {
-                    error.message.orEmpty().contains("Enable at least one", ignoreCase = true) -> "فعّلي منطقة توصيل واحدة على الأقل"
-                    error.message.orEmpty().contains("Approved merchant", ignoreCase = true) -> "حساب التاجر غير جاهز لتعديل التوصيل"
-                    else -> error.message ?: "تعذر حفظ التوصيل"
+                    error.message.orEmpty().contains("Enable at least one", ignoreCase = true) -> getString(R.string.merchant_delivery_34)
+                    error.message.orEmpty().contains("Approved merchant", ignoreCase = true) -> getString(R.string.merchant_delivery_35)
+                    else -> CustomerErrorMessages.from(error, getString(R.string.merchant_delivery_36))
                 }
                 toast(message)
             }
@@ -237,11 +239,11 @@ class MerchantDeliveryFragment : Fragment() {
     private fun showError(message: String) {
         val context = requireContext()
         root.removeAllViews()
-        root.addView(MerchantUi.title(context, "التوصيل"))
+        root.addView(MerchantUi.title(context, getString(R.string.order_details_4)))
         root.addView(MerchantUi.card(context).apply {
-            addView(MerchantUi.text(context, "تعذر تحميل التوصيل", 16f, true))
+            addView(MerchantUi.text(context, getString(R.string.merchant_delivery_37), 16f, true))
             addView(MerchantUi.muted(context, message).apply { setPadding(0, MerchantUi.dp(context, 5), 0, MerchantUi.dp(context, 10)) })
-            addView(MerchantUi.secondaryButton(context, "إعادة المحاولة") { load() })
+            addView(MerchantUi.secondaryButton(context, getString(R.string.notifications_5)) { load() })
         })
     }
 

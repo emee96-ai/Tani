@@ -74,7 +74,7 @@ object AdminUiText {
     fun backendMessage(raw: String?, status: Int): String {
         val value = raw.orEmpty().lowercase()
         return when {
-            "cannot remove the last active admin" in value -> "لا يمكن إزالة آخر مدير نشط. أضيفي مديراً آخر أولاً"
+            "cannot remove the last active admin" in value -> "لا يمكن إزالة آخر مدير نشط. أضف مديراً آخر أولاً"
             "no registered account found for this email" in value -> "هذا البريد غير مسجل في تاني"
             "user profile not found" in value -> "الحساب موجود لكن ملف المستخدم غير مكتمل"
             "invalid role" in value -> "الصلاحية المختارة غير صالحة"
@@ -85,9 +85,9 @@ object AdminUiText {
             "status transition is not allowed" in value -> "لا يمكن نقل الطلب إلى الحالة المختارة"
             "not found" in value -> "العنصر المطلوب غير موجود"
             "infinite recursion" in value -> "تعذر الوصول للبيانات بسبب إعداد صلاحيات قديم"
-            status == 401 -> "انتهت جلسة الدخول، سجّلي الدخول مرة أخرى"
-            status == 403 -> "لا تملكين صلاحية تنفيذ هذه العملية"
-            status >= 500 -> "حدث خطأ في الخادم، حاولي مرة أخرى"
+            status == 401 -> "انتهت جلسة الدخول، سجّل الدخول مرة أخرى"
+            status == 403 -> "لا تملك صلاحية تنفيذ هذه العملية"
+            status >= 500 -> "حدث خطأ في الخادم، حاول مرة أخرى"
             else -> "تعذر تنفيذ العملية"
         }
     }

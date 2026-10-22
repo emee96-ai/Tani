@@ -22,7 +22,7 @@ class TrustRepository {
     suspend fun createTicket(subject: String, description: String, priority: String = "normal"): SupportTicket {
         val uid = Supabase.userId ?: error("تسجيل الدخول مطلوب")
         require(subject.trim().length in 3..140) { "عنوان التذكرة قصير جداً" }
-        require(description.trim().length in 5..2000) { "اكتبي تفاصيل المشكلة" }
+        require(description.trim().length in 5..2000) { "اكتب تفاصيل المشكلة" }
         val rows: List<SupportTicket> = Supabase.post(
             "support_tickets",
             buildJsonObject {
@@ -69,7 +69,7 @@ class TrustRepository {
     ): Complaint {
         val uid = Supabase.userId ?: error("تسجيل الدخول مطلوب")
         require(subject.trim().length in 3..140) { "عنوان الشكوى قصير جداً" }
-        require(description.trim().length in 5..2000) { "اكتبي تفاصيل الشكوى" }
+        require(description.trim().length in 5..2000) { "اكتب تفاصيل الشكوى" }
         val rows: List<Complaint> = Supabase.post(
             "complaints",
             buildJsonObject {

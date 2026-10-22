@@ -1,10 +1,12 @@
 package com.tani.app.data
 
+import androidx.core.content.edit
 import com.tani.app.util.runCatchingCancellable
 
 import android.content.Context
 import android.util.Base64
 import com.tani.app.BuildConfig
+import com.tani.app.data.network.SessionRefreshPolicy
 import com.tani.app.security.SecureTokenStorage
 import com.tani.app.data.notifications.PushMessaging
 import io.ktor.client.HttpClient
@@ -35,14 +37,15 @@ import kotlinx.serialization.json.put
 
 object Supabase {
 
-    const val URL = "https://sihttimibjzoahvwuwbm.supabase.co"
-    const val KEY = "sb_publishable_9syQMNqMr0q9V0_Z4W-jvA_OQjhHj1Y"
+    const val URL = BuildConfig.SUPABASE_URL
+    const val KEY = BuildConfig.SUPABASE_PUBLISHABLE_KEY
     val PASSWORD_RESET_REDIRECT: String get() = BuildConfig.PASSWORD_RESET_REDIRECT
 
     private const val ACCESS_TOKEN_KEY = "access_token"
     private const val REFRESH_TOKEN_KEY = "refresh_token"
     private const val USER_ID_KEY = "user_id"
     private const val REFRESH_LEEWAY_SECONDS = 90L
+    private const val SESSION_REFRESH_FAILED = "تعذر تجديد جلسة الدخول. تحقق من الاتصال ثم حاول مرة أخرى"
 
     private lateinit var secureStorage: SecureTokenStorage
 
@@ -77,7 +80,7 @@ object Supabase {
             secureStorage.putString(REFRESH_TOKEN_KEY, legacy.getString(REFRESH_TOKEN_KEY, null))
             secureStorage.putString(USER_ID_KEY, legacy.getString(USER_ID_KEY, null))
         }
-        legacy.edit().clear().apply()
+        legacy.edit { clear() }
     }
 
     var token: String?
@@ -151,12 +154,21 @@ object Supabase {
         val currentRefreshToken = refreshToken ?: return@withLock false
 
         return@withLock runCatchingCancellable {
-            val response: AuthResponse = authPost(
-                "token?grant_type=refresh_token",
-                buildJsonObject {
-                    put("refresh_token", currentRefreshToken)
-                }.toString()
-            )
+            val httpResponse = client.post("$URL/auth/v1/token?grant_type=refresh_token") {
+                headers {
+                    append("apikey", KEY)
+                    append(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                }
+                setBody(buildJsonObject { put("refresh_token", currentRefreshToken) }.toString())
+            }
+            if (SessionRefreshPolicy.isSessionRejected(httpResponse.status.value)) {
+                // الخادم ألغى الجلسة: نخرج المستخدم بدل أن تفشل كل الطلبات برسالة "تحقق من الاتصال".
+                httpResponse.bodyAsText()
+                Cart.clear()
+                clearSession()
+                return@withLock false
+            }
+            val response: AuthResponse = parse(httpResponse)
 
             val newAccessToken = response.access_token
                 ?: error("تعذر تجديد جلسة تسجيل الدخول")
@@ -201,164 +213,94 @@ object Supabase {
     suspend inline fun <reified T> get(
         path: String,
         query: String = ""
-    ): T {
-        if (token != null && !ensureFreshSession()) {
-            error("تعذر تجديد جلسة الدخول. تحققي من الاتصال ثم حاولي مرة أخرى")
-        }
-
-        val url =
-            "$URL/rest/v1/$path${if (query.isBlank()) "" else "?$query"}"
-
-        var usedToken = token
-        var response = client.get(url) {
-            authHeaders(this)
-        }
-
-        if (
-            response.status.value == 401 &&
-            usedToken != null &&
-            refreshToken != null
-        ) {
-            response.bodyAsText() // استهلاك الاستجابة قبل إعادة المحاولة
-            if (refreshSession(force = true)) {
-                usedToken = token
-                response = client.get(url) {
-                    authHeaders(this)
-                }
-            }
-        }
-
-        return parse(response)
-    }
+    ): T = parse(sendWithSessionRetry { client.get(restUrl(path, query)) { authHeaders(this) } })
 
     suspend inline fun <reified T> post(
         path: String,
         body: String
-    ): T {
-        if (token != null && !ensureFreshSession()) {
-            error("تعذر تجديد جلسة الدخول. تحققي من الاتصال ثم حاولي مرة أخرى")
-        }
-
-        var response = client.post("$URL/rest/v1/$path") {
+    ): T = parse(sendWithSessionRetry {
+        client.post(restUrl(path)) {
             authHeaders(this)
-
-            headers {
-                append(
-                    HttpHeaders.ContentType,
-                    ContentType.Application.Json.toString()
-                )
-                append("Prefer", "return=representation")
-            }
-
-            setBody(body)
+            jsonBody(body)
         }
-
-        if (
-            response.status.value == 401 &&
-            token != null &&
-            refreshToken != null
-        ) {
-            response.bodyAsText()
-            if (refreshSession(force = true)) {
-                response = client.post("$URL/rest/v1/$path") {
-                    authHeaders(this)
-                    headers {
-                        append(
-                            HttpHeaders.ContentType,
-                            ContentType.Application.Json.toString()
-                        )
-                        append("Prefer", "return=representation")
-                    }
-                    setBody(body)
-                }
-            }
-        }
-
-        return parse(response)
-    }
+    })
 
     suspend inline fun <reified T> patch(
         path: String,
         query: String,
         body: String
-    ): T {
-        if (token != null && !ensureFreshSession()) {
-            error("تعذر تجديد جلسة الدخول. تحققي من الاتصال ثم حاولي مرة أخرى")
-        }
-
-        val url = "$URL/rest/v1/$path${if (query.isBlank()) "" else "?$query"}"
-        var response = client.patch(url) {
+    ): T = parse(sendWithSessionRetry {
+        client.patch(restUrl(path, query)) {
             authHeaders(this)
-            headers {
-                append(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                append("Prefer", "return=representation")
-            }
-            setBody(body)
+            jsonBody(body)
         }
-
-        if (response.status.value == 401 && token != null && refreshToken != null) {
-            response.bodyAsText()
-            if (refreshSession(force = true)) {
-                response = client.patch(url) {
-                    authHeaders(this)
-                    headers {
-                        append(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                        append("Prefer", "return=representation")
-                    }
-                    setBody(body)
-                }
-            }
-        }
-
-        return parse(response)
-    }
-
+    })
 
     suspend fun delete(
         path: String,
         query: String
     ): Boolean {
-        if (token != null && !ensureFreshSession()) {
-            error("تعذر تجديد جلسة الدخول. تحققي من الاتصال ثم حاولي مرة أخرى")
-        }
-
-        val url = "$URL/rest/v1/$path${if (query.isBlank()) "" else "?$query"}"
-        var response = client.delete(url) {
-            authHeaders(this)
-            headers { append("Prefer", "return=minimal") }
-        }
-
-        if (response.status.value == 401 && token != null && refreshToken != null) {
-            response.bodyAsText()
-            if (refreshSession(force = true)) {
-                response = client.delete(url) {
-                    authHeaders(this)
-                    headers { append("Prefer", "return=minimal") }
-                }
+        val response = sendWithSessionRetry {
+            client.delete(restUrl(path, query)) {
+                authHeaders(this)
+                headers { append("Prefer", "return=minimal") }
             }
         }
-
         val text = response.bodyAsText()
         if (response.status.value !in 200..299) {
-            val message = runCatchingCancellable {
-                val obj = json.parseToJsonElement(text).jsonObject
-                sequenceOf("message", "msg", "error_description", "error")
-                    .mapNotNull { key -> obj[key]?.toString()?.trim('\"') }
-                    .firstOrNull { it.isNotBlank() }
-            }.getOrNull()
-            error(message ?: "تعذر تنفيذ العملية (${response.status.value})")
+            error(errorMessage(text) ?: "تعذر تنفيذ العملية (${response.status.value})")
         }
         return true
     }
+
+    @PublishedApi
+    internal fun restUrl(path: String, query: String = ""): String =
+        "$URL/rest/v1/$path${if (query.isBlank()) "" else "?$query"}"
+
+    @PublishedApi
+    internal fun HttpRequestBuilder.jsonBody(body: String) {
+        headers {
+            append(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            append("Prefer", "return=representation")
+        }
+        setBody(body)
+    }
+
+    private suspend fun requireFreshSession() {
+        if (!ensureFreshSession()) error(SESSION_REFRESH_FAILED)
+    }
+
+    /**
+     * يرسل الطلب، وعند 401 يجدد الجلسة مرة واحدة ثم يعيد الطلب نفسه.
+     * الطلب المجهول (بدون token) لا يحتاج تجديداً.
+     */
+    @PublishedApi
+    internal suspend fun sendWithSessionRetry(request: suspend () -> HttpResponse): HttpResponse {
+        // إذا ألغى الخادم الجلسة أثناء التجديد يصبح token فارغاً ويستمر الطلب كزائر.
+        if (token != null && !ensureFreshSession() && token != null) error(SESSION_REFRESH_FAILED)
+        val response = request()
+        if (response.status.value == 401 && token != null && refreshToken != null) {
+            response.bodyAsText() // استهلاك الاستجابة قبل إعادة المحاولة
+            if (refreshSession(force = true)) return request()
+        }
+        return response
+    }
+
+    /** يستخرج رسالة الخطأ من رد Supabase (PostgREST وAuth وStorage تستخدم مفاتيح مختلفة). */
+    @PublishedApi
+    internal fun errorMessage(text: String): String? = runCatchingCancellable {
+        val obj = json.parseToJsonElement(text).jsonObject
+        sequenceOf("message", "msg", "error_description", "error")
+            .mapNotNull { key -> obj[key]?.toString()?.trim('"') }
+            .firstOrNull { it.isNotBlank() }
+    }.getOrNull()
 
     suspend fun uploadAvatar(bytes: ByteArray): String {
         val uid = userId ?: error("تسجيل الدخول مطلوب")
         require(bytes.isNotEmpty()) { "الصورة غير صالحة" }
         require(bytes.size <= 5 * 1024 * 1024) { "حجم الصورة يجب ألا يتجاوز 5 ميجابايت" }
 
-        if (!ensureFreshSession()) {
-            error("تعذر تجديد جلسة الدخول. تحققي من الاتصال ثم حاولي مرة أخرى")
-        }
+        requireFreshSession()
 
         val objectPath = "$uid/avatar.jpg"
         val response = client.post("$URL/storage/v1/object/avatars/$objectPath") {
@@ -372,12 +314,7 @@ object Supabase {
 
         val text = response.bodyAsText()
         if (response.status.value !in 200..299) {
-            val message = runCatchingCancellable {
-                val obj = json.parseToJsonElement(text).jsonObject
-                sequenceOf("message", "error", "error_description")
-                    .mapNotNull { key -> obj[key]?.toString()?.trim('"') }
-                    .firstOrNull { it.isNotBlank() }
-            }.getOrNull()
+            val message = errorMessage(text)
             error(message ?: "تعذر رفع الصورة")
         }
 
@@ -437,19 +374,21 @@ object Supabase {
     }
 
     suspend fun signOut() {
-        val access = token
-        if (!access.isNullOrBlank()) {
-            runCatchingCancellable {
-                val response = client.post("$URL/auth/v1/logout") {
-                    headers {
-                        append("apikey", KEY)
-                        append("Authorization", "Bearer $access")
-                    }
-                }
-                response.bodyAsText()
-            }
-        }
+        token?.takeIf { it.isNotBlank() }?.let { revokeSessions(it) }
         clearSession()
+    }
+
+    /** يلغي جلسات الحساب على الخادم (أفضل جهد، والفشل لا يمنع المتابعة). */
+    suspend fun revokeSessions(accessToken: String) {
+        runCatchingCancellable {
+            val response = client.post("$URL/auth/v1/logout") {
+                headers {
+                    append("apikey", KEY)
+                    append("Authorization", "Bearer $accessToken")
+                }
+            }
+            response.bodyAsText()
+        }
     }
 
     suspend inline fun <reified T> authPost(
@@ -515,9 +454,7 @@ object Supabase {
         upsert: Boolean = false
     ): String {
         require(bytes.isNotEmpty()) { "الملف غير صالح" }
-        if (!ensureFreshSession()) {
-            error("تعذر تجديد جلسة الدخول. تحققي من الاتصال ثم حاولي مرة أخرى")
-        }
+        requireFreshSession()
         val response = client.post("$URL/storage/v1/object/$bucket/$objectPath") {
             authHeaders(this)
             headers {
@@ -528,32 +465,20 @@ object Supabase {
         }
         val text = response.bodyAsText()
         if (response.status.value !in 200..299) {
-            val message = runCatchingCancellable {
-                val obj = json.parseToJsonElement(text).jsonObject
-                sequenceOf("message", "error", "error_description")
-                    .mapNotNull { key -> obj[key]?.toString()?.trim('"') }
-                    .firstOrNull { it.isNotBlank() }
-            }.getOrNull()
+            val message = errorMessage(text)
             error(message ?: "تعذر رفع الملف")
         }
         return objectPath
     }
 
     suspend fun deleteStorageObject(bucket: String, objectPath: String): Boolean {
-        if (!ensureFreshSession()) {
-            error("تعذر تجديد جلسة الدخول. تحققي من الاتصال ثم حاولي مرة أخرى")
-        }
+        requireFreshSession()
         val response = client.delete("$URL/storage/v1/object/$bucket/$objectPath") {
             authHeaders(this)
         }
         val text = response.bodyAsText()
         if (response.status.value !in 200..299) {
-            val message = runCatchingCancellable {
-                val obj = json.parseToJsonElement(text).jsonObject
-                sequenceOf("message", "error", "error_description")
-                    .mapNotNull { key -> obj[key]?.toString()?.trim('"') }
-                    .firstOrNull { it.isNotBlank() }
-            }.getOrNull()
+            val message = errorMessage(text)
             error(message ?: "تعذر حذف الملف")
         }
         return true
@@ -563,12 +488,7 @@ object Supabase {
         val text = response.bodyAsText()
 
         if (response.status.value !in 200..299) {
-            val message = runCatchingCancellable {
-                val obj = json.parseToJsonElement(text).jsonObject
-                sequenceOf("message", "msg", "error_description", "error")
-                    .mapNotNull { key -> obj[key]?.toString()?.trim('"') }
-                    .firstOrNull { it.isNotBlank() }
-            }.getOrNull()
+            val message = errorMessage(text)
 
             ErrorMonitoring.captureMessage(
                 source = "supabase_http",

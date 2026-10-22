@@ -1,5 +1,13 @@
 package com.tani.app.data.cache
 
+import com.tani.app.data.addresses
+import com.tani.app.data.categories
+import com.tani.app.data.featuredProducts
+import com.tani.app.data.marketplaceProducts
+import com.tani.app.data.merchantProfile
+import com.tani.app.data.orderGroups
+import com.tani.app.data.stores
+
 import android.content.Context
 import com.tani.app.data.AccountProfile
 import com.tani.app.data.Address
@@ -24,7 +32,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
@@ -88,33 +95,58 @@ object AppContentStore {
     @Volatile private var privateDataUserId: String? = null
     @Volatile private var recommendationsUserId: String? = null
 
-    fun hydrateFromDisk(context: Context): Boolean = runBlocking {
-        withTimeoutOrNull(STARTUP_DISK_BUDGET_MS) {
-            withContext(Dispatchers.IO) {
-                val cache = MarketplaceCache(context.applicationContext)
-                val cachedFeed = cache.loadHomeFeed(allowExpired = true)
-                val cachedProducts = cache.load(CATALOG_PREVIEW_KEY, allowExpired = true)
-                val cachedStores = cache.loadStores(allowExpired = true)
-                val sessionUserId = Supabase.userId?.takeIf { Supabase.hasStoredSession() }
-                val cachedRecommendations = sessionUserId?.let {
-                    cache.loadRecommendations(it, allowExpired = true)
-                }.orEmpty()
+    private class DiskSnapshot(
+        val homeFeed: HomeFeed?,
+        val products: List<ProductCard>,
+        val stores: List<StoreCard>,
+        val recommendations: List<ProductCard>,
+        val recommendationsUserId: String?
+    )
 
-                homeFeed = cachedFeed
-                products = cachedProducts.ifEmpty {
-                    cachedFeed?.let { feed ->
-                        (feed.featuredProducts + feed.newestProducts + feed.popularProducts)
-                            .distinctBy { it.id }
-                    }.orEmpty()
-                }
-                stores = cachedStores.ifEmpty { cachedFeed?.stores.orEmpty() }
-                recommendations = cachedRecommendations
-                recommendationsUserId = sessionUserId
-                productsLoaded = products.isNotEmpty()
-                storesLoaded = stores.isNotEmpty()
-            }
+    /**
+     * Blocking file reads cannot be interrupted by coroutine cancellation, so the read runs
+     * outside the caller and only the wait is budgeted. A snapshot that misses the budget is
+     * discarded rather than applied later over fresher network data.
+     */
+    fun hydrateFromDisk(context: Context): Boolean {
+        val appContext = context.applicationContext
+        val pending = backgroundScope.async { readDiskSnapshot(appContext) }
+        val snapshot = runBlocking { withTimeoutOrNull(STARTUP_DISK_BUDGET_MS) { pending.await() } }
+        if (snapshot == null) {
+            pending.cancel()
+            return hasCoreContent()
         }
-        hasCoreContent()
+        homeFeed = snapshot.homeFeed
+        products = snapshot.products
+        stores = snapshot.stores
+        recommendations = snapshot.recommendations
+        recommendationsUserId = snapshot.recommendationsUserId
+        productsLoaded = products.isNotEmpty()
+        storesLoaded = stores.isNotEmpty()
+        return hasCoreContent()
+    }
+
+    private suspend fun readDiskSnapshot(appContext: Context): DiskSnapshot {
+        val cache = MarketplaceCache(appContext)
+        val cachedFeed = cache.loadHomeFeed(allowExpired = true)
+        val cachedProducts = cache.load(CATALOG_PREVIEW_KEY, allowExpired = true)
+        val cachedStores = cache.loadStores(allowExpired = true)
+        val sessionUserId = Supabase.userId?.takeIf { Supabase.hasStoredSession() }
+        val cachedRecommendations = sessionUserId?.let {
+            cache.loadRecommendations(it, allowExpired = true)
+        }.orEmpty()
+        return DiskSnapshot(
+            homeFeed = cachedFeed,
+            products = cachedProducts.ifEmpty {
+                cachedFeed?.let { feed ->
+                    (feed.featuredProducts + feed.newestProducts + feed.popularProducts)
+                        .distinctBy { it.id }
+                }.orEmpty()
+            },
+            stores = cachedStores.ifEmpty { cachedFeed?.stores.orEmpty() },
+            recommendations = cachedRecommendations,
+            recommendationsUserId = sessionUserId
+        )
     }
 
     fun hasCoreContent(): Boolean = homeFeed != null && productsLoaded && storesLoaded

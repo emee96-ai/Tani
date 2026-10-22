@@ -6,7 +6,7 @@
         <item
             android:id="@+id/drawer_favorites"
             android:icon="@drawable/ic_favorite_outline"
-            android:title="المفضلة" />
+            android:title="@string/drawer_favorites" />
     </group>
 
     <group
@@ -15,7 +15,7 @@
         <item
             android:id="@+id/drawer_seller"
             android:icon="@drawable/ic_store"
-            android:title="البيع على تاني" />
+            android:title="@string/drawer_seller" />
     </group>
 
     <group
@@ -24,14 +24,14 @@
         <item
             android:id="@+id/drawer_support"
             android:icon="@drawable/ic_help"
-            android:title="الدعم والشكاوى" />
+            android:title="@string/drawer_support" />
         <item
             android:id="@+id/drawer_policies"
             android:icon="@drawable/ic_settings"
-            android:title="السياسات والخصوصية" />
+            android:title="@string/drawer_policies" />
         <item
             android:id="@+id/drawer_about"
             android:icon="@drawable/ic_brand"
-            android:title="من نحن" />
+            android:title="@string/drawer_about" />
     </group>
 </menu>

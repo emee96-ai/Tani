@@ -3,7 +3,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/tani_background"
     android:layoutDirection="rtl">
 
     <ScrollView
@@ -28,7 +27,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:padding="32dp"
-                android:text="جاري تحميل المنتج..."
+                android:text="@string/product_details_loading"
                 android:textColor="@color/text_muted" />
 
             <LinearLayout
@@ -56,7 +55,7 @@
                             android:id="@+id/product_details_image"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
-                            android:contentDescription="صورة المنتج"
+                            android:contentDescription="@string/product_details_image_desc"
                             android:scaleType="centerCrop"
                             android:src="@drawable/ic_image_placeholder" />
 
@@ -72,7 +71,7 @@
                             android:layout_height="64dp"
                             android:layout_gravity="center"
                             android:background="@android:color/transparent"
-                            android:contentDescription="تشغيل الفيديو"
+                            android:contentDescription="@string/product_details_play_desc"
                             android:padding="8dp"
                             android:src="@drawable/ic_play_circle"
                             android:visibility="gone" />
@@ -84,7 +83,7 @@
                             android:layout_gravity="top|end"
                             android:layout_margin="12dp"
                             android:background="@drawable/bg_media_action"
-                            android:contentDescription="إضافة للمفضلة"
+                            android:contentDescription="@string/product_details_favorite_desc"
                             android:padding="10dp"
                             android:src="@drawable/ic_favorite_outline" />
 
@@ -95,7 +94,7 @@
                             android:layout_gravity="top|start"
                             android:layout_margin="12dp"
                             android:background="@drawable/bg_media_action"
-                            android:contentDescription="مشاركة المنتج"
+                            android:contentDescription="@string/product_details_share_desc"
                             android:padding="10dp"
                             android:src="@drawable/ic_share" />
 
@@ -134,7 +133,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:textColor="@color/text_dark"
-                    android:textSize="25sp"
+                    android:textSize="24sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -143,7 +142,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="5dp"
                     android:textColor="@color/text_muted"
-                    android:textSize="13sp" />
+                    android:textSize="14sp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -158,7 +157,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:textColor="@color/warning"
-                        android:textSize="13sp" />
+                        android:textSize="14sp" />
 
                     <TextView
                         android:id="@+id/product_details_stock"
@@ -192,9 +191,9 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="وصف المنتج"
+                        android:text="@string/product_details_label"
                         android:textColor="@color/text_dark"
-                        android:textSize="17sp"
+                        android:textSize="16sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -213,7 +212,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="50dp"
                     android:layout_marginTop="12dp"
-                    android:text="زيارة المتجر"
+                    android:text="@string/product_details_store"
                     android:textColor="@color/tani_primary"
                     app:cornerRadius="14dp" />
 
@@ -227,9 +226,9 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="خيارات المنتج"
+                        android:text="@string/product_details_label_2"
                         android:textColor="@color/text_dark"
-                        android:textSize="18sp"
+                        android:textSize="22sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -238,7 +237,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
                         android:textColor="@color/text_muted"
-                        android:textSize="13sp" />
+                        android:textSize="14sp" />
 
                     <HorizontalScrollView
                         android:layout_width="match_parent"
@@ -265,9 +264,9 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="المتجر والتوصيل"
+                        android:text="@string/product_details_label_3"
                         android:textColor="@color/text_dark"
-                        android:textSize="17sp"
+                        android:textSize="16sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -276,7 +275,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="7dp"
                         android:textColor="@color/text_dark"
-                        android:textSize="13sp" />
+                        android:textSize="14sp" />
 
                     <TextView
                         android:id="@+id/product_details_delivery"
@@ -284,16 +283,16 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:textColor="@color/text_muted"
-                        android:textSize="13sp" />
+                        android:textSize="14sp" />
                 </LinearLayout>
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
-                    android:text="التقييمات"
+                    android:text="@string/product_details_label_4"
                     android:textColor="@color/text_dark"
-                    android:textSize="18sp"
+                    android:textSize="22sp"
                     android:textStyle="bold" />
 
                 <LinearLayout
@@ -306,9 +305,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
-                    android:text="منتجات مشابهة"
+                    android:text="@string/product_details_label_5"
                     android:textColor="@color/text_dark"
-                    android:textSize="18sp"
+                    android:textSize="22sp"
                     android:textStyle="bold" />
 
                 <LinearLayout
@@ -345,13 +344,13 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:textColor="@color/tani_secondary"
-                android:textSize="18sp"
+                android:textSize="22sp"
                 android:textStyle="bold" />
 
             <LinearLayout
                 android:id="@+id/product_details_quantity_box"
                 android:layout_width="wrap_content"
-                android:layout_height="44dp"
+                android:layout_height="48dp"
                 android:background="@drawable/bg_chip"
                 android:gravity="center"
                 android:orientation="horizontal"
@@ -359,33 +358,35 @@
 
                 <Button
                     android:id="@+id/product_details_quantity_minus"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:contentDescription="@string/product_details_quantity_minus_desc"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
                     android:backgroundTint="@android:color/transparent"
                     android:minWidth="0dp"
-                    android:text="−"
+                    android:text="@string/product_details_quantity_minus"
                     android:textColor="@color/text_dark"
-                    android:textSize="20sp" />
+                    android:textSize="22sp" />
 
                 <TextView
                     android:id="@+id/product_details_quantity_value"
                     android:layout_width="38dp"
                     android:layout_height="match_parent"
                     android:gravity="center"
-                    android:text="1"
+                    android:text="@string/product_details_quantity_default"
                     android:textColor="@color/text_dark"
-                    android:textSize="15sp"
+                    android:textSize="16sp"
                     android:textStyle="bold" />
 
                 <Button
                     android:id="@+id/product_details_quantity_plus"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:contentDescription="@string/product_details_quantity_plus_desc"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
                     android:backgroundTint="@android:color/transparent"
                     android:minWidth="0dp"
-                    android:text="+"
+                    android:text="@string/product_details_quantity_plus"
                     android:textColor="@color/tani_primary"
-                    android:textSize="20sp" />
+                    android:textSize="22sp" />
             </LinearLayout>
         </LinearLayout>
 
@@ -395,12 +396,12 @@
             android:layout_height="54dp"
             android:layout_marginTop="8dp"
             android:enabled="false"
-            android:text="جاري التحميل"
-            android:textColor="@color/white"
+            android:text="@string/product_details_add"
+            android:textColor="@color/on_primary"
             app:backgroundTint="@color/tani_primary"
             app:cornerRadius="16dp"
             app:icon="@drawable/ic_cart_plus"
             app:iconGravity="textStart"
-            app:iconTint="@color/white" />
+            app:iconTint="@color/on_primary" />
     </LinearLayout>
 </FrameLayout>

@@ -69,6 +69,20 @@ END $$;
 SELECT set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000001',true);
 SELECT tests.assert_true((SELECT count(*) FROM public.order_items WHERE order_id='a5000000-0000-4000-8000-000000000001')=1,'customer sees their own order items');
 SELECT tests.expect_denied($q$UPDATE public.profiles SET role='admin' WHERE id='a1000000-0000-4000-8000-000000000001'$q$,'customer cannot promote themselves');
+-- The baseline omits production column grants, so the check above can pass on the missing UPDATE privilege alone.
+-- Grant UPDATE temporarily to prove the profile triggers block self-promotion even when the column is writable.
+RESET ROLE;
+GRANT UPDATE ON public.profiles TO authenticated;
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000001',true);
+SELECT tests.expect_denied($q$UPDATE public.profiles SET role='admin' WHERE id='a1000000-0000-4000-8000-000000000001'$q$,'profile trigger blocks self-promotion with UPDATE granted');
+SELECT tests.expect_denied($q$UPDATE public.profiles SET is_active=true,role='support' WHERE id='a1000000-0000-4000-8000-000000000001'$q$,'profile trigger blocks role change to staff with UPDATE granted');
+UPDATE public.profiles SET name='Launch test renamed' WHERE id='a1000000-0000-4000-8000-000000000001';
+SELECT tests.assert_true((SELECT name='Launch test renamed' AND role='customer' FROM public.profiles WHERE id='a1000000-0000-4000-8000-000000000001'),'owner can still edit ordinary profile fields');
+RESET ROLE;
+REVOKE UPDATE ON public.profiles FROM authenticated;
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000001',true);
 SELECT tests.assert_true(public.soft_delete_my_account(),'customer deletion succeeds through protected triggers');
 SELECT tests.assert_true(public.soft_delete_my_account(),'deletion retry is idempotent');
 SELECT tests.assert_true(public.current_user_role() IS NULL,'deleted account immediately loses its role');

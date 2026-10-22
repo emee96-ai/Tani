@@ -1,5 +1,11 @@
 package com.tani.app.ui.commerce
 
+import androidx.core.content.ContextCompat
+import com.tani.app.data.cancelOrderGroup
+import com.tani.app.data.orderGroupDetails
+
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.app.AlertDialog
@@ -45,7 +51,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
         summary = view.findViewById(R.id.order_details_summary)
         merchants = view.findViewById(R.id.order_details_merchants)
         cancelButton = view.findViewById(R.id.order_details_cancel)
-        view.findViewById<TextView>(R.id.order_details_title).text = "طلب #${groupId.take(8).uppercase()}"
+        view.findViewById<TextView>(R.id.order_details_title).text = getString(R.string.order_details_1, (groupId.take(8).uppercase()))
         view.findViewById<Button>(R.id.order_details_refresh).setOnClickListener { load(groupId) }
         cancelButton.setOnClickListener { confirmCancel(groupId) }
         load(groupId)
@@ -61,7 +67,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
                 }
                 .onFailure {
                     summary.removeAllViews()
-                    summary.addView(message(it.message ?: "تعذر تحميل تفاصيل الطلب"))
+                    summary.addView(message(CustomerErrorMessages.from(it, getString(R.string.order_details_2))))
                 }
             progress.visibility = View.GONE
         }
@@ -79,8 +85,8 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
                 layoutDirection = View.LAYOUT_DIRECTION_RTL
 
                 addView(TextView(requireContext()).apply {
-                    text = "ملخص الطلب"
-                    textSize = 20f
+                    text = getString(R.string.order_details_3)
+                    textSize = 22f
                     setTypeface(typeface, Typeface.BOLD)
                     setTextColor(requireContext().getColor(R.color.text_dark))
                 }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
@@ -90,31 +96,31 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
 
             addView(TextView(requireContext()).apply {
                 text = CommerceUi.formatDate(group.created_at)
-                textSize = 14.5f
+                textSize = 14f
                 setPadding(0, dp(7), 0, dp(13))
                 setTextColor(requireContext().getColor(R.color.text_muted))
             })
 
             addView(divider())
-            addView(valueRow("قيمة المنتجات", MarketplaceUi.formatPrice(group.subtotal)))
-            addView(valueRow("التوصيل", MarketplaceUi.formatPrice(group.delivery_total)))
+            addView(valueRow(getString(R.string.cart_3), MarketplaceUi.formatPrice(group.subtotal)))
+            addView(valueRow(getString(R.string.order_details_4), MarketplaceUi.formatPrice(group.delivery_total)))
             if (group.discount_total > 0) {
-                addView(valueRow("الخصم", MarketplaceUi.formatPrice(group.discount_total)))
+                addView(valueRow(getString(R.string.order_details_5), MarketplaceUi.formatPrice(group.discount_total)))
             }
-            addView(valueRow("الإجمالي", MarketplaceUi.formatPrice(group.grand_total), emphasis = true))
-            addView(valueRow("الدفع", "عند الاستلام"))
+            addView(valueRow(getString(R.string.order_details_6), MarketplaceUi.formatPrice(group.grand_total), emphasis = true))
+            addView(valueRow(getString(R.string.order_details_7), getString(R.string.order_details_8)))
 
             group.customer_note?.takeIf { it.isNotBlank() }?.let { note ->
                 addView(divider())
                 addView(TextView(requireContext()).apply {
-                    text = "ملاحظتك"
-                    textSize = 15f
+                    text = getString(R.string.order_details_9)
+                    textSize = 16f
                     setTypeface(typeface, Typeface.BOLD)
                     setTextColor(requireContext().getColor(R.color.text_dark))
                 })
                 addView(TextView(requireContext()).apply {
                     text = note
-                    textSize = 15f
+                    textSize = 16f
                     setPadding(0, dp(5), 0, 0)
                     setTextColor(requireContext().getColor(R.color.text_muted))
                 })
@@ -152,8 +158,8 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
             layoutDirection = View.LAYOUT_DIRECTION_RTL
 
             addView(TextView(context).apply {
-                text = order.store_name_snapshot ?: "المتجر"
-                textSize = 21f
+                text = order.store_name_snapshot ?: getString(R.string.main_18)
+                textSize = 22f
                 setTypeface(typeface, Typeface.BOLD)
                 setTextColor(context.getColor(R.color.text_dark))
             }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
@@ -162,39 +168,39 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
         })
 
         addView(TextView(context).apply {
-            text = "إجمالي هذا المتجر: ${MarketplaceUi.formatPrice(order.total)}"
+            text = getString(R.string.order_details_10, (MarketplaceUi.formatPrice(order.total)))
             textSize = 16f
             setTypeface(typeface, Typeface.BOLD)
             setPadding(0, dp(10), 0, 0)
             setTextColor(context.getColor(R.color.text_dark))
         })
         addView(TextView(context).apply {
-            text = "التوصيل: ${MarketplaceUi.formatPrice(order.delivery_fee)}"
-            textSize = 15f
+            text = getString(R.string.checkout_8, (MarketplaceUi.formatPrice(order.delivery_fee)))
+            textSize = 16f
             setPadding(0, dp(5), 0, 0)
             setTextColor(context.getColor(R.color.text_muted))
         })
 
         addView(divider())
-        addView(sectionLabel("بيانات التوصيل"))
+        addView(sectionLabel(getString(R.string.order_details_11)))
         addView(TextView(context).apply {
             text = order.address
-            textSize = 15.5f
+            textSize = 16f
             setPadding(0, dp(7), 0, 0)
             setTextColor(context.getColor(R.color.text_dark))
         })
         addView(TextView(context).apply {
-            text = "هاتف: ${order.phone}"
-            textSize = 15f
+            text = getString(R.string.order_details_12, order.phone)
+            textSize = 16f
             setPadding(0, dp(5), 0, 0)
             setTextColor(context.getColor(R.color.text_muted))
         })
 
         if (items.isNotEmpty()) {
             addView(divider())
-            addView(sectionLabel("المنتجات"))
+            addView(sectionLabel(getString(R.string.main_16)))
             items.forEach { item ->
-                val name = item.product_name_snapshot ?: "منتج"
+                val name = item.product_name_snapshot ?: getString(R.string.order_details_13)
                 val variant = item.variant_snapshot?.get("name")?.jsonPrimitive?.contentOrNull
                 val line = item.line_total ?: item.unit_price * item.quantity
                 addView(TextView(context).apply {
@@ -203,11 +209,11 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
                         variant?.let { append(" • $it") }
                         append("\n${item.quantity} × ${MarketplaceUi.formatPrice(item.unit_price)} = ${MarketplaceUi.formatPrice(line)}")
                     }
-                    textSize = 15f
+                    textSize = 16f
                     setLineSpacing(0f, 1.15f)
                     setPadding(dp(10), dp(9), dp(10), dp(9))
                     setTextColor(context.getColor(R.color.text_dark))
-                    background = context.getDrawable(R.drawable.bg_chip)
+                    background = ContextCompat.getDrawable(context, R.drawable.bg_chip)
                 }, LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
@@ -217,7 +223,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
 
         if (history.isNotEmpty()) {
             addView(divider())
-            addView(sectionLabel("تتبع الحالة"))
+            addView(sectionLabel(getString(R.string.order_details_14)))
             history.forEachIndexed { index, event ->
                 addView(timelineRow(event, index == history.lastIndex))
             }
@@ -225,8 +231,8 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
 
         addView(divider())
         addView(Button(context).apply {
-            text = "مشكلة في هذا الطلب"
-            textSize = 15.5f
+            text = getString(R.string.order_details_15)
+            textSize = 16f
             setOnClickListener {
                 (activity as? MainActivity)?.show(SupportCenterFragment.newComplaint(order.id, order.seller_id))
             }
@@ -237,10 +243,10 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
 
         if (order.status == "delivered" && !order.seller_id.isNullOrBlank()) {
             addView(Button(context).apply {
-                text = "قيّمي الطلب والمتجر"
-                textSize = 15.5f
+                text = getString(R.string.order_details_16)
+                textSize = 16f
                 setTypeface(typeface, Typeface.BOLD)
-                setTextColor(context.getColor(R.color.white))
+                setTextColor(context.getColor(R.color.on_primary))
                 backgroundTintList = ColorStateList.valueOf(context.getColor(R.color.tani_primary))
                 setOnClickListener { showReviewDialog(order, items) }
             }, LinearLayout.LayoutParams(
@@ -253,12 +259,12 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
     private fun sectionCard() = LinearLayout(requireContext()).apply {
         orientation = LinearLayout.VERTICAL
         setPadding(dp(18), dp(18), dp(18), dp(18))
-        background = requireContext().getDrawable(R.drawable.bg_card)
+        background = ContextCompat.getDrawable(requireContext(), R.drawable.bg_card)
     }
 
     private fun sectionLabel(value: String) = TextView(requireContext()).apply {
         text = value
-        textSize = 18f
+        textSize = 22f
         setTypeface(typeface, Typeface.BOLD)
         setTextColor(requireContext().getColor(R.color.text_dark))
     }
@@ -272,14 +278,14 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
 
             addView(TextView(requireContext()).apply {
                 text = label
-                textSize = if (emphasis) 16f else 15f
+                textSize = if (emphasis) 16f else 16f
                 if (emphasis) setTypeface(typeface, Typeface.BOLD)
                 setTextColor(requireContext().getColor(if (emphasis) R.color.text_dark else R.color.text_muted))
             }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
 
             addView(TextView(requireContext()).apply {
                 text = value
-                textSize = if (emphasis) 20f else 15.5f
+                textSize = if (emphasis) 22f else 16f
                 setTypeface(typeface, Typeface.BOLD)
                 setTextColor(requireContext().getColor(if (emphasis) R.color.tani_primary else R.color.text_dark))
             })
@@ -287,7 +293,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
 
     private fun statusChip(status: String) = TextView(requireContext()).apply {
         text = CommerceUi.statusLabel(status)
-        textSize = 13.5f
+        textSize = 14f
         setTypeface(typeface, Typeface.BOLD)
         setTextColor(requireContext().getColor(statusColor(status)))
         setBackgroundResource(R.drawable.bg_chip)
@@ -305,7 +311,7 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
 
         addView(TextView(requireContext()).apply {
             text = if (current) "●" else "○"
-            textSize = 18f
+            textSize = 22f
             gravity = Gravity.CENTER
             setTextColor(requireContext().getColor(if (current) statusColor(event.to_status) else R.color.text_muted))
         }, LinearLayout.LayoutParams(dp(28), LinearLayout.LayoutParams.WRAP_CONTENT))
@@ -314,13 +320,13 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
             orientation = LinearLayout.VERTICAL
             addView(TextView(requireContext()).apply {
                 text = CommerceUi.statusLabel(event.to_status)
-                textSize = 15.5f
+                textSize = 16f
                 setTypeface(typeface, if (current) Typeface.BOLD else Typeface.NORMAL)
                 setTextColor(requireContext().getColor(R.color.text_dark))
             })
             addView(TextView(requireContext()).apply {
                 text = CommerceUi.formatDate(event.created_at)
-                textSize = 13.5f
+                textSize = 14f
                 setPadding(0, dp(2), 0, 0)
                 setTextColor(requireContext().getColor(R.color.text_muted))
             })
@@ -364,17 +370,17 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
             this.rating = 5f
         }
         val comment = EditText(requireContext()).apply {
-            hint = "ملاحظتك (اختياري)"
+            hint = getString(R.string.order_details_17)
             minLines = 3
             maxLines = 6
         }
         container.addView(rating)
         container.addView(comment)
         AlertDialog.Builder(requireContext())
-            .setTitle("تقييم بعد التسليم")
-            .setMessage("التقييم متاح فقط للطلبات التي تم تسليمها فعلياً.")
+            .setTitle(getString(R.string.order_details_18))
+            .setMessage(getString(R.string.order_details_19))
             .setView(container)
-            .setPositiveButton("إرسال") { _, _ ->
+            .setPositiveButton(getString(R.string.order_details_20)) { _, _ ->
                 viewLifecycleOwner.lifecycleScope.launch {
                     runCatchingCancellable {
                         trustRepository.submitDeliveredOrderReviews(
@@ -383,41 +389,41 @@ class OrderDetailsFragment : Fragment(R.layout.fragment_order_details) {
                             comment = comment.text.toString()
                         )
                     }.onSuccess {
-                        Toast.makeText(requireContext(), "شكراً لتقييمك", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), getString(R.string.order_details_21), Toast.LENGTH_SHORT).show()
                     }.onFailure {
                         val msg = it.message.orEmpty()
                         val friendly = if (msg.contains("duplicate", true) || msg.contains("unique", true)) {
-                            "تم تقييم هذا الطلب من قبل"
+                            getString(R.string.order_details_22)
                         } else {
-                            msg.ifBlank { "تعذر إرسال التقييم" }
+                            CustomerErrorMessages.from(it, getString(R.string.order_details_23))
                         }
                         Toast.makeText(requireContext(), friendly, Toast.LENGTH_LONG).show()
                     }
                 }
             }
-            .setNegativeButton("إلغاء", null)
+            .setNegativeButton(getString(R.string.addresses_19), null)
             .show()
     }
 
     private fun confirmCancel(groupId: String) {
         AlertDialog.Builder(requireContext())
-            .setTitle("إلغاء الطلب")
-            .setMessage("يمكن الإلغاء الآن فقط لأن جميع طلبات التجار ما زالت بانتظار القبول. هل تريدين المتابعة؟")
-            .setPositiveButton("إلغاء الطلب") { _, _ ->
+            .setTitle(getString(R.string.order_details_24))
+            .setMessage(getString(R.string.order_details_25))
+            .setPositiveButton(getString(R.string.order_details_24)) { _, _ ->
                 viewLifecycleOwner.lifecycleScope.launch {
                     progress.visibility = View.VISIBLE
                     runCatchingCancellable { repository.cancelOrderGroup(groupId) }
                         .onSuccess {
-                            Toast.makeText(requireContext(), "تم إلغاء الطلب", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(requireContext(), getString(R.string.order_details_26), Toast.LENGTH_SHORT).show()
                             load(groupId)
                         }
                         .onFailure {
-                            Toast.makeText(requireContext(), it.message ?: "تعذر إلغاء الطلب", Toast.LENGTH_LONG).show()
+                            Toast.makeText(requireContext(), CustomerErrorMessages.from(it, getString(R.string.order_details_27)), Toast.LENGTH_LONG).show()
                         }
                     progress.visibility = View.GONE
                 }
             }
-            .setNegativeButton("رجوع", null)
+            .setNegativeButton(getString(R.string.checkout_41), null)
             .show()
     }
 

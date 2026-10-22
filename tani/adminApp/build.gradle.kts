@@ -20,9 +20,24 @@ val hasReleaseSigning = listOf(
     taniReleaseKeyPassword
 ).all { !it.isNullOrBlank() }
 
+val taniSupabaseUrl = providers.gradleProperty("TANI_SUPABASE_URL")
+    .orElse("https://sihttimibjzoahvwuwbm.supabase.co")
+    .get().trimEnd('/')
+val taniSupabaseKey = providers.gradleProperty("TANI_SUPABASE_PUBLISHABLE_KEY")
+    .orElse("sb_publishable_9syQMNqMr0q9V0_Z4W-jvA_OQjhHj1Y")
+    .get()
+require(taniSupabaseUrl.startsWith("https://")) { "TANI_SUPABASE_URL must use HTTPS" }
+require(taniSupabaseKey.startsWith("sb_publishable_")) {
+    "TANI_SUPABASE_PUBLISHABLE_KEY must be a publishable key, never a server key"
+}
+
 android {
     namespace = "com.tani.admin"
     compileSdk = 36
+
+    buildFeatures {
+        buildConfig = true
+    }
 
     defaultConfig {
         applicationId = "com.tani.admin"
@@ -30,6 +45,8 @@ android {
         targetSdk = 36
         versionCode = taniAdminVersionCode
         versionName = taniAdminVersionName
+        buildConfigField("String", "SUPABASE_URL", "\"$taniSupabaseUrl\"")
+        buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"$taniSupabaseKey\"")
     }
 
     signingConfigs {
@@ -76,14 +93,13 @@ android {
 }
 
 dependencies {
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
-    implementation("androidx.core:core-ktx:1.15.0")
-    implementation("androidx.appcompat:appcompat:1.7.0")
-    implementation("androidx.activity:activity-ktx:1.10.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
-    implementation("androidx.core:core:1.15.0")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+    implementation("androidx.core:core-ktx:1.18.0")
+    implementation("androidx.appcompat:appcompat:1.8.0")
+    implementation("androidx.activity:activity-ktx:1.13.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.11.0")
     implementation("androidx.drawerlayout:drawerlayout:1.2.0")
-    implementation("com.google.android.material:material:1.12.0")
+    implementation("com.google.android.material:material:1.14.0")
     implementation("io.ktor:ktor-client-android:3.0.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
     testImplementation("junit:junit:4.13.2")

@@ -1,8 +1,12 @@
-Gradle wrapper: 8.9
-Android Gradle Plugin: 8.7.3
-Kotlin: 2.0.21
-compileSdk/targetSdk: 35
+Gradle wrapper: 8.11.1 (SHA-256 verified)
+Android Gradle Plugin: 8.10.1
+Kotlin: 2.0.21 (KSP 2.0.21-1.0.28)
+compileSdk/targetSdk: 36
 minSdk: 24
+JDK: 17+
 
 The standard Gradle wrapper is bundled, including gradle/wrapper/gradle-wrapper.jar.
 Core library desugaring is enabled because the app uses java.time APIs while supporting Android API 24+.
+
+Local builds need the Android SDK: set ANDROID_HOME, or create local.properties (not committed) with
+  sdk.dir=/path/to/Android/Sdk

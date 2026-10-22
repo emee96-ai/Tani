@@ -1,5 +1,13 @@
 package com.tani.app.ui.commerce
 
+import androidx.core.content.ContextCompat
+import com.tani.app.data.addAddress
+import com.tani.app.data.addresses
+import com.tani.app.data.deleteAddress
+import com.tani.app.data.updateAddress
+
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.app.AlertDialog
@@ -53,7 +61,7 @@ class AddressesFragment : Fragment(R.layout.fragment_addresses) {
                 }
                 .onFailure {
                     box.removeAllViews()
-                    box.addView(message(it.message ?: "تعذر تحميل العناوين"))
+                    box.addView(message(CustomerErrorMessages.from(it, getString(R.string.addresses_1))))
                 }
             progress.visibility = View.GONE
         }
@@ -62,40 +70,40 @@ class AddressesFragment : Fragment(R.layout.fragment_addresses) {
     private fun render() {
         box.removeAllViews()
         if (addresses.isEmpty()) {
-            box.addView(message("لا توجد عناوين محفوظة بعد."))
+            box.addView(message(getString(R.string.addresses_2)))
             return
         }
         addresses.forEach { address ->
             val card = LinearLayout(requireContext()).apply {
                 orientation = LinearLayout.VERTICAL
                 setPadding(16, 16, 16, 16)
-                background = requireContext().getDrawable(R.drawable.bg_card)
+                background = ContextCompat.getDrawable(requireContext(), R.drawable.bg_card)
             }
             card.addView(TextView(requireContext()).apply {
                 text = buildString {
                     append(address.label)
-                    if (address.is_default) append("  •  الافتراضي ✓")
+                    if (address.is_default) append(getString(R.string.addresses_3))
                 }
-                textSize = 18f
+                textSize = 22f
                 setTextColor(requireContext().getColor(R.color.text_dark))
             })
             card.addView(TextView(requireContext()).apply {
                 text = buildString {
                     append(address.description)
-                    address.area?.takeIf { it.isNotBlank() }?.let { append("\nالمنطقة: $it") }
-                    address.landmark?.takeIf { it.isNotBlank() }?.let { append("\nعلامة مميزة: $it") }
-                    address.phone?.takeIf { it.isNotBlank() }?.let { append("\nالهاتف: $it") }
+                    address.area?.takeIf { it.isNotBlank() }?.let { append(getString(R.string.addresses_4, it)) }
+                    address.landmark?.takeIf { it.isNotBlank() }?.let { append(getString(R.string.addresses_5, it)) }
+                    address.phone?.takeIf { it.isNotBlank() }?.let { append(getString(R.string.addresses_6, it)) }
                 }
-                textSize = 15f
+                textSize = 16f
                 setPadding(0, 8, 0, 8)
             })
             val actions = LinearLayout(requireContext()).apply { orientation = LinearLayout.HORIZONTAL }
             actions.addView(Button(requireContext()).apply {
-                text = "تعديل"
+                text = getString(R.string.addresses_7)
                 setOnClickListener { showEditor(address) }
             }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
             actions.addView(Button(requireContext()).apply {
-                text = "حذف"
+                text = getString(R.string.cart_13)
                 setOnClickListener { confirmDelete(address) }
             }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
             card.addView(actions)
@@ -108,32 +116,32 @@ class AddressesFragment : Fragment(R.layout.fragment_addresses) {
 
     private fun showEditor(existing: Address?) {
         val label = EditText(requireContext()).apply {
-            hint = "اسم العنوان: المنزل / العمل"
-            setText(existing?.label ?: "المنزل")
+            hint = getString(R.string.addresses_8)
+            setText(existing?.label ?: getString(R.string.addresses_9))
         }
         val description = EditText(requireContext()).apply {
-            hint = "العنوان بالتفصيل"
+            hint = getString(R.string.addresses_10)
             setText(existing?.description.orEmpty())
         }
         val area = EditText(requireContext()).apply {
-            hint = "المنطقة"
+            hint = getString(R.string.addresses_11)
             setText(existing?.area.orEmpty())
         }
         val landmark = EditText(requireContext()).apply {
-            hint = "علامة مميزة قريبة"
+            hint = getString(R.string.addresses_12)
             setText(existing?.landmark.orEmpty())
         }
         val phone = EditText(requireContext()).apply {
-            hint = "رقم هاتف التوصيل"
+            hint = getString(R.string.addresses_13)
             inputType = InputType.TYPE_CLASS_PHONE
             setText(existing?.phone.orEmpty())
         }
         val notes = EditText(requireContext()).apply {
-            hint = "ملاحظات التوصيل (اختياري)"
+            hint = getString(R.string.addresses_14)
             setText(existing?.delivery_notes.orEmpty())
         }
         val defaultBox = CheckBox(requireContext()).apply {
-            text = "اجعليه العنوان الافتراضي"
+            text = getString(R.string.addresses_15)
             isChecked = existing?.is_default ?: addresses.isEmpty()
         }
         val form = LinearLayout(requireContext()).apply {
@@ -142,10 +150,10 @@ class AddressesFragment : Fragment(R.layout.fragment_addresses) {
             addView(label); addView(description); addView(area); addView(landmark); addView(phone); addView(notes); addView(defaultBox)
         }
         val dialog = AlertDialog.Builder(requireContext())
-            .setTitle(if (existing == null) "إضافة عنوان" else "تعديل العنوان")
+            .setTitle(if (existing == null) getString(R.string.addresses_16) else getString(R.string.addresses_17))
             .setView(form)
-            .setPositiveButton("حفظ", null)
-            .setNegativeButton("إلغاء", null)
+            .setPositiveButton(getString(R.string.addresses_18), null)
+            .setNegativeButton(getString(R.string.addresses_19), null)
             .create()
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
@@ -166,7 +174,7 @@ class AddressesFragment : Fragment(R.layout.fragment_addresses) {
                         dialog.dismiss()
                         load(forceRefresh = true)
                     }.onFailure {
-                        Toast.makeText(requireContext(), it.message ?: "تعذر حفظ العنوان", Toast.LENGTH_LONG).show()
+                        Toast.makeText(requireContext(), CustomerErrorMessages.from(it, getString(R.string.addresses_20)), Toast.LENGTH_LONG).show()
                     }
                 }
             }
@@ -176,16 +184,16 @@ class AddressesFragment : Fragment(R.layout.fragment_addresses) {
 
     private fun confirmDelete(address: Address) {
         AlertDialog.Builder(requireContext())
-            .setTitle("حذف العنوان")
-            .setMessage("هل تريدين حذف ${address.label}؟")
-            .setPositiveButton("حذف") { _, _ ->
+            .setTitle(getString(R.string.addresses_21))
+            .setMessage(getString(R.string.addresses_22, address.label))
+            .setPositiveButton(getString(R.string.cart_13)) { _, _ ->
                 viewLifecycleOwner.lifecycleScope.launch {
                     runCatchingCancellable { repository.deleteAddress(address.id) }
                         .onSuccess { load(forceRefresh = true) }
-                        .onFailure { Toast.makeText(requireContext(), it.message ?: "تعذر الحذف", Toast.LENGTH_LONG).show() }
+                        .onFailure { Toast.makeText(requireContext(), CustomerErrorMessages.from(it, getString(R.string.addresses_23)), Toast.LENGTH_LONG).show() }
                 }
             }
-            .setNegativeButton("إلغاء", null)
+            .setNegativeButton(getString(R.string.addresses_19), null)
             .show()
     }
 

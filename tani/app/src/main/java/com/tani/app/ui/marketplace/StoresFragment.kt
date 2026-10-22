@@ -58,11 +58,11 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
         fun renderStatus(message: String? = null, canRetry: Boolean = false) {
             loading.visibility = View.VISIBLE
             loading.text = message ?: when {
-                isLoading && loaded.isEmpty() -> "جاري تحميل المتاجر${cityLabel()}..."
-                isLoading -> "جاري تحميل المزيد..."
-                loaded.isEmpty() -> "لا توجد متاجر مطابقة${cityLabel()} حالياً"
-                hasMore -> "تم عرض ${loaded.size} متجر${cityLabel()} • مرري لعرض المزيد"
-                else -> "تم عرض ${loaded.size} متجر${cityLabel()}"
+                isLoading && loaded.isEmpty() -> getString(R.string.stores_1, cityLabel())
+                isLoading -> getString(R.string.stores_2)
+                loaded.isEmpty() -> getString(R.string.stores_3, cityLabel())
+                hasMore -> getString(R.string.stores_4, loaded.size.toString(), cityLabel())
+                else -> getString(R.string.stores_5, loaded.size.toString(), cityLabel())
             }
             retry.visibility = if (canRetry && !isLoading) View.VISIBLE else View.GONE
             retry.isEnabled = !isLoading
@@ -90,7 +90,7 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
                 adapter.submitList(emptyList())
                 hasMore = false
                 isLoading = false
-                renderStatus("اكتبي حرفين على الأقل للبحث، أو امسحي النص لعرض كل المتاجر")
+                renderStatus(getString(R.string.stores_6))
                 return
             }
 
@@ -117,8 +117,8 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
                         loaded.addAll(cached)
                         adapter.submitList(loaded.toList())
                         renderStatus(
-                            if (online) "نعرض آخر بيانات محفوظة${cityLabel()} • جاري التحديث..."
-                            else "بدون اتصال — نعرض ${loaded.size} متجر محفوظ${cityLabel()}",
+                            if (online) getString(R.string.stores_7, cityLabel())
+                            else getString(R.string.stores_8, loaded.size.toString(), cityLabel()),
                             canRetry = !online
                         )
                     }
@@ -129,9 +129,9 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
                     hasMore = false
                     renderStatus(
                         if (loaded.isEmpty()) {
-                            "لا يوجد اتصال بالإنترنت ولا توجد متاجر محفوظة مطابقة${cityLabel()}"
+                            getString(R.string.stores_9, cityLabel())
                         } else {
-                            "بدون اتصال — نعرض ${loaded.size} متجر محفوظ${cityLabel()}"
+                            getString(R.string.stores_8, loaded.size.toString(), cityLabel())
                         },
                         canRetry = true
                     )
@@ -176,9 +176,9 @@ class StoresFragment : Fragment(R.layout.fragment_stores) {
                         adapter.submitList(loaded.toList())
                     }
                     val fallback = if (loaded.isNotEmpty()) {
-                        "تعذر التحديث — نعرض ${loaded.size} متجر محفوظ${cityLabel()}"
+                        getString(R.string.stores_10, loaded.size.toString(), cityLabel())
                     } else {
-                        "تعذر تحميل المتاجر. حاولي مرة أخرى."
+                        getString(R.string.stores_11)
                     }
                     renderStatus(CustomerErrorMessages.from(error, fallback), canRetry = true)
                 }

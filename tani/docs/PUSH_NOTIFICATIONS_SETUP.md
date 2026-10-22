@@ -2,7 +2,7 @@
 
 ## Implemented, awaiting real configuration and delivery verification
 
-The Android app includes pinned Firebase Messaging 25.1.2, manual `FirebaseOptions`,
+The Android app includes pinned Firebase Messaging 25.1.3, manual `FirebaseOptions`,
 notification permission/channel handling and a non-exported `TaniMessagingService`.
 `PushMessaging` registers only a signed-in account with notification permission,
 serializes registration against logout and checks the session generation. Logout

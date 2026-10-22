@@ -3,21 +3,21 @@
     <item
         android:id="@+id/home"
         android:icon="@drawable/ic_nav_home"
-        android:title="الرئيسية" />
+        android:title="@string/bottom_nav_home" />
     <item
         android:id="@+id/categories"
         android:icon="@drawable/ic_store"
-        android:title="المتاجر" />
+        android:title="@string/categories_stores" />
     <item
         android:id="@+id/cart"
         android:icon="@drawable/ic_nav_cart"
-        android:title="السلة" />
+        android:title="@string/bottom_nav_cart" />
     <item
         android:id="@+id/orders"
         android:icon="@drawable/ic_nav_orders"
-        android:title="طلباتي" />
+        android:title="@string/orders_label" />
     <item
         android:id="@+id/profile"
         android:icon="@drawable/ic_nav_profile"
-        android:title="حسابي" />
+        android:title="@string/drawer_header_label" />
 </menu>

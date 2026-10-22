@@ -42,34 +42,33 @@ Kosti city gate، delivery-provider abstraction، city-scoped ranked search، pe
 - Account deletion soft-deactivates public merchant assets and anonymizes the profile while preserving the minimum operational/audit history.
 - Sensitive workflows use protected RPCs and server-side ownership/role checks.
 
-## Fresh Supabase deployment order
-Run in this exact order:
-1. `supabase/schema.sql`
-2. `supabase/phase0_full_product_foundation.sql`
-3. `supabase/phase1_analytics_admin.sql`
-4. `supabase/phase2_marketplace_core.sql`
-5. `supabase/phase3_commerce.sql`
-6. `supabase/phase4_merchant_operations.sql`
-7. `supabase/phase5_trust_support.sql`
-8. `supabase/phase6_growth.sql`
-9. `supabase/phase7_monetization.sql`
-10. `supabase/phase8_scale.sql`
-11. `supabase/final_security_hardening.sql`
-12. Configure Auth redirect URL / Storage as documented; optional demo seed only after required Auth users exist.
+## Supabase database: source of truth
+The live project schema is the 2026-09-30 snapshot in `qa/database/live_schema_baseline.sql` plus every file in `supabase/migrations/`, applied in filename order. CI rebuilds exactly this in `qa/run_launch_tests.sh`.
+
+- **New database changes** go only into `supabase/migrations/` with a `YYYYMMDDHHMMSS_name.sql` prefix.
+- The top-level `supabase/*.sql` files (`schema.sql`, `phase0`–`phase8`, and the dated fixes) are the **historical** history that produced the baseline. They are already applied to the live project and must not be re-run against it.
+- `live_schema_baseline.sql` is schema-only and meant for isolated test databases; it is not a production restore. Production recovery follows `docs/BACKUP_RECOVERY_RUNBOOK.md`.
+- There is currently no verified script that builds a fresh production database from scratch. If one is needed (new region or staging), take a `supabase db dump` of the live schema and validate it in an isolated project first.
 
 ## Authentication setup
 For password recovery add `tani://auth/reset` to Supabase **Authentication → URL Configuration → Redirect URLs**. See `supabase/AUTH_SETUP.md`.
 
 ## Build
-From the project root:
+Requires JDK 17+ and the Android SDK (set `ANDROID_HOME`, or put `sdk.dir=...` in an uncommitted `local.properties`). From the project root:
 ```bash
 chmod +x gradlew
 ./gradlew assembleDebug
 ```
+The Supabase project is read from Gradle properties `TANI_SUPABASE_URL` and `TANI_SUPABASE_PUBLISHABLE_KEY` (default: the current live project). To build against staging:
+```bash
+./gradlew assembleDebug -PTANI_SUPABASE_URL=https://<staging>.supabase.co -PTANI_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+```
+The build rejects any non-HTTPS URL and any key that does not start with `sb_publishable_`. The admin web dashboard (`admin/app.js`) still has these values hardcoded.
+
 APK output after a successful build:
 `app/build/outputs/apk/debug/app-debug.apk`
 
-The Gradle wrapper is pinned to Gradle 8.9 and its JAR is bundled. If the first wrapper download is blocked by network/DNS, run the build in the configured GitHub Codespace/CI environment.
+The Gradle wrapper is pinned to Gradle 8.11.1 (with SHA-256 verification) and its JAR is bundled. If the first wrapper download is blocked by network/DNS, run the build in the configured GitHub Codespace/CI environment.
 
 ## QA
 Run:

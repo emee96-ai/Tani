@@ -4,6 +4,7 @@ import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import androidx.core.content.edit
 import java.nio.charset.StandardCharsets
 import java.security.KeyStore
 import javax.crypto.Cipher
@@ -35,15 +36,14 @@ class SecureTokenStorage(
     }
 
     fun putString(key: String, value: String?) {
-        val edit = prefs.edit()
-        if (value == null) edit.remove(key) else edit.putString(key, encrypt(value))
-        edit.apply()
+        prefs.edit { if (value == null) remove(key) else putString(key, encrypt(value)) }
     }
 
     fun contains(key: String): Boolean = prefs.contains(key)
 
     /** A checkout key must reach disk before its network request is sent. */
     fun putStringSync(key: String, value: String?): Boolean {
+        //noinspection UseKtx: the caller needs the result of commit()
         val edit = prefs.edit()
         if (value == null) edit.remove(key) else edit.putString(key, encrypt(value))
         return edit.commit()
@@ -57,7 +57,7 @@ class SecureTokenStorage(
         return Base64.encodeToString(packed, Base64.NO_WRAP)
     }
 
-    fun clear() = prefs.edit().clear().apply()
+    fun clear() = prefs.edit { clear() }
 
     private fun secretKey(): SecretKey {
         val keyStore = KeyStore.getInstance(KEYSTORE).apply { load(null) }

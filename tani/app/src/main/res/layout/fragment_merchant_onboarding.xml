@@ -3,8 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/tani_background">
+    android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -20,9 +19,9 @@
             android:id="@+id/merchant_onboarding_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="ابدئي البيع على تاني"
+            android:text="@string/merchant_onboarding_title"
             android:textColor="@color/text_dark"
-            android:textSize="25sp"
+            android:textSize="24sp"
             android:textStyle="bold"
             android:gravity="start" />
 
@@ -31,7 +30,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="الخطوة 1 من 4"
+            android:text="@string/merchant_onboarding_step"
             android:textColor="@color/tani_primary"
             android:textSize="14sp"
             android:textStyle="bold" />
@@ -75,7 +74,7 @@
         android:paddingTop="8dp"
         android:paddingEnd="20dp"
         android:paddingBottom="2dp"
-        android:text="جاري الإرسال…"
+        android:text="@string/merchant_onboarding_status"
         android:textColor="@color/tani_primary"
         android:textStyle="bold"
         android:visibility="gone" />
@@ -96,7 +95,7 @@
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="wrap_content"
             android:layout_height="52dp"
-            android:text="السابق"
+            android:text="@string/merchant_onboarding_back"
             android:textAllCaps="false"
             android:textColor="@color/tani_primary"
             app:strokeColor="@color/tani_primary" />
@@ -120,9 +119,9 @@
             android:layout_width="wrap_content"
             android:layout_height="52dp"
             android:minWidth="148dp"
-            android:text="التالي"
+            android:text="@string/merchant_onboarding_next"
             android:textAllCaps="false"
-            android:textColor="@color/white"
+            android:textColor="@color/on_primary"
             app:backgroundTint="@color/tani_primary"
             app:cornerRadius="14dp" />
     </LinearLayout>

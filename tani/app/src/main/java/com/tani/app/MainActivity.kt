@@ -1,12 +1,14 @@
 package com.tani.app
 
+import androidx.core.content.ContextCompat
+import com.tani.app.data.merchantProfile
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.content.Intent
 import android.Manifest
 import android.os.Build
 import androidx.activity.result.contract.ActivityResultContracts
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
@@ -49,11 +51,9 @@ import com.tani.app.ui.profile.ProfileFragment
 import com.tani.app.ui.seller.MerchantOnboardingFragment
 import com.tani.app.ui.seller.SellerFragment
 import com.tani.app.ui.trust.SupportCenterFragment
-import java.net.URL
 import java.net.URLDecoder
-import kotlinx.coroutines.Dispatchers
+import com.tani.app.ui.marketplace.MarketplaceImageLoader
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
 
@@ -76,6 +76,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(R.style.Theme_Tani)
         super.onCreate(savedInstanceState)
+        // Screens rely on the window background instead of painting their own
+        window.setBackgroundDrawableResource(R.color.tani_background)
         selectedPrimaryItemId = savedInstanceState?.getInt(STATE_SELECTED_PRIMARY, R.id.home) ?: R.id.home
 
         Supabase.init(this)
@@ -165,7 +167,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startAppFast(restoringState: Boolean) {
-        findViewById<TextView>(R.id.launch_loading_text)?.text = "فتح تاني…"
+        findViewById<TextView>(R.id.launch_loading_text)?.text = getString(R.string.main_1)
 
         if (restoringState && visibleContentFragment() != null) {
             syncBottomNavSelection(selectedPrimaryItemId)
@@ -228,7 +230,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupDrawerAccountHeader() {
         drawerAccountHeader = drawerNav.getHeaderView(0)
-        drawerAccountAvatar = drawerAccountHeader.findViewById(R.id.drawer_account_avatar)
+        drawerAccountAvatar = drawerAccountHeader.findViewById<ImageView>(R.id.drawer_account_avatar).apply { clipToOutline = true }
         drawerAccountName = drawerAccountHeader.findViewById(R.id.drawer_account_name)
         drawerAccountEmail = drawerAccountHeader.findViewById(R.id.drawer_account_email)
         drawerAccountHeader.setOnClickListener {
@@ -262,8 +264,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun renderDrawerAccount(account: com.tani.app.data.AccountProfile) {
-        drawerAccountName.text = account.profile.name.ifBlank { "حسابي" }
-        drawerAccountEmail.text = account.email.ifBlank { "بيانات الحساب" }
+        drawerAccountName.text = account.profile.name.ifBlank { getString(R.string.main_2) }
+        drawerAccountEmail.text = account.email.ifBlank { getString(R.string.main_3) }
         refreshMerchantEntryLabel()
         val avatarUrl = account.profile.avatar_url
         if (avatarUrl.isNullOrBlank()) {
@@ -271,11 +273,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
         lifecycleScope.launch {
-            val bitmap = withContext(Dispatchers.IO) {
-                runCatchingCancellable {
-                    URL(avatarUrl).openStream().use { BitmapFactory.decodeStream(it) }
-                }.getOrNull()
-            }
+            val bitmap = MarketplaceImageLoader.loadBitmap(this@MainActivity, avatarUrl)
             if (bitmap != null) {
                 drawerAccountAvatar.setPadding(0, 0, 0, 0)
                 drawerAccountAvatar.setImageBitmap(bitmap)
@@ -286,8 +284,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun renderGuestDrawerAccount() {
-        drawerAccountName.text = "حسابي"
-        drawerAccountEmail.text = "سجلي الدخول لعرض بيانات الحساب"
+        drawerAccountName.text = getString(R.string.main_2)
+        drawerAccountEmail.text = getString(R.string.main_4)
         refreshMerchantEntryLabel()
         renderDefaultDrawerAvatar()
     }
@@ -296,13 +294,13 @@ class MainActivity : AppCompatActivity() {
         if (!::drawerNav.isInitialized) return
         val item = drawerNav.menu.findItem(R.id.drawer_seller) ?: return
         item.title = if (!Supabase.hasStoredSession()) {
-            "البيع على تاني"
+            getString(R.string.main_5)
         } else {
             when (AppContentStore.merchant?.verification_status) {
-                "approved" -> "لوحة التاجر"
-                "pending" -> "متابعة طلب التاجر"
-                "suspended" -> "حساب التاجر"
-                else -> "البيع على تاني"
+                "approved" -> getString(R.string.main_6)
+                "pending" -> getString(R.string.main_7)
+                "suspended" -> getString(R.string.main_8)
+                else -> getString(R.string.main_5)
             }
         }
     }
@@ -378,13 +376,14 @@ class MainActivity : AppCompatActivity() {
             return true
         }
 
-        if (
-            (type == "signup" || type == "email") &&
-            !token.isNullOrBlank() &&
-            !refreshToken.isNullOrBlank()
-        ) {
-            Supabase.saveSession(token, refreshToken, null)
-            showApp()
+        if (type == "signup" || type == "email") {
+            // لا نقبل توكن قادماً من رابط خارجي كجلسة دخول، فرابط مصنوع يدوياً
+            // كان سيدخل الضحية إلى حساب المهاجم. يؤكد الخادم البريد، ثم يسجّل المستخدم دخوله بنفسه.
+            setDrawerEnabled(false)
+            nav.visibility = View.GONE
+            toolbar.visibility = View.GONE
+            show(AuthFragment.newNoticeInstance(getString(R.string.auth_31)), addToBackStack = false)
+            hideLaunchSplash()
             return true
         }
 
@@ -395,7 +394,7 @@ class MainActivity : AppCompatActivity() {
             if (type == null || type == "recovery") {
                 AuthFragment.newResetInstance(token, refreshToken)
             } else {
-                AuthFragment.newResetInstance(null, null, "رابط المصادقة غير صالح")
+                AuthFragment.newResetInstance(null, null, getString(R.string.main_9))
             },
             addToBackStack = false
         )
@@ -564,8 +563,8 @@ class MainActivity : AppCompatActivity() {
         toolbar.visibility = View.VISIBLE
         toolbar.setNavigationIcon(R.drawable.ic_menu)
         if (fragment is HomeFragment) {
-            toolbar.logo = getDrawable(R.drawable.ic_brand)
-            toolbar.title = "تاني"
+            toolbar.logo = ContextCompat.getDrawable(this, R.drawable.ic_brand)
+            toolbar.title = getString(R.string.main_10)
         } else {
             toolbar.logo = null
             toolbar.title = screenTitle(fragment)
@@ -666,7 +665,7 @@ class MainActivity : AppCompatActivity() {
                 toolbar.visibility = View.VISIBLE
                 toolbar.setNavigationIcon(R.drawable.ic_menu)
                 toolbar.logo = null
-                toolbar.title = current?.let(::screenTitle) ?: "تاني"
+                toolbar.title = current?.let(::screenTitle) ?: getString(R.string.main_10)
                 nav.visibility = View.VISIBLE
                 refreshCartBadge()
             }
@@ -682,29 +681,29 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun screenTitle(fragment: Fragment): String = when (fragment.javaClass.simpleName) {
-        "HomeFragment" -> "تاني"
-        "CategoriesFragment" -> "التصنيفات"
-        "CartFragment" -> "السلة"
-        "OrdersFragment" -> "طلباتي"
-        "ProfileFragment" -> "حسابي"
-        "AccountFragment" -> "بيانات الحساب"
-        "ProductDetailsFragment" -> "تفاصيل المنتج"
-        "SearchFragment" -> "البحث"
-        "ProductsFragment" -> "المنتجات"
-        "StoresFragment" -> "المتاجر"
-        "StoreDetailsFragment" -> "المتجر"
-        "CheckoutFragment" -> "إتمام الطلب"
-        "AddressesFragment" -> "العناوين"
-        "OrderDetailsFragment" -> "تفاصيل الطلب"
-        "OrderConfirmationFragment" -> "تم الطلب"
-        "FavoritesFragment" -> "المفضلة"
-        "NotificationsFragment" -> "الإشعارات"
-        "AboutFragment" -> "من نحن"
-        "SupportCenterFragment" -> "الدعم والشكاوى"
-        "PoliciesFragment" -> "السياسات والخصوصية"
-        "MerchantOnboardingFragment" -> "البيع على تاني"
-        "SellerFragment" -> "لوحة التاجر"
-        else -> "تاني"
+        "HomeFragment" -> getString(R.string.main_10)
+        "CategoriesFragment" -> getString(R.string.main_11)
+        "CartFragment" -> getString(R.string.main_12)
+        "OrdersFragment" -> getString(R.string.main_13)
+        "ProfileFragment" -> getString(R.string.main_2)
+        "AccountFragment" -> getString(R.string.main_3)
+        "ProductDetailsFragment" -> getString(R.string.main_14)
+        "SearchFragment" -> getString(R.string.main_15)
+        "ProductsFragment" -> getString(R.string.main_16)
+        "StoresFragment" -> getString(R.string.main_17)
+        "StoreDetailsFragment" -> getString(R.string.main_18)
+        "CheckoutFragment" -> getString(R.string.main_19)
+        "AddressesFragment" -> getString(R.string.main_20)
+        "OrderDetailsFragment" -> getString(R.string.main_21)
+        "OrderConfirmationFragment" -> getString(R.string.main_22)
+        "FavoritesFragment" -> getString(R.string.main_23)
+        "NotificationsFragment" -> getString(R.string.main_24)
+        "AboutFragment" -> getString(R.string.main_25)
+        "SupportCenterFragment" -> getString(R.string.main_26)
+        "PoliciesFragment" -> getString(R.string.main_27)
+        "MerchantOnboardingFragment" -> getString(R.string.main_5)
+        "SellerFragment" -> getString(R.string.main_6)
+        else -> getString(R.string.main_10)
     }
 
     companion object {

@@ -2,7 +2,6 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/tani_background"
     android:fillViewport="true"
     android:layoutDirection="rtl"
     android:scrollbars="none">
@@ -31,9 +30,9 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="طلباتي"
+                    android:text="@string/orders_label"
                     android:textColor="@color/text_dark"
-                    android:textSize="30sp"
+                    android:textSize="28sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -42,7 +41,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:lineSpacingExtra="2dp"
-                    android:text="تابعي كل طلباتك الحالية والمكتملة"
+                    android:text="@string/orders_summary"
                     android:textColor="@color/text_muted"
                     android:textSize="16sp" />
             </LinearLayout>
@@ -53,8 +52,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="50dp"
                 android:minWidth="72dp"
-                android:text="تحديث"
-                android:textSize="15sp" />
+                android:text="@string/orders_refresh"
+                android:textSize="16sp" />
         </LinearLayout>
 
         <HorizontalScrollView
@@ -77,8 +76,8 @@
                     android:minWidth="104dp"
                     android:paddingStart="18dp"
                     android:paddingEnd="18dp"
-                    android:text="الكل"
-                    android:textSize="15sp" />
+                    android:text="@string/orders_all"
+                    android:textSize="16sp" />
 
                 <Button
                     android:id="@+id/orders_active"
@@ -89,8 +88,8 @@
                     android:minWidth="112dp"
                     android:paddingStart="18dp"
                     android:paddingEnd="18dp"
-                    android:text="النشطة"
-                    android:textSize="15sp" />
+                    android:text="@string/orders_active"
+                    android:textSize="16sp" />
 
                 <Button
                     android:id="@+id/orders_completed"
@@ -101,8 +100,8 @@
                     android:minWidth="122dp"
                     android:paddingStart="18dp"
                     android:paddingEnd="18dp"
-                    android:text="المكتملة"
-                    android:textSize="15sp" />
+                    android:text="@string/orders_completed"
+                    android:textSize="16sp" />
 
                 <Button
                     android:id="@+id/orders_cancelled"
@@ -113,8 +112,8 @@
                     android:minWidth="112dp"
                     android:paddingStart="18dp"
                     android:paddingEnd="18dp"
-                    android:text="الملغاة"
-                    android:textSize="15sp" />
+                    android:text="@string/orders_cancelled"
+                    android:textSize="16sp" />
             </LinearLayout>
         </HorizontalScrollView>
 

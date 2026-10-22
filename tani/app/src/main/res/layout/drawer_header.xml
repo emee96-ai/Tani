@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/drawer_account_header"
     android:layout_width="match_parent"
     android:layout_height="196dp"
@@ -8,15 +9,16 @@
     android:gravity="bottom|start"
     android:padding="22dp"
     android:background="@color/brand_soft"
+    tools:ignore="Overdraw"
     android:clickable="true"
     android:focusable="true">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="حسابي"
+        android:text="@string/drawer_header_label"
         android:textColor="@color/text_dark"
-        android:textSize="15sp"
+        android:textSize="16sp"
         android:textStyle="bold" />
 
     <LinearLayout
@@ -31,8 +33,7 @@
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:background="@drawable/bg_avatar"
-            android:clipToOutline="true"
-            android:contentDescription="الصورة الشخصية"
+            android:contentDescription="@string/drawer_account_avatar_desc"
             android:padding="12dp"
             android:scaleType="centerCrop"
             android:src="@android:drawable/ic_menu_myplaces" />
@@ -50,9 +51,9 @@
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:text="حسابي"
+                android:text="@string/drawer_header_label"
                 android:textColor="@color/text_dark"
-                android:textSize="18sp"
+                android:textSize="22sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -62,9 +63,9 @@
                 android:layout_marginTop="4dp"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:text="سجلي الدخول لعرض بيانات الحساب"
+                android:text="@string/drawer_account_email"
                 android:textColor="@color/text_muted"
-                android:textSize="13sp" />
+                android:textSize="14sp" />
         </LinearLayout>
     </LinearLayout>
 
@@ -72,7 +73,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:text="اضغطي لفتح بيانات الحساب"
+        android:text="@string/drawer_header_label_2"
         android:textColor="@color/text_muted"
         android:textSize="12sp" />
 </LinearLayout>

@@ -22,7 +22,7 @@ object PendingCheckoutStore {
         val name = name(userId)
         if (!storage.contains(name)) return null
         val raw = storage.getString(name)
-            ?: error("تعذر قراءة محاولة الطلب المحفوظة. تواصلي مع الدعم قبل إعادة الطلب")
+            ?: error("تعذر قراءة محاولة الطلب المحفوظة. تواصل مع الدعم قبل إعادة الطلب")
         return Supabase.json.decodeFromString<Attempt>(raw).also {
             UUID.fromString(it.key)
             it.groupId?.let(UUID::fromString)

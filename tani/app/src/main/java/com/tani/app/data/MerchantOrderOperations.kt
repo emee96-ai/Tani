@@ -17,11 +17,11 @@ suspend fun Repository.transitionMerchantOrderOperational(
 ): String {
     require(note.length <= 450) { "الملاحظة طويلة جداً" }
     if (status in setOf("rejected", "cancelled", "failed")) {
-        require(note.trim().length >= 3) { "اكتبي سبباً واضحاً" }
+        require(note.trim().length >= 3) { "اكتب سبباً واضحاً" }
     }
     if (status == "out_for_delivery") {
         require(estimatedMinutes != null && estimatedMinutes in 1..1440) {
-            "حددي زمن الوصول المتوقع بالدقائق"
+            "حدد زمن الوصول المتوقع بالدقائق"
         }
     } else {
         require(estimatedMinutes == null) { "زمن الوصول يستخدم فقط عند خروج الطلب للتوصيل" }

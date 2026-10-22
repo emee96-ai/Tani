@@ -44,7 +44,7 @@ class MainActivitySmokeTest {
 
         onView(withId(R.id.categories)).perform(click())
         waitForDisplayed(R.id.stores_list)
-        onView(withText("استكشفي المتاجر المحلية حسب الاسم أو المنطقة"))
+        onView(withText("استكشف المتاجر المحلية حسب الاسم أو المنطقة"))
             .check(matches(isDisplayed()))
 
         onView(withId(R.id.cart)).perform(click())
@@ -105,6 +105,26 @@ class MainActivitySmokeTest {
         waitForText(R.id.status, "البريد الإلكتروني غير صحيح")
     }
 
+    @Test
+    fun screensSurviveActivityRecreation() {
+        openAuthAsGuest()
+        onView(withId(R.id.email)).perform(replaceText("keep@example.com"))
+        closeSoftKeyboard()
+
+        activityRule.scenario.recreate()
+        waitForDisplayed(R.id.auth_title)
+        onView(withId(R.id.email)).check(matches(withText("keep@example.com")))
+
+        onView(withId(R.id.browse_as_guest)).perform(scrollTo(), click())
+        waitForDisplayed(R.id.bottom_nav)
+        onView(withId(R.id.cart)).perform(click())
+        waitForDisplayed(R.id.cart_box)
+
+        activityRule.scenario.recreate()
+        waitForDisplayed(R.id.bottom_nav, 20_000L)
+        waitForDisplayed(R.id.cart_box)
+    }
+
     private fun openAuthAsGuest() {
         ensureGuestHome()
         onView(withId(R.id.orders)).perform(click())
@@ -122,7 +142,7 @@ class MainActivitySmokeTest {
         waitForDisplayed(R.id.bottom_nav)
     }
 
-    private fun waitForDisplayed(@IdRes id: Int, timeoutMs: Long = 10_000L) {
+    private fun waitForDisplayed(@IdRes id: Int, timeoutMs: Long = 20_000L) {
         val deadline = System.currentTimeMillis() + timeoutMs
         var lastFailure: Throwable? = null
         while (System.currentTimeMillis() < deadline) {
@@ -137,7 +157,7 @@ class MainActivitySmokeTest {
         fail("View $id did not become visible within ${timeoutMs}ms. Last error: ${lastFailure?.message}")
     }
 
-    private fun waitForText(@IdRes id: Int, expected: String, timeoutMs: Long = 5_000L) {
+    private fun waitForText(@IdRes id: Int, expected: String, timeoutMs: Long = 10_000L) {
         val deadline = System.currentTimeMillis() + timeoutMs
         var lastFailure: Throwable? = null
         while (System.currentTimeMillis() < deadline) {

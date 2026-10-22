@@ -2,13 +2,13 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_pressed="true">
         <shape>
-            <solid android:color="#F1EFFF" />
+            <solid android:color="@color/brand_soft" />
             <corners android:radius="12dp" />
         </shape>
     </item>
     <item>
         <shape>
-            <solid android:color="@color/white" />
+            <solid android:color="@color/tani_surface" />
             <corners android:radius="12dp" />
         </shape>
     </item>

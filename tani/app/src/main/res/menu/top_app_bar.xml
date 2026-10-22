@@ -3,8 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/action_notifications"
-        android:contentDescription="الإشعارات"
+        android:contentDescription="@string/top_app_bar_action_notifications_desc"
         android:icon="@drawable/ic_notifications"
-        android:title="الإشعارات"
+        android:title="@string/top_app_bar_action_notifications_desc"
         app:showAsAction="always" />
 </menu>

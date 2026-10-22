@@ -1,6 +1,8 @@
 package com.tani.app.data
 
 import android.content.Context
+import android.content.SharedPreferences
+import androidx.core.content.edit
 import com.tani.app.BuildConfig
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -63,31 +65,29 @@ object ErrorMonitoring {
     private const val PENDING_MESSAGE = "pending_message"
     private const val PENDING_SOURCE = "pending_source"
 
-    private lateinit var context: Context
+    private lateinit var prefs: SharedPreferences
     private var installed = false
 
     fun init(appContext: Context) {
-        context = appContext.applicationContext
+        prefs = appContext.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         if (installed) return
         installed = true
 
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             runCatching {
-                context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                    .edit()
-                    .putString(PENDING_TYPE, throwable::class.java.simpleName.take(120))
-                    .putString(PENDING_MESSAGE, sanitize(throwable.message).take(500))
-                    .putString(PENDING_SOURCE, "uncaught:${thread.name.take(60)}")
-                    .commit()
+                prefs.edit(commit = true) {
+                    putString(PENDING_TYPE, throwable::class.java.simpleName.take(120))
+                    putString(PENDING_MESSAGE, sanitize(throwable.message).take(500))
+                    putString(PENDING_SOURCE, "uncaught:${thread.name.take(60)}")
+                }
             }
             previous?.uncaughtException(thread, throwable)
         }
     }
 
     suspend fun flushPendingCrash() {
-        if (!::context.isInitialized) return
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        if (!::prefs.isInitialized) return
         val type = prefs.getString(PENDING_TYPE, null) ?: return
         val source = prefs.getString(PENDING_SOURCE, "uncaught") ?: "uncaught"
         val message = prefs.getString(PENDING_MESSAGE, "") ?: ""
@@ -98,7 +98,7 @@ object ErrorMonitoring {
             message = message,
             contextData = buildJsonObject { put("recovered_on_next_launch", true) }
         )
-        if (sent) prefs.edit().clear().apply()
+        if (sent) prefs.edit { clear() }
     }
 
     suspend fun capture(
