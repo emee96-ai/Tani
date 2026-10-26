@@ -1,11 +1,11 @@
 package com.tani.app.ui.seller
 
 import androidx.core.graphics.scale
+import com.tani.app.util.decodeBoundedBitmap
 import com.tani.app.util.runCatchingCancellable
 
 import android.content.DialogInterface
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.text.InputType
@@ -695,7 +695,7 @@ class MerchantProductsFragment : Fragment() {
     }
 
     private fun imageBytes(uri: Uri, maxSize: Int, quality: Int): ByteArray {
-        val bitmap = requireContext().contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
+        val bitmap = requireContext().contentResolver.decodeBoundedBitmap(uri, maxSize)
             ?: error(getString(R.string.account_4))
         val largest = maxOf(bitmap.width, bitmap.height)
         val scaled = if (largest > maxSize) {

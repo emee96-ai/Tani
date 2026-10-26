@@ -8,10 +8,10 @@ import com.tani.app.data.merchantProfile
 import com.tani.app.data.submitMerchantApplication
 import com.tani.app.data.uploadMerchantIdentity
 
+import com.tani.app.util.decodeBoundedBitmap
 import com.tani.app.util.runCatchingCancellable
 
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.text.InputType
@@ -693,7 +693,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
             require(bytes.size <= 8 * 1024 * 1024) { getString(R.string.merchant_onboarding_91) }
             return bytes to "application/pdf"
         }
-        val bitmap = requireContext().contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
+        val bitmap = requireContext().contentResolver.decodeBoundedBitmap(uri, 1600)
             ?: error(getString(R.string.account_4))
         val largest = maxOf(bitmap.width, bitmap.height)
         val scaled = if (largest > 1600) {
