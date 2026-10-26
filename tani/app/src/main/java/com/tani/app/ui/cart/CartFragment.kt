@@ -42,6 +42,8 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
     }
 
     private fun restoreOrSync() {
+        // سلة الزائر محلية فقط، والخادم لا يقبل مزامنتها قبل تسجيل الدخول.
+        if (!Supabase.hasStoredSession()) return
         viewLifecycleOwner.lifecycleScope.launch {
             if (Cart.all().isEmpty()) {
                 runCatchingCancellable { repository.remoteCart() }
@@ -299,6 +301,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
 
     private fun syncSilent() {
         (activity as? MainActivity)?.refreshCartBadge()
+        if (!Supabase.hasStoredSession()) return
         viewLifecycleOwner.lifecycleScope.launch { runCatchingCancellable { repository.syncCart(Cart.all()) } }
     }
 }
