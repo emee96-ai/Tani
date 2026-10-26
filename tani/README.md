@@ -50,6 +50,22 @@ The live project schema is the 2026-09-30 snapshot in `qa/database/live_schema_b
 - `live_schema_baseline.sql` is schema-only and meant for isolated test databases; it is not a production restore. Production recovery follows `docs/BACKUP_RECOVERY_RUNBOOK.md`.
 - There is currently no verified script that builds a fresh production database from scratch. If one is needed (new region or staging), take a `supabase db dump` of the live schema and validate it in an isolated project first.
 
+### Applying migrations to production
+`supabase db push` does not work: the live project has about 95 dashboard-era versions with no local file. Never mark those as reverted. Apply each new file on its own and record it:
+
+```bash
+supabase db query --linked -f supabase/migrations/<version>_<name>.sql
+supabase migration repair --status applied <version> --linked
+```
+
+### Scheduled upkeep
+- `tani-launch-maintenance` (pg_cron, every minute) runs the maintenance worker.
+- `tani-purge-old-records` (pg_cron, daily) deletes app errors after 90 days, app events after 180 days, read notifications after 180 days and pg_cron run history after 7 days. Audit logs are kept.
+- GitHub workflows: `Tani Database Backup` (weekly), `Tani Supabase Keepalive` (daily, stops the free project from pausing) and `Tani Usage Report` (monthly, opens an issue above 80% of the free plan limits). Scheduled workflows only run from `main`, and GitHub turns them off after 60 days without commits in a public repository — re-enable them from the Actions tab if that happens.
+
+### Release signing
+The release key lives in `~/.tani-keys/tani-release.jks` (alias `tani`) with its passwords in `~/.gradle/gradle.properties`. Every future update must be signed with this key, and its SHA-256 is published in `https://emee96-ai.github.io/.well-known/assetlinks.json`. Keep two encrypted copies off the machine. Moving App Links to another domain needs an app update and a period where both hosts serve `assetlinks.json`.
+
 ## Authentication setup
 For password recovery add `tani://auth/reset` to Supabase **Authentication → URL Configuration → Redirect URLs**. See `supabase/AUTH_SETUP.md`.
 

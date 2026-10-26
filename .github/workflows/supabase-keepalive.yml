@@ -1,0 +1,26 @@
+name: Tani Supabase Keepalive
+
+# Free Supabase projects are paused after a week without API traffic.
+# One public read a day keeps the project awake during quiet periods.
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Read one public category
+        env:
+          # The same public key that ships inside the app.
+          SUPABASE_URL: https://sihttimibjzoahvwuwbm.supabase.co
+          SUPABASE_KEY: sb_publishable_9syQMNqMr0q9V0_Z4W-jvA_OQjhHj1Y
+        run: |
+          curl --fail --silent --show-error --retry 3 --retry-delay 20 \
+            -H "apikey: $SUPABASE_KEY" \
+            "$SUPABASE_URL/rest/v1/categories?select=id&limit=1" > /dev/null

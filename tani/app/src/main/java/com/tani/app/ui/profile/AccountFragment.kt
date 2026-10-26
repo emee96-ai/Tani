@@ -3,6 +3,7 @@ package com.tani.app.ui.profile
 import androidx.core.graphics.scale
 import com.tani.app.data.network.CustomerErrorMessages
 
+import com.tani.app.util.decodeBoundedBitmap
 import com.tani.app.util.runCatchingCancellable
 
 import android.graphics.Bitmap
@@ -178,9 +179,8 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
         viewLifecycleOwner.lifecycleScope.launch {
             runCatchingCancellable {
                 withContext(Dispatchers.IO) {
-                    val bitmap = requireContext().contentResolver.openInputStream(uri)?.use {
-                        BitmapFactory.decodeStream(it)
-                    } ?: error(getString(R.string.account_4))
+                    val bitmap = requireContext().contentResolver.decodeBoundedBitmap(uri, 1024)
+                        ?: error(getString(R.string.account_4))
                     val scaled = scaleDown(bitmap, 1024)
                     ByteArrayOutputStream().use { output ->
                         require(scaled.compress(Bitmap.CompressFormat.JPEG, 82, output)) {

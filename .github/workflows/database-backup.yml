@@ -1,0 +1,43 @@
+name: Tani Database Backup
+
+# The free Supabase plan has no backups. This keeps a weekly encrypted dump.
+# The repository is public, so the dump is only ever stored encrypted.
+# Restore: gpg --decrypt tani-*.sql.gz.gpg | gunzip | psql "$DATABASE_URL"
+on:
+  schedule:
+    - cron: '30 2 * * 5'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      TANI_BACKUP_DB_URL: ${{ secrets.TANI_BACKUP_DB_URL }}
+      TANI_BACKUP_PASSPHRASE: ${{ secrets.TANI_BACKUP_PASSPHRASE }}
+    steps:
+      - name: Check secrets
+        run: |
+          [[ -n "$TANI_BACKUP_DB_URL" ]] || { echo 'TANI_BACKUP_DB_URL is not set' >&2; exit 1; }
+          (( ${#TANI_BACKUP_PASSPHRASE} >= 24 )) || { echo 'TANI_BACKUP_PASSPHRASE must be at least 24 characters' >&2; exit 1; }
+      - name: Dump and encrypt
+        run: |
+          set -euo pipefail
+          file="tani-$(date -u +%Y%m%d).sql.gz.gpg"
+          # The server runs PostgreSQL 17, so pg_dump must be 17 too.
+          docker run --rm -e PGURL="$TANI_BACKUP_DB_URL" postgres:17 \
+            sh -c 'pg_dump "$PGURL" --no-owner --no-privileges --schema=public --schema=private --schema=auth --schema=storage' \
+            | gzip -9 \
+            | gpg --batch --yes --symmetric --cipher-algo AES256 --passphrase-fd 3 --output "$file" 3<<<"$TANI_BACKUP_PASSPHRASE"
+          size=$(stat -c %s "$file")
+          (( size > 10000 )) || { echo "Backup is suspiciously small ($size bytes)" >&2; exit 1; }
+          echo "BACKUP_FILE=$file" >> "$GITHUB_ENV"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BACKUP_FILE }}
+          path: ${{ env.BACKUP_FILE }}
+          retention-days: 90
+          if-no-files-found: error

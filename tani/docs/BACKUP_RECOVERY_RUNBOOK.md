@@ -1,7 +1,9 @@
 # Tani Backup & Recovery Runbook
 
 ## Database
-- Use Supabase managed backups/PITR appropriate to the paid plan in production.
+- The project is on the free Supabase plan, which has no managed backups. The `Tani Database Backup` workflow takes a weekly encrypted dump (Fridays 02:30 UTC) and keeps it as a workflow artifact for 90 days. It needs two repository secrets: `TANI_BACKUP_DB_URL` (the session-pooler connection string) and `TANI_BACKUP_PASSPHRASE` (24+ characters, stored outside GitHub as well — without it the dumps cannot be opened).
+- Restore a dump: `gpg --decrypt tani-YYYYMMDD.sql.gz.gpg | gunzip | psql "$DATABASE_URL"`, into an empty project first, never over the live one.
+- On a paid plan, use Supabase managed backups/PITR instead.
 - Before high-risk schema changes, create/confirm a current backup and record migration version.
 - Keep all schema changes reproducible in `supabase/*.sql`; never rely on dashboard-only DDL.
 

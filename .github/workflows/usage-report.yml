@@ -1,0 +1,38 @@
+name: Tani Usage Report
+
+# Opens an issue when the database or storage passes 80% of the free plan.
+on:
+  schedule:
+    - cron: '0 7 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  report:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      TANI_BACKUP_DB_URL: ${{ secrets.TANI_BACKUP_DB_URL }}
+      GH_TOKEN: ${{ github.token }}
+      DB_LIMIT_MB: 500
+      STORAGE_LIMIT_MB: 1024
+      MAU_LIMIT: 50000
+    steps:
+      - name: Measure and alert
+        run: |
+          set -euo pipefail
+          [[ -n "$TANI_BACKUP_DB_URL" ]] || { echo 'TANI_BACKUP_DB_URL is not set' >&2; exit 1; }
+          read -r db_mb storage_mb mau < <(docker run --rm -e PGURL="$TANI_BACKUP_DB_URL" postgres:17 psql "$PGURL" -XAt -F ' ' -c "
+            select pg_database_size(current_database())/1048576,
+                   coalesce((select sum((metadata->>'size')::bigint) from storage.objects),0)/1048576,
+                   (select count(*) from auth.users where last_sign_in_at > now()-interval '30 days')")
+          summary="Database: ${db_mb}/${DB_LIMIT_MB} MB, storage: ${storage_mb}/${STORAGE_LIMIT_MB} MB, monthly active users: ${mau}/${MAU_LIMIT}"
+          echo "$summary" | tee -a "$GITHUB_STEP_SUMMARY"
+          if (( db_mb * 10 >= DB_LIMIT_MB * 8 || storage_mb * 10 >= STORAGE_LIMIT_MB * 8 || mau * 10 >= MAU_LIMIT * 8 )); then
+            gh issue create --repo "$GITHUB_REPOSITORY" \
+              --title "Supabase free plan above 80% ($(date -u +%Y-%m))" \
+              --body "$summary"
+          fi
