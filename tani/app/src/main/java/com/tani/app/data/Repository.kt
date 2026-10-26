@@ -52,7 +52,7 @@ class Repository {
         }
 
         val response: AuthResponse = Supabase.authPost("signup", body.toString())
-        val uid = response.user?.id ?: error("تعذر إنشاء الحساب")
+        val uid = response.user?.id ?: response.id ?: error("تعذر إنشاء الحساب")
 
         // public.handle_new_user() في schema.sql ينشئ profile تلقائياً.
         // لا ننشئه مرة ثانية من التطبيق حتى لا يحدث تعارض بالمفتاح الأساسي.
