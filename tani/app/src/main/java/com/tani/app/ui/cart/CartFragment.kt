@@ -1,5 +1,10 @@
 package com.tani.app.ui.cart
 
+import androidx.core.content.ContextCompat
+import com.tani.app.data.productImageUrl
+import com.tani.app.data.remoteCart
+import com.tani.app.data.syncCart
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.os.Bundle
@@ -12,6 +17,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.snackbar.Snackbar
 import com.tani.app.MainActivity
 import com.tani.app.R
 import com.tani.app.data.Analytics
@@ -22,6 +28,7 @@ import com.tani.app.data.Supabase
 import com.tani.app.ui.auth.AuthFragment
 import com.tani.app.ui.commerce.CheckoutFragment
 import com.tani.app.ui.marketplace.MarketplaceUi
+import java.util.Locale
 import kotlinx.coroutines.launch
 
 class CartFragment : Fragment(R.layout.fragment_cart) {
@@ -35,6 +42,8 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
     }
 
     private fun restoreOrSync() {
+        // سلة الزائر محلية فقط، والخادم لا يقبل مزامنتها قبل تسجيل الدخول.
+        if (!Supabase.hasStoredSession()) return
         viewLifecycleOwner.lifecycleScope.launch {
             if (Cart.all().isEmpty()) {
                 runCatchingCancellable { repository.remoteCart() }
@@ -56,8 +65,8 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
         val items = Cart.all()
         if (items.isEmpty()) {
             box.addView(TextView(requireContext()).apply {
-                text = "السلة فارغة 🛍️\nأضيفي منتجات من المتاجر ثم ارجعي هنا."
-                textSize = 17f
+                text = getString(R.string.cart_1)
+                textSize = 16f
                 gravity = Gravity.CENTER
                 setPadding(10, MarketplaceUi.dp(requireContext(), 38), 10, MarketplaceUi.dp(requireContext(), 38))
                 setTextColor(requireContext().getColor(R.color.text_muted))
@@ -66,8 +75,8 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
         }
 
         box.addView(TextView(requireContext()).apply {
-            text = "${Cart.itemCount()} قطعة من ${Cart.groupedBySeller().size} متجر"
-            textSize = 15f
+            text = getString(R.string.cart_2, Cart.itemCount().toString(), (Cart.groupedBySeller().size).toString())
+            textSize = 16f
             setTextColor(requireContext().getColor(R.color.text_muted))
             setPadding(0, 0, 0, MarketplaceUi.dp(requireContext(), 12))
         })
@@ -90,31 +99,31 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
                 MarketplaceUi.dp(requireContext(), 16),
                 MarketplaceUi.dp(requireContext(), 16)
             )
-            background = requireContext().getDrawable(R.drawable.bg_card)
+            background = ContextCompat.getDrawable(requireContext(), R.drawable.bg_card)
         }
-        summary.addView(summaryLine("قيمة المنتجات", MarketplaceUi.formatPrice(Cart.subtotal())))
-        summary.addView(summaryLine("التوصيل المبدئي", MarketplaceUi.formatPrice(Cart.deliveryTotal())))
+        summary.addView(summaryLine(getString(R.string.cart_3), MarketplaceUi.formatPrice(Cart.subtotal())))
+        summary.addView(summaryLine(getString(R.string.cart_4), MarketplaceUi.formatPrice(Cart.deliveryTotal())))
         summary.addView(TextView(requireContext()).apply {
-            text = "الإجمالي المبدئي: ${MarketplaceUi.formatPrice(Cart.grandTotal())}"
-            textSize = 21f
+            text = getString(R.string.cart_5, (MarketplaceUi.formatPrice(Cart.grandTotal())))
+            textSize = 22f
             setTextColor(requireContext().getColor(R.color.tani_primary))
             setPadding(0, MarketplaceUi.dp(requireContext(), 12), 0, MarketplaceUi.dp(requireContext(), 6))
         })
         summary.addView(TextView(requireContext()).apply {
-            text = "في الخطوة التالية سنعرض رسوم التوصيل والإجمالي النهائي قبل تأكيد الطلب."
-            textSize = 13f
+            text = getString(R.string.cart_6)
+            textSize = 14f
             setTextColor(requireContext().getColor(R.color.text_muted))
         })
         box.addView(summary)
 
         box.addView(Button(requireContext()).apply {
-            text = "إكمال الطلب"
+            text = getString(R.string.cart_7)
             setOnClickListener {
                 if (Supabase.hasStoredSession()) {
                     viewLifecycleOwner.lifecycleScope.launch { Analytics.track("checkout_started", screen = "cart") }
                     (activity as? MainActivity)?.show(CheckoutFragment())
                 } else {
-                    Toast.makeText(requireContext(), "سجّلي الدخول لإتمام الطلب — السلة محفوظة", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), getString(R.string.cart_8), Toast.LENGTH_SHORT).show()
                     (activity as? MainActivity)?.show(AuthFragment.newCheckoutInstance())
                 }
             }
@@ -129,7 +138,7 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
 
     private fun merchantGroup(items: List<CartItem>): LinearLayout {
         val first = items.first()
-        val storeName = first.product.store_name ?: "المتجر"
+        val storeName = first.product.store_name ?: getString(R.string.main_18)
         val subtotal = items.sumOf { it.unitPrice * it.quantity }
         val delivery = first.product.delivery_fee
 
@@ -141,16 +150,16 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
                 MarketplaceUi.dp(requireContext(), 16),
                 MarketplaceUi.dp(requireContext(), 16)
             )
-            background = requireContext().getDrawable(R.drawable.bg_card)
+            background = ContextCompat.getDrawable(requireContext(), R.drawable.bg_card)
 
             addView(TextView(requireContext()).apply {
                 text = storeName
-                textSize = 18f
+                textSize = 22f
                 setTextColor(requireContext().getColor(R.color.text_dark))
             })
             items.forEach { addView(itemRow(it)) }
             addView(TextView(requireContext()).apply {
-                text = "المجموع: ${MarketplaceUi.formatPrice(subtotal)}\nالتوصيل المبدئي: ${MarketplaceUi.formatPrice(delivery)}"
+                text = getString(R.string.cart_9, (MarketplaceUi.formatPrice(subtotal)), (MarketplaceUi.formatPrice(delivery)))
                 textSize = 14f
                 setPadding(0, MarketplaceUi.dp(requireContext(), 10), 0, 0)
                 setTextColor(requireContext().getColor(R.color.text_muted))
@@ -188,26 +197,26 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
         }
         info.addView(TextView(requireContext()).apply {
             text = item.product.name
-            textSize = 17f
+            textSize = 16f
             setTextColor(requireContext().getColor(R.color.text_dark))
             setTypeface(typeface, android.graphics.Typeface.BOLD)
         })
         item.variantName?.let { variantName ->
             info.addView(TextView(requireContext()).apply {
-                text = "الخيار: $variantName"
+                text = getString(R.string.cart_10, variantName)
                 textSize = 14f
                 setPadding(0, MarketplaceUi.dp(requireContext(), 4), 0, 0)
                 setTextColor(requireContext().getColor(R.color.tani_primary))
             })
         }
         info.addView(TextView(requireContext()).apply {
-            text = "${MarketplaceUi.formatPrice(item.unitPrice)} × ${item.quantity}"
+            text = getString(R.string.cart_14, MarketplaceUi.formatPrice(item.unitPrice), item.quantity.toString())
             textSize = 14f
             setPadding(0, MarketplaceUi.dp(requireContext(), 5), 0, 0)
             setTextColor(requireContext().getColor(R.color.text_muted))
         })
         info.addView(TextView(requireContext()).apply {
-            text = "المجموع ${MarketplaceUi.formatPrice(item.unitPrice * item.quantity)}"
+            text = getString(R.string.cart_11, (MarketplaceUi.formatPrice(item.unitPrice * item.quantity)))
             textSize = 14f
             setPadding(0, MarketplaceUi.dp(requireContext(), 4), 0, 0)
             setTextColor(requireContext().getColor(R.color.tani_primary))
@@ -226,13 +235,13 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
             minWidth = 0
             setOnClickListener {
                 if (!Cart.increase(item.key)) {
-                    Toast.makeText(requireContext(), "وصلتِ للكمية المتاحة", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), getString(R.string.cart_12), Toast.LENGTH_SHORT).show()
                 }
                 render(); syncSilent()
             }
         }, LinearLayout.LayoutParams(MarketplaceUi.dp(requireContext(), 52), MarketplaceUi.dp(requireContext(), 48)))
         actions.addView(TextView(requireContext()).apply {
-            text = item.quantity.toString()
+            text = String.format(Locale.US, "%d", item.quantity)
             textSize = 16f
             gravity = Gravity.CENTER
             setTextColor(requireContext().getColor(R.color.text_dark))
@@ -240,17 +249,17 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
         actions.addView(Button(requireContext()).apply {
             text = "−"
             minWidth = 0
-            setOnClickListener { Cart.decrease(item.key); render(); syncSilent() }
+            setOnClickListener { changeWithUndo(item.key) { Cart.decrease(item.key) } }
         }, LinearLayout.LayoutParams(MarketplaceUi.dp(requireContext(), 52), MarketplaceUi.dp(requireContext(), 48)))
         actions.addView(TextView(requireContext()).apply {
-            text = "حذف"
+            text = getString(R.string.cart_13)
             textSize = 14f
             gravity = Gravity.CENTER
             setPadding(MarketplaceUi.dp(requireContext(), 14), 0, MarketplaceUi.dp(requireContext(), 14), 0)
             setTextColor(requireContext().getColor(R.color.error))
             isClickable = true
             isFocusable = true
-            setOnClickListener { Cart.remove(item.key); render(); syncSilent() }
+            setOnClickListener { changeWithUndo(item.key) { Cart.remove(item.key) } }
         }, LinearLayout.LayoutParams(0, MarketplaceUi.dp(requireContext(), 48), 1f))
         row.addView(actions)
         return row
@@ -274,8 +283,25 @@ class CartFragment : Fragment(R.layout.fragment_cart) {
         })
     }
 
+    /** حذف منتج من السلة بلمسة واحدة يحتاج طريقة سريعة للتراجع عنه. */
+    private fun changeWithUndo(itemKey: String, change: () -> Unit) {
+        val before = Cart.all()
+        change()
+        render(); syncSilent()
+        if (Cart.all().any { it.key == itemKey }) return
+        Snackbar.make(requireView(), getString(R.string.cart_15), Snackbar.LENGTH_LONG)
+            .apply { activity?.findViewById<View>(R.id.bottom_nav)?.takeIf { it.isShown }?.let { anchorView = it } }
+            .setAction(R.string.cart_16) {
+                if (view == null) return@setAction
+                Cart.replace(before)
+                render(); syncSilent()
+            }
+            .show()
+    }
+
     private fun syncSilent() {
         (activity as? MainActivity)?.refreshCartBadge()
+        if (!Supabase.hasStoredSession()) return
         viewLifecycleOwner.lifecycleScope.launch { runCatchingCancellable { repository.syncCart(Cart.all()) } }
     }
 }

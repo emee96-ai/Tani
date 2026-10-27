@@ -1,5 +1,11 @@
 package com.tani.app.ui.marketplace
 
+import com.tani.app.data.store
+import com.tani.app.data.storeImageUrl
+import com.tani.app.data.storeProductPage
+
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.os.Bundle
@@ -40,24 +46,24 @@ class StoreDetailsFragment : Fragment(R.layout.fragment_store_details) {
                 content.visibility = View.VISIBLE
                 view.findViewById<TextView>(R.id.store_details_name).text = store.name
                 view.findViewById<TextView>(R.id.store_details_description).text =
-                    store.description.ifBlank { "متجر محلي على تاني" }
+                    store.description.ifBlank { getString(R.string.store_details_1) }
                 val trust = MarketplaceUi.verificationLabel(store.verification_status)
                 view.findViewById<TextView>(R.id.store_details_status).text =
-                    listOfNotNull(trust, if (store.is_open) "مفتوح الآن" else "مغلق حالياً").joinToString(" • ")
+                    listOfNotNull(trust, if (store.is_open) getString(R.string.store_details_2) else getString(R.string.store_details_3)).joinToString(" • ")
                 view.findViewById<TextView>(R.id.store_details_location).text =
-                    "${store.city}${store.area?.let { " - $it" } ?: ""}"
+                    store.area?.let { getString(R.string.store_details_11, store.city, it) } ?: store.city
                 view.findViewById<TextView>(R.id.store_details_rating).text =
                     if (store.review_count > 0) {
-                        String.format(Locale.US, "★ %.1f (%d تقييم)", store.average_rating, store.review_count)
-                    } else "بدون تقييمات بعد"
+                        String.format(Locale.US, getString(R.string.store_details_4), store.average_rating, store.review_count)
+                    } else getString(R.string.store_details_5)
                 val categoryNames = products.mapNotNull { it.category_name?.takeIf { name -> name.isNotBlank() } }.distinct().take(6)
                 view.findViewById<TextView>(R.id.store_details_categories).text =
                     if (categoryNames.isEmpty()) "" else "الفئات: ${categoryNames.joinToString(" • ")}"
 
                 view.findViewById<TextView>(R.id.store_details_delivery).text = buildString {
-                    append(if (store.delivery_fee > 0) "التوصيل: ${MarketplaceUi.formatPrice(store.delivery_fee)}" else "رسوم التوصيل تظهر حسب إعدادات المتجر")
+                    append(if (store.delivery_fee > 0) getString(R.string.checkout_8, (MarketplaceUi.formatPrice(store.delivery_fee))) else getString(R.string.store_details_6))
                     store.delivery_area?.let { append(" • $it") }
-                    store.estimated_minutes?.let { append(" • حوالي $it دقيقة") }
+                    store.estimated_minutes?.let { append(getString(R.string.store_details_7, it.toString())) }
                 }
                 view.findViewById<Button>(R.id.store_details_share).setOnClickListener {
                     ShareHelper.store(requireContext(), store.id, store.name)
@@ -81,7 +87,7 @@ class StoreDetailsFragment : Fragment(R.layout.fragment_store_details) {
                 val box = view.findViewById<LinearLayout>(R.id.store_details_products)
                 box.removeAllViews()
                 if (products.isEmpty()) {
-                    box.addView(MarketplaceUi.empty(requireContext(), "لا توجد منتجات متاحة في هذا المتجر حالياً"))
+                    box.addView(MarketplaceUi.empty(requireContext(), getString(R.string.store_details_8)))
                 } else {
                     val cards = products.map { product ->
                         MarketplaceUi.productCard(
@@ -89,13 +95,13 @@ class StoreDetailsFragment : Fragment(R.layout.fragment_store_details) {
                             onOpen = { (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id)) },
                             onAdd = {
                                 if (product.has_variants) {
-                                    Toast.makeText(requireContext(), "اختاري المقاس أو اللون أولاً", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(requireContext(), getString(R.string.favorites_4), Toast.LENGTH_SHORT).show()
                                     (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id))
                                 } else if (Cart.add(product.toProduct())) {
                                     (activity as? MainActivity)?.refreshCartBadge()
-                                    Toast.makeText(requireContext(), "تمت إضافة ${product.name} للسلة", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(requireContext(), getString(R.string.home_28, product.name), Toast.LENGTH_SHORT).show()
                                 } else {
-                                    Toast.makeText(requireContext(), "تعذر إضافة كمية إضافية", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(requireContext(), getString(R.string.home_29), Toast.LENGTH_SHORT).show()
                                 }
                             }
                         )
@@ -107,7 +113,7 @@ class StoreDetailsFragment : Fragment(R.layout.fragment_store_details) {
                     Analytics.track("store_view", screen = "store_details", entityType = "store", entityId = store.id)
                 }
             }.onFailure {
-                loading.text = "تعذر تحميل المتجر\n${it.message ?: "حاولي مرة أخرى"}"
+                loading.text = getString(R.string.store_details_9, CustomerErrorMessages.from(it, getString(R.string.store_details_10)))
             }
         }
     }

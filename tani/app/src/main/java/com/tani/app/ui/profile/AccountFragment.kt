@@ -1,5 +1,8 @@
 package com.tani.app.ui.profile
 
+import androidx.core.graphics.scale
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.graphics.Bitmap
@@ -26,7 +29,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
-import java.net.URL
+import com.tani.app.ui.marketplace.MarketplaceImageLoader
 
 class AccountFragment : Fragment(R.layout.fragment_account) {
 
@@ -55,7 +58,7 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
 
         progress = view.findViewById(R.id.account_progress)
         content = view.findViewById(R.id.account_content)
-        avatar = view.findViewById(R.id.account_avatar)
+        avatar = view.findViewById<ImageView>(R.id.account_avatar).apply { clipToOutline = true }
         editButton = view.findViewById(R.id.account_edit)
         changeAvatarButton = view.findViewById(R.id.account_change_avatar)
         saveButton = view.findViewById(R.id.account_save)
@@ -98,7 +101,7 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
                 .onFailure {
                     Toast.makeText(
                         requireContext(),
-                        it.message ?: "تعذر تحميل بيانات الحساب",
+                        CustomerErrorMessages.from(it, getString(R.string.account_1)),
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -132,11 +135,11 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
                 name.setText(updated.name)
                 phone.setText(updated.phone)
                 setEditMode(false)
-                Toast.makeText(requireContext(), "تم حفظ التعديلات", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), getString(R.string.account_2), Toast.LENGTH_SHORT).show()
             }.onFailure {
                 Toast.makeText(
                     requireContext(),
-                    it.message ?: "تعذر حفظ التعديلات",
+                    CustomerErrorMessages.from(it, getString(R.string.account_3)),
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -146,7 +149,7 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
 
     private fun setEditMode(enabled: Boolean) {
         editMode = enabled
-        editButton.text = if (enabled) "إلغاء" else "تعديل"
+        editButton.text = if (enabled) getString(R.string.addresses_19) else getString(R.string.addresses_7)
         changeAvatarButton.visibility = if (enabled) View.VISIBLE else View.GONE
         saveButton.visibility = if (enabled) View.VISIBLE else View.GONE
         setEditable(name, enabled)
@@ -177,16 +180,16 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
                 withContext(Dispatchers.IO) {
                     val bitmap = requireContext().contentResolver.openInputStream(uri)?.use {
                         BitmapFactory.decodeStream(it)
-                    } ?: error("تعذر قراءة الصورة")
+                    } ?: error(getString(R.string.account_4))
                     val scaled = scaleDown(bitmap, 1024)
                     ByteArrayOutputStream().use { output ->
                         require(scaled.compress(Bitmap.CompressFormat.JPEG, 82, output)) {
-                            "تعذر تجهيز الصورة"
+                            getString(R.string.account_5)
                         }
                         output.toByteArray()
                     }.also {
                         require(it.size <= 5 * 1024 * 1024) {
-                            "حجم الصورة كبير جداً. اختاري صورة أصغر"
+                            getString(R.string.account_6)
                         }
                     }
                 }
@@ -197,7 +200,7 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
             }.onFailure {
                 Toast.makeText(
                     requireContext(),
-                    it.message ?: "تعذر تجهيز الصورة",
+                    CustomerErrorMessages.from(it, getString(R.string.account_5)),
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -206,12 +209,9 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
     }
 
     private fun loadRemoteAvatar(url: String) {
+        val appContext = requireContext().applicationContext
         viewLifecycleOwner.lifecycleScope.launch {
-            val bitmap = withContext(Dispatchers.IO) {
-                runCatchingCancellable {
-                    URL(url).openStream().use { BitmapFactory.decodeStream(it) }
-                }.getOrNull()
-            }
+            val bitmap = MarketplaceImageLoader.loadBitmap(appContext, url)
             if (bitmap != null && isAdded) {
                 avatar.setPadding(0, 0, 0, 0)
                 avatar.setImageBitmap(bitmap)
@@ -233,7 +233,7 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
         val ratio = maxSize.toFloat() / largest.toFloat()
         val width = (bitmap.width * ratio).toInt().coerceAtLeast(1)
         val height = (bitmap.height * ratio).toInt().coerceAtLeast(1)
-        return Bitmap.createScaledBitmap(bitmap, width, height, true)
+        return bitmap.scale(width, height)
     }
 
     private fun setLoading(loading: Boolean) {

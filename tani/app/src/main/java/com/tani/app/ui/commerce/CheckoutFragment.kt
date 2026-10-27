@@ -1,5 +1,7 @@
 package com.tani.app.ui.commerce
 
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.app.AlertDialog
@@ -18,6 +20,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.snackbar.Snackbar
 import com.tani.app.MainActivity
 import com.tani.app.R
 import com.tani.app.data.*
@@ -50,7 +53,17 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
     private var latestQuoteSignature: String? = null
     private var quoteJob: Job? = null
 
+    // اختيارات العنوان والمنطقة قبل تدوير الشاشة أو إيقاف النظام للتطبيق؛ تُطبق بعد تحميل البيانات.
+    private var restoredAddressId: String? = null
+    private var restoredZoneIds: Map<String, String> = emptyMap()
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        savedInstanceState?.let { state ->
+            restoredAddressId = state.getString(STATE_ADDRESS_ID)
+            restoredZoneIds = state.getStringArrayList(STATE_ZONE_IDS).orEmpty()
+                .mapNotNull { entry -> entry.split('=', limit = 2).takeIf { it.size == 2 } }
+                .associate { (sellerId, zoneId) -> sellerId to zoneId }
+        }
         addressGroup = view.findViewById(R.id.checkout_addresses)
         deliveryZonesBox = view.findViewById(R.id.checkout_delivery_zones)
         deliveryHint = view.findViewById(R.id.checkout_delivery_hint)
@@ -78,7 +91,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
                 if (groupId != null) {
                     (activity as? MainActivity)?.show(OrderConfirmationFragment.newInstance(groupId))
                 } else if (Cart.all().isEmpty()) {
-                    Toast.makeText(requireContext(), "السلة فارغة", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), getString(R.string.checkout_1), Toast.LENGTH_SHORT).show()
                     parentFragmentManager.popBackStack()
                 } else {
                     confirm.setOnClickListener { submit() }
@@ -86,12 +99,31 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
                 }
             }.onFailure {
                 progress.visibility = View.GONE
-                confirm.text = "إعادة التحقق من محاولة الطلب"
+                confirm.text = getString(R.string.checkout_2)
                 confirm.isEnabled = true
                 confirm.setOnClickListener { recoverCheckout() }
-                Toast.makeText(requireContext(), it.message ?: "تعذر التحقق من الطلب السابق", Toast.LENGTH_LONG).show()
+                showError(CustomerErrorMessages.from(it, getString(R.string.checkout_3)))
             }
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString(STATE_ADDRESS_ID, selectedAddressId ?: restoredAddressId)
+        val zoneIds = restoredZoneIds + selectedZones.mapValues { (_, zone) -> zone.id }
+        outState.putStringArrayList(
+            STATE_ZONE_IDS,
+            ArrayList(zoneIds.map { (sellerId, zoneId) -> "$sellerId=$zoneId" })
+        )
+    }
+
+    private fun applyRestoredSelections() {
+        restoredAddressId?.takeIf { id -> addresses.any { it.id == id } }?.let { selectedAddressId = it }
+        restoredZoneIds.forEach { (sellerId, zoneId) ->
+            zonesBySeller[sellerId]?.firstOrNull { it.id == zoneId }?.let { selectedZones[sellerId] = it }
+        }
+        restoredAddressId = null
+        restoredZoneIds = emptyMap()
     }
 
     override fun onDestroyView() {
@@ -128,6 +160,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
                 addresses = loadedAddresses
                 zonesBySeller = loadedZones
                 if (phone.text.isBlank()) phone.setText(account.profile.phone)
+                applyRestoredSelections()
                 renderAddresses()
                 renderDeliveryZones()
                 dataLoaded = true
@@ -135,11 +168,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
                 updateConfirmState()
                 requestQuoteRefresh()
             }.onFailure {
-                Toast.makeText(
-                    requireContext(),
-                    it.message ?: "تعذر تحميل بيانات الطلب والتوصيل",
-                    Toast.LENGTH_LONG
-                ).show()
+                showError(CustomerErrorMessages.from(it, getString(R.string.checkout_4)))
             }
             progress.visibility = View.GONE
             updateConfirmState()
@@ -150,7 +179,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
         addressGroup.removeAllViews()
         if (addresses.isEmpty()) {
             addressGroup.addView(TextView(requireContext()).apply {
-                text = "أضيفي عنواناً قبل تأكيد الطلب."
+                text = getString(R.string.checkout_5)
                 setPadding(0, dp(12), 0, dp(12))
             })
             selectedAddressId = null
@@ -168,7 +197,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
                 tag = address.id
                 text = buildString {
                     append(address.label)
-                    if (address.is_default) append(" • الافتراضي")
+                    if (address.is_default) append(getString(R.string.checkout_6))
                     append("\n${address.description}")
                     address.area?.takeIf { it.isNotBlank() }?.let { append(" - $it") }
                 }
@@ -201,7 +230,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
 
         grouped.forEach { (sellerId, group) ->
             val first = group.first()
-            val storeName = first.product.store_name ?: "المتجر"
+            val storeName = first.product.store_name ?: getString(R.string.main_18)
             val zones = zonesBySeller[sellerId].orEmpty()
 
             deliveryZonesBox.addView(TextView(requireContext()).apply {
@@ -214,7 +243,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
 
             if (zones.isEmpty()) {
                 deliveryZonesBox.addView(TextView(requireContext()).apply {
-                    text = "سيتم حساب التوصيل لهذا المتجر تلقائياً قبل التأكيد"
+                    text = getString(R.string.checkout_7)
                     textSize = 14f
                     setTextColor(requireContext().getColor(R.color.text_muted))
                     setPadding(0, 0, 0, dp(10))
@@ -235,7 +264,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
                     text = buildString {
                         append(zone.area_name)
                         append("\n")
-                        append("التوصيل: ${MarketplaceUi.formatPrice(zone.fee)}")
+                        append(getString(R.string.checkout_8, (MarketplaceUi.formatPrice(zone.fee))))
                         zone.estimated_minutes?.let { append(" • ${formatEstimate(it)}") }
                     }
                     isChecked = zone.id == preferred?.id
@@ -256,7 +285,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
         }
 
         if (merchantsWithChoices == 0) {
-            deliveryHint.text = multiMerchantPrefix() + "سنحسب رسوم التوصيل تلقائياً قبل التأكيد."
+            deliveryHint.text = withMerchantPrefix(getString(R.string.checkout_9))
         } else {
             updateDeliveryHint()
         }
@@ -276,15 +305,15 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
     private fun updateDeliveryHint() {
         val missing = sellersRequiringZone().count { it !in selectedZones }
         deliveryHint.text = if (missing == 0) {
-            multiMerchantPrefix() + "تم اختيار التوصيل لكل متجر ✓"
+            withMerchantPrefix(getString(R.string.checkout_10))
         } else {
-            multiMerchantPrefix() + "اختاري منطقة التوصيل لـ $missing ${if (missing == 1) "متجر" else "متاجر"}."
+            withMerchantPrefix(resources.getQuantityString(R.plurals.checkout_missing_zones, missing, missing.toString()))
         }
     }
 
-    private fun multiMerchantPrefix(): String {
+    private fun withMerchantPrefix(message: String): String {
         val count = Cart.groupedBySeller().size
-        return if (count > 1) "طلبك موزع على $count متاجر • " else ""
+        return if (count > 1) getString(R.string.checkout_11, count.toString(), message) else message
     }
 
     private fun renderSummary() {
@@ -296,7 +325,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
 
         grouped.forEach { (sellerId, group) ->
             val first = group.first()
-            val storeName = first.product.store_name ?: "المتجر"
+            val storeName = first.product.store_name ?: getString(R.string.main_18)
             val subtotal = group.sumOf { it.unitPrice * it.quantity }
             val zones = zonesBySeller[sellerId].orEmpty()
             val chosen = selectedZones[sellerId]
@@ -309,18 +338,18 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
             summary.addView(TextView(requireContext()).apply {
                 text = buildString {
                     append(storeName)
-                    append("\n${group.sumOf { it.quantity }} منتج • ${MarketplaceUi.formatPrice(subtotal)}")
+                    append(getString(R.string.checkout_12, (group.sumOf { it.quantity }).toString(), (MarketplaceUi.formatPrice(subtotal))))
                     append("\n")
                     when {
-                        zones.isEmpty() -> append("التوصيل: يُحسب تلقائياً")
-                        delivery == null -> append("التوصيل: اختاري المنطقة")
+                        zones.isEmpty() -> append(getString(R.string.checkout_13))
+                        delivery == null -> append(getString(R.string.checkout_14))
                         else -> {
-                            append("التوصيل: ${MarketplaceUi.formatPrice(delivery)}")
+                            append(getString(R.string.checkout_8, (MarketplaceUi.formatPrice(delivery))))
                             chosen?.let { append(" • ${it.area_name}") }
                         }
                     }
                 }
-                textSize = 15f
+                textSize = 16f
                 setTextColor(requireContext().getColor(R.color.text_dark))
                 setPadding(0, dp(8), 0, dp(8))
             })
@@ -331,41 +360,41 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
             validQuote != null -> {
                 val deliveryTotal = validQuote.deliveries.sumOf { it.fee }
                 buildString {
-                    append("قيمة المنتجات: ${MarketplaceUi.formatPrice(validQuote.subtotal)}")
-                    append("\nالتوصيل: ${MarketplaceUi.formatPrice(deliveryTotal)}")
+                    append(getString(R.string.checkout_15, (MarketplaceUi.formatPrice(validQuote.subtotal))))
+                    append(getString(R.string.checkout_16, (MarketplaceUi.formatPrice(deliveryTotal))))
                     if (validQuote.discount_total > 0) {
-                        append("\nالخصم: ${MarketplaceUi.formatPrice(validQuote.discount_total)}")
+                        append(getString(R.string.checkout_17, (MarketplaceUi.formatPrice(validQuote.discount_total))))
                     }
-                    append("\nالإجمالي النهائي: ${MarketplaceUi.formatPrice(validQuote.grand_total)}")
+                    append(getString(R.string.checkout_18, (MarketplaceUi.formatPrice(validQuote.grand_total))))
                 }
             }
-            missingZone -> "اختاري منطقة التوصيل لإظهار الإجمالي النهائي."
-            serverDeliveryNeeded -> "قيمة المنتجات: ${MarketplaceUi.formatPrice(Cart.subtotal())}\nجاري حساب التوصيل والإجمالي النهائي…"
+            missingZone -> getString(R.string.checkout_19)
+            serverDeliveryNeeded -> getString(R.string.checkout_20, (MarketplaceUi.formatPrice(Cart.subtotal())))
             else -> {
                 val estimated = Cart.subtotal() + selectedDeliveryTotal
-                "التوصيل: ${MarketplaceUi.formatPrice(selectedDeliveryTotal)}\nالإجمالي المتوقع: ${MarketplaceUi.formatPrice(estimated)}\nيتم التحقق تلقائياً قبل التأكيد."
+                getString(R.string.checkout_21, (MarketplaceUi.formatPrice(selectedDeliveryTotal)), (MarketplaceUi.formatPrice(estimated)))
             }
         }
 
         confirm.text = if (validQuote != null && !hasBlockingWarnings(validQuote)) {
-            "تأكيد الطلب • ${MarketplaceUi.formatPrice(validQuote.grand_total)}"
+            getString(R.string.checkout_22, (MarketplaceUi.formatPrice(validQuote.grand_total)))
         } else {
-            "مراجعة وتأكيد الطلب"
+            getString(R.string.checkout_23)
         }
     }
 
     private fun showAddAddress() {
-        val label = EditText(requireContext()).apply { hint = "اسم العنوان"; setText("المنزل") }
-        val description = EditText(requireContext()).apply { hint = "العنوان بالتفصيل" }
-        val area = EditText(requireContext()).apply { hint = "المنطقة / الحي" }
-        val landmark = EditText(requireContext()).apply { hint = "علامة مميزة" }
+        val label = EditText(requireContext()).apply { hint = getString(R.string.checkout_24); setText(getString(R.string.addresses_9)) }
+        val description = EditText(requireContext()).apply { hint = getString(R.string.addresses_10) }
+        val area = EditText(requireContext()).apply { hint = getString(R.string.checkout_25) }
+        val landmark = EditText(requireContext()).apply { hint = getString(R.string.checkout_26) }
         val addressPhone = EditText(requireContext()).apply {
-            hint = "هاتف التوصيل"
+            hint = getString(R.string.checkout_27)
             inputType = InputType.TYPE_CLASS_PHONE
             setText(phone.text.toString())
         }
         val defaultBox = CheckBox(requireContext()).apply {
-            text = "العنوان الافتراضي"
+            text = getString(R.string.checkout_28)
             isChecked = addresses.isEmpty()
         }
         val form = LinearLayout(requireContext()).apply {
@@ -379,10 +408,10 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
             addView(defaultBox)
         }
         val dialog = AlertDialog.Builder(requireContext())
-            .setTitle("إضافة عنوان")
+            .setTitle(getString(R.string.addresses_16))
             .setView(form)
-            .setPositiveButton("حفظ", null)
-            .setNegativeButton("إلغاء", null)
+            .setPositiveButton(getString(R.string.addresses_18), null)
+            .setNegativeButton(getString(R.string.addresses_19), null)
             .create()
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
@@ -407,7 +436,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
                     }.onFailure {
                         Toast.makeText(
                             requireContext(),
-                            it.message ?: "تعذر حفظ العنوان",
+                            CustomerErrorMessages.from(it, getString(R.string.addresses_20)),
                             Toast.LENGTH_LONG
                         ).show()
                     }
@@ -420,19 +449,19 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
     private fun submit() {
         val addressId = selectedAddressId
         if (addressId == null) {
-            Toast.makeText(requireContext(), "اختاري عنوان التوصيل", Toast.LENGTH_SHORT).show()
+            showError(getString(R.string.checkout_29))
             return
         }
         val phoneValue = phone.text.toString().trim()
         if (phoneValue.length < 7) {
-            phone.error = "أدخلي رقم هاتف صحيح للتوصيل"
+            phone.error = getString(R.string.checkout_30)
             phone.requestFocus()
             return
         }
         val missingSeller = sellersRequiringZone().firstOrNull { it !in selectedZones }
         if (missingSeller != null) {
-            val store = Cart.groupedBySeller()[missingSeller]?.firstOrNull()?.product?.store_name ?: "المتجر"
-            Toast.makeText(requireContext(), "اختاري منطقة التوصيل من $store", Toast.LENGTH_LONG).show()
+            val store = Cart.groupedBySeller()[missingSeller]?.firstOrNull()?.product?.store_name ?: getString(R.string.main_18)
+            showError(getString(R.string.checkout_31, store))
             return
         }
 
@@ -445,7 +474,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
 
         confirm.isEnabled = false
         progress.visibility = View.VISIBLE
-        total.text = "جاري التحقق من السعر والتوصيل…"
+        total.text = getString(R.string.checkout_32)
         viewLifecycleOwner.lifecycleScope.launch {
             runCatchingCancellable {
                 repository.quoteCart(Cart.all(), selectedZones.toMap())
@@ -455,11 +484,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
                 renderSummary()
                 showQuoteConfirmation(addressId, quote)
             }.onFailure {
-                Toast.makeText(
-                    requireContext(),
-                    it.message ?: "تعذر التحقق من الأسعار ورسوم التوصيل",
-                    Toast.LENGTH_LONG
-                ).show()
+                showError(CustomerErrorMessages.from(it, getString(R.string.checkout_33)))
             }
             progress.visibility = View.GONE
             updateConfirmState()
@@ -481,7 +506,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
             return
         }
 
-        total.text = "جاري حساب الإجمالي النهائي…"
+        total.text = getString(R.string.checkout_34)
         quoteJob = viewLifecycleOwner.lifecycleScope.launch {
             delay(180)
             val result = runCatchingCancellable { repository.quoteCart(Cart.all(), selectedZones.toMap()) }
@@ -507,9 +532,9 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
         val warnings = quoteWarnings(quote)
         if (warnings.isNotEmpty()) {
             AlertDialog.Builder(requireContext())
-                .setTitle("راجعي السلة")
+                .setTitle(getString(R.string.checkout_35))
                 .setMessage(warnings.joinToString("\n"))
-                .setPositiveButton("حسناً", null)
+                .setPositiveButton(getString(R.string.checkout_36), null)
                 .show()
             return
         }
@@ -519,23 +544,23 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
         renderSummary()
 
         val message = buildString {
-            append("قيمة المنتجات: ${MarketplaceUi.formatPrice(quote.subtotal)}\n")
+            append(getString(R.string.checkout_37, (MarketplaceUi.formatPrice(quote.subtotal))))
             quote.deliveries.forEach { delivery ->
-                append("توصيل ${delivery.store_name}: ${MarketplaceUi.formatPrice(delivery.fee)}")
+                append(getString(R.string.checkout_38, delivery.store_name, (MarketplaceUi.formatPrice(delivery.fee))))
                 delivery.area?.takeIf { it.isNotBlank() }?.let { append(" • $it") }
                 append("\n")
             }
             if (quote.discount_total > 0) {
-                append("الخصم: ${MarketplaceUi.formatPrice(quote.discount_total)}\n")
+                append(getString(R.string.checkout_39, (MarketplaceUi.formatPrice(quote.discount_total))))
             }
-            append("\nالإجمالي النهائي: ${MarketplaceUi.formatPrice(quote.grand_total)}")
+            append(getString(R.string.checkout_18, (MarketplaceUi.formatPrice(quote.grand_total))))
         }
 
         AlertDialog.Builder(requireContext())
-            .setTitle("التأكيد الأخير")
+            .setTitle(getString(R.string.checkout_40))
             .setMessage(message)
-            .setNegativeButton("رجوع", null)
-            .setPositiveButton("إرسال الطلب") { _, _ -> placeOrder(addressId, quote) }
+            .setNegativeButton(getString(R.string.checkout_41), null)
+            .setPositiveButton(getString(R.string.checkout_42)) { _, _ -> placeOrder(addressId, quote) }
             .show()
     }
 
@@ -544,7 +569,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
         progress.visibility = View.VISIBLE
         viewLifecycleOwner.lifecycleScope.launch {
             runCatchingCancellable {
-                val uid = Supabase.userId ?: error("تسجيل الدخول مطلوب")
+                val uid = Supabase.userId ?: error(getString(R.string.checkout_43))
                 val attempt = PendingCheckoutStore.begin(uid)
                 repository.checkoutWithDeliveryZones(
                     addressId = addressId,
@@ -562,11 +587,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
                 clearQuote()
                 renderSummary()
                 requestQuoteRefresh()
-                Toast.makeText(
-                    requireContext(),
-                    it.message ?: "تعذر إنشاء الطلب",
-                    Toast.LENGTH_LONG
-                ).show()
+                showError(CustomerErrorMessages.from(it, getString(R.string.checkout_44)))
             }
             progress.visibility = View.GONE
             updateConfirmState()
@@ -577,7 +598,7 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
         val unavailable = quote.items.filterNot { it.available }
         return buildList {
             addAll(quote.warnings)
-            unavailable.forEach { add("${it.name}: الكمية المطلوبة غير متاحة") }
+            unavailable.forEach { add(getString(R.string.checkout_45, it.name)) }
         }.distinct()
     }
 
@@ -620,11 +641,25 @@ class CheckoutFragment : Fragment(R.layout.fragment_checkout) {
     }
 
     private fun formatEstimate(minutes: Int): String = when {
-        minutes < 60 -> "$minutes دقيقة"
-        minutes % 60 == 0 -> "${minutes / 60} ساعة"
-        else -> "${minutes / 60}س ${minutes % 60}د"
+        minutes < 60 -> getString(R.string.checkout_46, minutes.toString())
+        minutes % 60 == 0 -> getString(R.string.checkout_47, (minutes / 60).toString())
+        else -> getString(R.string.checkout_48, (minutes / 60).toString(), (minutes % 60).toString())
+    }
+
+    // Checkout errors stay on screen long enough to read, then dismiss themselves.
+    private fun showError(message: String) {
+        val root = view ?: return
+        Snackbar.make(root, message, ERROR_DURATION_MS)
+            .setTextMaxLines(5)
+            .apply { activity?.findViewById<View>(R.id.bottom_nav)?.takeIf { it.isShown }?.let { anchorView = it } }
+            .show()
     }
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
+    private companion object {
+        const val STATE_ADDRESS_ID = "checkout_selected_address_id"
+        const val STATE_ZONE_IDS = "checkout_selected_zone_ids"
+        const val ERROR_DURATION_MS = 8_000
+    }
 }

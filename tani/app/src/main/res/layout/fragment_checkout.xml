@@ -2,7 +2,6 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/tani_background"
     android:orientation="vertical">
 
     <ScrollView
@@ -24,16 +23,16 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="إتمام الطلب"
+                android:text="@string/checkout_label"
                 android:textColor="@color/text_dark"
-                android:textSize="27sp"
+                android:textSize="28sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="5dp"
-                android:text="راجعي التوصيل وبيانات الاستلام، والإجمالي النهائي سيظهر قبل التأكيد."
+                android:text="@string/checkout_label_2"
                 android:textColor="@color/text_muted"
                 android:textSize="14sp" />
 
@@ -56,16 +55,16 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="1  التوصيل"
+                    android:text="@string/checkout_label_3"
                     android:textColor="@color/text_dark"
-                    android:textSize="18sp"
+                    android:textSize="22sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:text="العنوان"
+                    android:text="@string/checkout_label_4"
                     android:textColor="@color/text_muted"
                     android:textStyle="bold" />
 
@@ -81,14 +80,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="50dp"
                     android:layout_marginTop="8dp"
-                    android:text="إضافة عنوان جديد" />
+                    android:text="@string/addresses_add" />
 
                 <TextView
                     android:id="@+id/checkout_delivery_hint"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
-                    android:text="يتم اختيار منطقة التوصيل حسب المتجر"
+                    android:text="@string/checkout_delivery_hint"
                     android:textColor="@color/text_muted" />
 
                 <LinearLayout
@@ -110,30 +109,33 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="2  بيانات الاستلام"
+                    android:text="@string/checkout_label_5"
                     android:textColor="@color/text_dark"
-                    android:textSize="18sp"
+                    android:textSize="22sp"
                     android:textStyle="bold" />
 
                 <EditText
                     android:id="@+id/checkout_phone"
+                    android:autofillHints="phone"
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
                     android:layout_marginTop="10dp"
                     android:background="@drawable/bg_field"
-                    android:hint="رقم الهاتف"
+                    android:hint="@string/account_label_4"
                     android:inputType="phone"
                     android:paddingHorizontal="14dp"
                     android:singleLine="true" />
 
                 <EditText
                     android:id="@+id/checkout_notes"
+                    android:inputType="textMultiLine|textCapSentences"
+                    android:importantForAutofill="no"
                     android:layout_width="match_parent"
                     android:layout_height="88dp"
                     android:layout_marginTop="10dp"
                     android:background="@drawable/bg_field"
                     android:gravity="top|start"
-                    android:hint="ملاحظات للتاجر أو المندوب — اختياري"
+                    android:hint="@string/checkout_notes_hint"
                     android:padding="14dp" />
             </LinearLayout>
 
@@ -149,16 +151,16 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="3  ملخص الطلب"
+                    android:text="@string/checkout_label_6"
                     android:textColor="@color/text_dark"
-                    android:textSize="18sp"
+                    android:textSize="22sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="5dp"
-                    android:text="الدفع عند الاستلام (COD)"
+                    android:text="@string/checkout_label_7"
                     android:textColor="@color/text_muted" />
 
                 <LinearLayout
@@ -174,7 +176,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     android:textColor="@color/tani_primary"
-                    android:textSize="20sp"
+                    android:textSize="22sp"
                     android:textStyle="bold" />
             </LinearLayout>
         </LinearLayout>
@@ -194,6 +196,6 @@
             android:id="@+id/checkout_confirm"
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:text="مراجعة وتأكيد الطلب" />
+            android:text="@string/checkout_confirm" />
     </LinearLayout>
 </LinearLayout>

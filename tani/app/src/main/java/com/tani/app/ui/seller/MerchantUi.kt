@@ -20,11 +20,11 @@ object MerchantUi {
         root.gravity = Gravity.TOP
     }
 
-    fun title(context: Context, value: String) = text(context, value, 27f, true).apply { setPadding(0, 0, 0, dp(context, 4)) }
+    fun title(context: Context, value: String) = text(context, value, 28f, true).apply { setPadding(0, 0, 0, dp(context, 4)) }
     fun subtitle(context: Context, value: String) = muted(context, value, 14f).apply { setPadding(0, 0, 0, dp(context, 14)) }
-    fun sectionTitle(context: Context, value: String) = text(context, value, 19f, true).apply { setPadding(0, dp(context, 10), 0, dp(context, 8)) }
+    fun sectionTitle(context: Context, value: String) = text(context, value, 22f, true).apply { setPadding(0, dp(context, 10), 0, dp(context, 8)) }
 
-    fun text(context: Context, value: String, size: Float = 15f, bold: Boolean = false) = TextView(context).apply {
+    fun text(context: Context, value: String, size: Float = 16f, bold: Boolean = false) = TextView(context).apply {
         text = value
         textSize = size
         setTextColor(context.getColor(R.color.text_dark))
@@ -33,7 +33,7 @@ object MerchantUi {
         if (bold) setTypeface(typeface, Typeface.BOLD)
     }
 
-    fun muted(context: Context, value: String, size: Float = 13f) = TextView(context).apply {
+    fun muted(context: Context, value: String, size: Float = 14f) = TextView(context).apply {
         text = value
         textSize = size
         setTextColor(context.getColor(R.color.text_muted))
@@ -54,9 +54,9 @@ object MerchantUi {
 
     fun metricCard(context: Context, label: String, value: String, note: String? = null) = card(context).apply {
         minimumHeight = dp(context, 104)
-        addView(muted(context, label, 12.5f))
-        addView(text(context, value, 21f, true).apply { setPadding(0, dp(context, 4), 0, 0) })
-        note?.takeIf { it.isNotBlank() }?.let { addView(muted(context, it, 11.5f).apply { setPadding(0, dp(context, 4), 0, 0) }) }
+        addView(muted(context, label, 12f))
+        addView(text(context, value, 22f, true).apply { setPadding(0, dp(context, 4), 0, 0) })
+        note?.takeIf { it.isNotBlank() }?.let { addView(muted(context, it, 11f).apply { setPadding(0, dp(context, 4), 0, 0) }) }
     }
 
     fun navCard(context: Context, icon: String, title: String, subtitle: String, badge: String? = null, onClick: () -> Unit) = card(context).apply {
@@ -73,17 +73,17 @@ object MerchantUi {
         }
         row.addView(TextView(context).apply { text = icon; textSize = 22f; gravity = Gravity.CENTER }, LinearLayout.LayoutParams(dp(context, 42), dp(context, 42)))
         val copy = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.START }
-        copy.addView(text(context, title, 16.5f, true))
-        copy.addView(muted(context, subtitle, 12.5f).apply { setPadding(0, dp(context, 3), 0, 0) })
+        copy.addView(text(context, title, 16f, true))
+        copy.addView(muted(context, subtitle, 12f).apply { setPadding(0, dp(context, 3), 0, 0) })
         row.addView(copy, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = dp(context, 10) })
         badge?.takeIf { it.isNotBlank() }?.let { row.addView(pill(context, it, Tone.BRAND)) }
-        row.addView(text(context, "‹", 25f, true).apply { gravity = Gravity.CENTER })
+        row.addView(text(context, "‹", 24f, true).apply { gravity = Gravity.CENTER })
         addView(row)
     }
 
     fun pill(context: Context, label: String, tone: Tone = Tone.NEUTRAL) = TextView(context).apply {
         text = label
-        textSize = 11.5f
+        textSize = 11f
         setTypeface(typeface, Typeface.BOLD)
         gravity = Gravity.CENTER
         setPadding(dp(context, 10), dp(context, 5), dp(context, 10), dp(context, 5))
@@ -111,13 +111,13 @@ object MerchantUi {
         setTextColor(context.getColor(R.color.tani_surface))
     }
     fun compactButton(context: Context, label: String, onClick: () -> Unit) = secondaryButton(context, label, onClick).apply {
-        minHeight = dp(context, 42); minimumHeight = dp(context, 42); textSize = 12.5f
+        minHeight = dp(context, 48); minimumHeight = dp(context, 48); textSize = 14f
         layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
     }
 
     fun emptyCard(context: Context, title: String, message: String) = card(context, soft = true).apply {
         addView(text(context, title, 16f, true))
-        addView(muted(context, message, 13f).apply { setPadding(0, dp(context, 5), 0, 0) })
+        addView(muted(context, message, 14f).apply { setPadding(0, dp(context, 5), 0, 0) })
     }
     fun row(context: Context) = LinearLayout(context).apply {
         orientation = LinearLayout.HORIZONTAL

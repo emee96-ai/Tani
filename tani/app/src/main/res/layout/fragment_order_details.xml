@@ -2,7 +2,6 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/tani_background"
     android:layoutDirection="rtl"
     android:scrollbars="none">
 
@@ -19,8 +18,8 @@
             android:id="@+id/order_details_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="تفاصيل الطلب"
-            android:textSize="29sp"
+            android:text="@string/order_confirmation_confirmation_details"
+            android:textSize="28sp"
             android:textStyle="bold"
             android:textColor="@color/text_dark" />
 
@@ -28,9 +27,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
-            android:text="كل تفاصيل الطلب والتوصيل والتحديثات في مكان واحد"
+            android:text="@string/order_details_label"
             android:textColor="@color/text_muted"
-            android:textSize="15sp" />
+            android:textSize="16sp" />
 
         <ProgressBar
             android:id="@+id/order_details_progress"
@@ -50,7 +49,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="22dp"
-            android:text="طلبات المتاجر"
+            android:text="@string/order_details_label_2"
             android:textSize="22sp"
             android:textStyle="bold"
             android:textColor="@color/text_dark" />
@@ -68,7 +67,7 @@
             android:layout_width="match_parent"
             android:layout_height="54dp"
             android:layout_marginTop="18dp"
-            android:text="إلغاء الطلب"
+            android:text="@string/order_details_cancel"
             android:textSize="16sp"
             android:visibility="gone" />
 
@@ -78,8 +77,8 @@
             android:layout_height="56dp"
             android:layout_marginTop="12dp"
             android:layout_marginBottom="12dp"
-            android:text="تحديث الحالة"
-            android:textSize="17sp"
+            android:text="@string/order_details_refresh"
+            android:textSize="16sp"
             android:textStyle="bold" />
     </LinearLayout>
 </ScrollView>

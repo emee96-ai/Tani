@@ -1,5 +1,10 @@
 package com.tani.app.ui.growth
 
+import androidx.core.content.ContextCompat
+import com.tani.app.data.merchantProfile
+
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.graphics.Typeface
@@ -72,9 +77,9 @@ class NotificationsFragment : Fragment() {
         }
 
         root.removeAllViews()
-        root.addView(ScreenUi.title(context, "الإشعارات"))
-        root.addView(ScreenUi.subtitle(context, "كل تحديثات طلباتك ورسائلك المهمة في مكان واحد."))
-        root.addView(ScreenUi.muted(context, "جاري تحميل الإشعارات..."))
+        root.addView(ScreenUi.title(context, getString(R.string.main_24)))
+        root.addView(ScreenUi.subtitle(context, getString(R.string.notifications_1)))
+        root.addView(ScreenUi.muted(context, getString(R.string.notifications_2)))
 
         viewLifecycleOwner.lifecycleScope.launch {
             val notificationsResult = runCatchingCancellable {
@@ -105,10 +110,10 @@ class NotificationsFragment : Fragment() {
                 }
                 .onFailure {
                     root.removeAllViews()
-                    root.addView(ScreenUi.title(context, "الإشعارات"))
-                    root.addView(ScreenUi.subtitle(context, "تعذر تحميل الإشعارات حالياً."))
-                    root.addView(ScreenUi.muted(context, it.message ?: "حاولي مرة أخرى"))
-                    root.addView(ScreenUi.button(context, "إعادة المحاولة") { load(forceRefresh = true) })
+                    root.addView(ScreenUi.title(context, getString(R.string.main_24)))
+                    root.addView(ScreenUi.subtitle(context, getString(R.string.notifications_3)))
+                    root.addView(ScreenUi.muted(context, CustomerErrorMessages.from(it, getString(R.string.notifications_4))))
+                    root.addView(ScreenUi.button(context, getString(R.string.notifications_5)) { load(forceRefresh = true) })
                 }
         }
     }
@@ -123,14 +128,14 @@ class NotificationsFragment : Fragment() {
         val unread = sectionItems.count { it.read_at == null }
 
         root.removeAllViews()
-        root.addView(ScreenUi.title(context, "الإشعارات"))
+        root.addView(ScreenUi.title(context, getString(R.string.main_24)))
         root.addView(
             ScreenUi.subtitle(
                 context,
                 when {
-                    hasMerchantAccount -> "افصلي بين إشعارات مشترياتك وإشعارات متجرك."
-                    unread > 0 -> "عندك $unread إشعار غير مقروء"
-                    else -> "كل الإشعارات مقروءة"
+                    hasMerchantAccount -> getString(R.string.notifications_6)
+                    unread > 0 -> getString(R.string.notifications_7, unread.toString())
+                    else -> getString(R.string.notifications_8)
                 }
             )
         )
@@ -143,8 +148,8 @@ class NotificationsFragment : Fragment() {
         summary.addView(
             ScreenUi.text(
                 context,
-                if (hasMerchantAccount && audience == Audience.MERCHANT) "إشعاراتك كتاجرة" else "إشعاراتك كزبونة",
-                18f,
+                if (hasMerchantAccount && audience == Audience.MERCHANT) getString(R.string.notifications_9) else getString(R.string.notifications_10),
+                22f,
                 true
             )
         )
@@ -152,9 +157,9 @@ class NotificationsFragment : Fragment() {
             ScreenUi.muted(
                 context,
                 when {
-                    sectionItems.isEmpty() -> "ما عندك إشعارات في القسم ده حتى الآن."
-                    unread > 0 -> "${sectionItems.size} إشعار • $unread غير مقروء"
-                    else -> "${sectionItems.size} إشعار • كلها مقروءة"
+                    sectionItems.isEmpty() -> getString(R.string.notifications_11)
+                    unread > 0 -> getString(R.string.notifications_12, sectionItems.size.toString(), unread.toString())
+                    else -> getString(R.string.notifications_13, sectionItems.size.toString())
                 }
             )
         )
@@ -164,11 +169,11 @@ class NotificationsFragment : Fragment() {
             gravity = android.view.Gravity.CENTER_VERTICAL
             setPadding(0, ScreenUi.dp(context, 10), 0, 0)
         }
-        val allButton = filterButton("الكل (${sectionItems.size})", filter == Filter.ALL) {
+        val allButton = filterButton(getString(R.string.notifications_14, sectionItems.size.toString()), filter == Filter.ALL) {
             filter = Filter.ALL
             render()
         }
-        val unreadButton = filterButton("غير المقروء ($unread)", filter == Filter.UNREAD) {
+        val unreadButton = filterButton(getString(R.string.notifications_15, unread.toString()), filter == Filter.UNREAD) {
             filter = Filter.UNREAD
             render()
         }
@@ -181,9 +186,9 @@ class NotificationsFragment : Fragment() {
         summary.addView(actions)
 
         if (unread > 0) {
-            summary.addView(ScreenUi.button(context, "تحديد إشعارات القسم كمقروءة") { markAudienceRead(sectionItems) })
+            summary.addView(ScreenUi.button(context, getString(R.string.notifications_16)) { markAudienceRead(sectionItems) })
         }
-        summary.addView(ScreenUi.button(context, "تحديث الإشعارات") { load(forceRefresh = true) })
+        summary.addView(ScreenUi.button(context, getString(R.string.notifications_17)) { load(forceRefresh = true) })
         root.addView(summary)
 
         val shown = when (filter) {
@@ -196,8 +201,8 @@ class NotificationsFragment : Fragment() {
             empty.addView(
                 ScreenUi.text(
                     context,
-                    if (filter == Filter.UNREAD) "ما عندك إشعارات جديدة 🎉" else "لا توجد إشعارات حالياً",
-                    17f,
+                    if (filter == Filter.UNREAD) getString(R.string.notifications_18) else getString(R.string.notifications_19),
+                    16f,
                     true
                 )
             )
@@ -205,9 +210,9 @@ class NotificationsFragment : Fragment() {
                 ScreenUi.muted(
                     context,
                     when {
-                        filter == Filter.UNREAD -> "أي إشعار جديد حيظهر هنا مباشرة."
-                        hasMerchantAccount && audience == Audience.MERCHANT -> "الطلبات الجديدة وتنبيهات المخزون وتحديثات المتجر حتظهر هنا."
-                        else -> "تحديثات طلباتك وعروضك ورسائلك حتظهر هنا."
+                        filter == Filter.UNREAD -> getString(R.string.notifications_20)
+                        hasMerchantAccount && audience == Audience.MERCHANT -> getString(R.string.notifications_21)
+                        else -> getString(R.string.notifications_22)
                     }
                 )
             )
@@ -227,7 +232,7 @@ class NotificationsFragment : Fragment() {
             setPadding(0, ScreenUi.dp(context, 12), 0, ScreenUi.dp(context, 4))
 
             addView(
-                audienceButton("كزبونة", customerUnread, audience == Audience.CUSTOMER) {
+                audienceButton(getString(R.string.notifications_23), customerUnread, audience == Audience.CUSTOMER) {
                     audience = Audience.CUSTOMER
                     filter = Filter.ALL
                     render()
@@ -237,7 +242,7 @@ class NotificationsFragment : Fragment() {
                 }
             )
             addView(
-                audienceButton("كتاجرة", merchantUnread, audience == Audience.MERCHANT) {
+                audienceButton(getString(R.string.notifications_24), merchantUnread, audience == Audience.MERCHANT) {
                     audience = Audience.MERCHANT
                     filter = Filter.ALL
                     render()
@@ -254,7 +259,7 @@ class NotificationsFragment : Fragment() {
             text = if (unread > 0) "$label ($unread)" else label
             isAllCaps = false
             minHeight = ScreenUi.dp(requireContext(), 52)
-            textSize = 15f
+            textSize = 16f
             alpha = if (selected) 1f else 0.66f
             setTypeface(typeface, if (selected) Typeface.BOLD else Typeface.NORMAL)
             setOnClickListener { onClick() }
@@ -292,12 +297,12 @@ class NotificationsFragment : Fragment() {
         top.addView(title, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         if (isUnread) {
             top.addView(TextView(context).apply {
-                text = "جديد"
+                text = getString(R.string.notifications_25)
                 textSize = 12f
                 setTextColor(context.getColor(R.color.success))
                 setTypeface(typeface, Typeface.BOLD)
                 setPadding(ScreenUi.dp(context, 8), ScreenUi.dp(context, 4), ScreenUi.dp(context, 8), ScreenUi.dp(context, 4))
-                background = context.getDrawable(R.drawable.bg_chip)
+                background = ContextCompat.getDrawable(context, R.drawable.bg_chip)
             })
         }
         card.addView(top)
@@ -308,10 +313,10 @@ class NotificationsFragment : Fragment() {
         if (date.isNotBlank()) card.addView(ScreenUi.muted(context, date))
 
         if (hasDestination(notification)) {
-            card.addView(ScreenUi.muted(context, "اضغطي على الإشعار لفتح التفاصيل"))
+            card.addView(ScreenUi.muted(context, getString(R.string.notifications_26)))
         }
         if (isUnread) {
-            card.addView(ScreenUi.button(context, "تحديد كمقروء") { markRead(notification.id) })
+            card.addView(ScreenUi.button(context, getString(R.string.notifications_27)) { markRead(notification.id) })
         }
         return card
     }
@@ -319,30 +324,30 @@ class NotificationsFragment : Fragment() {
     private fun preferencesCard(prefs: NotificationPreferences): View {
         val context = requireContext()
         val card = ScreenUi.card(context)
-        card.addView(ScreenUi.text(context, "إعدادات الإشعارات", 18f, true))
-        card.addView(ScreenUi.muted(context, "اختاري أنواع التنبيهات التي تريدين استقبالها."))
+        card.addView(ScreenUi.text(context, getString(R.string.notifications_28), 22f, true))
+        card.addView(ScreenUi.muted(context, getString(R.string.notifications_29)))
 
         val enabled = CheckBox(context).apply {
-            text = "تشغيل الإشعارات"
+            text = getString(R.string.notifications_30)
             isChecked = prefs.push_enabled
         }
         val orders = CheckBox(context).apply {
-            text = "تحديثات الطلبات"
+            text = getString(R.string.notifications_31)
             isChecked = prefs.order_updates
         }
         val promos = CheckBox(context).apply {
-            text = "العروض والحملات"
+            text = getString(R.string.notifications_32)
             isChecked = prefs.promotions
         }
         val messages = CheckBox(context).apply {
-            text = "الرسائل والدعم"
+            text = getString(R.string.notifications_33)
             isChecked = prefs.messages
         }
         card.addView(enabled)
         card.addView(orders)
         card.addView(promos)
         card.addView(messages)
-        card.addView(ScreenUi.button(context, "حفظ إعدادات الإشعارات") {
+        card.addView(ScreenUi.button(context, getString(R.string.notifications_34)) {
             savePreferences(prefs, enabled, orders, promos, messages)
         })
         return card
@@ -370,9 +375,9 @@ class NotificationsFragment : Fragment() {
             }.onSuccess {
                 preferences = it
                 AppContentStore.updateNotifications(items, it)
-                Toast.makeText(context, "تم حفظ إعدادات الإشعارات", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, getString(R.string.notifications_35), Toast.LENGTH_SHORT).show()
             }.onFailure {
-                Toast.makeText(context, it.message ?: "تعذر حفظ الإعدادات", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, CustomerErrorMessages.from(it, getString(R.string.notifications_36)), Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -390,7 +395,7 @@ class NotificationsFragment : Fragment() {
                         syncBadge()
                     }
                     .onFailure {
-                        Toast.makeText(requireContext(), it.message ?: "تعذر تحديث الإشعار", Toast.LENGTH_LONG).show()
+                        Toast.makeText(requireContext(), CustomerErrorMessages.from(it, getString(R.string.notifications_37)), Toast.LENGTH_LONG).show()
                     }
             }
             openDestination(main, notification)
@@ -424,7 +429,7 @@ class NotificationsFragment : Fragment() {
                     render()
                 }
                 .onFailure {
-                    Toast.makeText(context, it.message ?: "تعذر تحديث الإشعار", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, CustomerErrorMessages.from(it, getString(R.string.notifications_37)), Toast.LENGTH_LONG).show()
                 }
         }
     }
@@ -446,10 +451,10 @@ class NotificationsFragment : Fragment() {
                 items = items.map { item -> if (item.id in ids) item.copy(read_at = item.read_at ?: "read") else item }
                 AppContentStore.updateNotifications(items, preferences)
                 syncBadge()
-                Toast.makeText(context, "تم تحديد إشعارات القسم كمقروءة", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, getString(R.string.notifications_38), Toast.LENGTH_SHORT).show()
                 render()
             }.onFailure {
-                Toast.makeText(context, it.message ?: "تعذر تحديث الإشعارات", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, CustomerErrorMessages.from(it, getString(R.string.notifications_39)), Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -468,15 +473,15 @@ class NotificationsFragment : Fragment() {
         }
 
     private fun typeLabel(type: String): String = when (type.lowercase()) {
-        "new_order" -> "طلب جديد للمتجر"
-        "merchant_order_update" -> "تحديث طلب للمتجر"
-        "order", "order_update", "order_status" -> "تحديث طلب"
-        "promotion", "promo", "campaign" -> "عرض وحملة"
-        "message", "support" -> "رسالة ودعم"
-        "stock_alert", "stock", "inventory" -> "تنبيه مخزون"
-        "merchant_verification" -> "تحديث حساب التاجر"
-        "merchant", "seller" -> "تحديث متجر"
-        else -> "إشعار من تاني"
+        "new_order" -> getString(R.string.notifications_40)
+        "merchant_order_update" -> getString(R.string.notifications_41)
+        "order", "order_update", "order_status" -> getString(R.string.notifications_42)
+        "promotion", "promo", "campaign" -> getString(R.string.notifications_43)
+        "message", "support" -> getString(R.string.notifications_44)
+        "stock_alert", "stock", "inventory" -> getString(R.string.notifications_45)
+        "merchant_verification" -> getString(R.string.notifications_46)
+        "merchant", "seller" -> getString(R.string.notifications_47)
+        else -> getString(R.string.notifications_48)
     }
 
     private enum class Filter { ALL, UNREAD }

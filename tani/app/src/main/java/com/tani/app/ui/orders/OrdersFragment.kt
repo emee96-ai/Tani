@@ -1,5 +1,10 @@
 package com.tani.app.ui.orders
 
+import androidx.core.content.ContextCompat
+import com.tani.app.data.orderGroups
+
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.content.res.ColorStateList
@@ -63,7 +68,7 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
             return
         }
         progress.visibility = View.VISIBLE
-        summary.text = "جاري تحميل طلباتك…"
+        summary.text = getString(R.string.orders_1)
         viewLifecycleOwner.lifecycleScope.launch {
             runCatchingCancellable { repository.orderGroups() }
                 .onSuccess {
@@ -74,8 +79,8 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
                 .onFailure {
                     groups = emptyList()
                     box.removeAllViews()
-                    summary.text = "تعذر تحميل الطلبات"
-                    box.addView(message(it.message ?: "حاولي مرة أخرى"))
+                    summary.text = getString(R.string.orders_2)
+                    box.addView(message(CustomerErrorMessages.from(it, getString(R.string.notifications_4))))
                 }
             progress.visibility = View.GONE
         }
@@ -88,16 +93,16 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
         val completedCount = groups.count { it.status == "delivered" }
         val cancelledCount = groups.count(::isCancelledLike)
 
-        allButton.text = "الكل (${groups.size})"
-        activeButton.text = "النشطة ($activeCount)"
-        completedButton.text = "المكتملة ($completedCount)"
-        cancelledButton.text = "الملغاة ($cancelledCount)"
+        allButton.text = getString(R.string.notifications_14, groups.size.toString())
+        activeButton.text = getString(R.string.orders_3, activeCount.toString())
+        completedButton.text = getString(R.string.orders_4, completedCount.toString())
+        cancelledButton.text = getString(R.string.orders_5, cancelledCount.toString())
         updateFilterStyle()
 
         summary.text = when {
-            groups.isEmpty() -> "ما عندك طلبات لسه"
-            activeCount > 0 -> "عندك $activeCount ${if (activeCount == 1) "طلب قيد المتابعة" else "طلبات قيد المتابعة"}"
-            else -> "كل طلباتك الحالية مكتملة أو منتهية"
+            groups.isEmpty() -> getString(R.string.orders_6)
+            activeCount > 0 -> "لديك $activeCount ${if (activeCount == 1) "طلب قيد المتابعة" else "طلبات قيد المتابعة"}"
+            else -> getString(R.string.orders_7)
         }
 
         val shown = groups.filter { group ->
@@ -122,7 +127,7 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
         val card = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(18), dp(18), dp(18), dp(18))
-            background = context.getDrawable(R.drawable.bg_card)
+            background = ContextCompat.getDrawable(context, R.drawable.bg_card)
             isClickable = true
             isFocusable = true
             setOnClickListener { openDetails(group.id) }
@@ -134,14 +139,14 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
             layoutDirection = View.LAYOUT_DIRECTION_RTL
         }
         header.addView(TextView(context).apply {
-            text = "طلب #${group.id.take(8).uppercase()}"
-            textSize = 18f
+            text = getString(R.string.order_details_1, (group.id.take(8).uppercase()))
+            textSize = 22f
             setTypeface(typeface, Typeface.BOLD)
             setTextColor(context.getColor(R.color.text_dark))
         }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         header.addView(TextView(context).apply {
             text = CommerceUi.statusLabel(group.status)
-            textSize = 13.5f
+            textSize = 14f
             setTypeface(typeface, Typeface.BOLD)
             setTextColor(context.getColor(statusColor(group.status)))
             setBackgroundResource(R.drawable.bg_chip)
@@ -151,7 +156,7 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
 
         card.addView(TextView(context).apply {
             text = CommerceUi.formatDate(group.created_at)
-            textSize = 14.5f
+            textSize = 14f
             setPadding(0, dp(8), 0, 0)
             setTextColor(context.getColor(R.color.text_muted))
         })
@@ -164,13 +169,13 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
             layoutDirection = View.LAYOUT_DIRECTION_RTL
         }
         totalRow.addView(TextView(context).apply {
-            text = "الإجمالي"
-            textSize = 15.5f
+            text = getString(R.string.order_details_6)
+            textSize = 16f
             setTextColor(context.getColor(R.color.text_muted))
         }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         totalRow.addView(TextView(context).apply {
             text = MarketplaceUi.formatPrice(group.grand_total)
-            textSize = 20f
+            textSize = 22f
             setTypeface(typeface, Typeface.BOLD)
             setTextColor(context.getColor(R.color.text_dark))
         })
@@ -179,8 +184,8 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
         val payment = paymentLabel(group.payment_method)
         val paymentState = paymentStatusLabel(group.payment_status)
         card.addView(TextView(context).apply {
-            text = "$payment • $paymentState"
-            textSize = 15f
+            text = getString(R.string.orders_26, payment, paymentState)
+            textSize = 16f
             setPadding(0, dp(9), 0, 0)
             setTextColor(context.getColor(R.color.text_muted))
         })
@@ -188,8 +193,8 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
         if (group.delivery_total > 0 || group.discount_total > 0) {
             card.addView(TextView(context).apply {
                 val parts = buildList {
-                    if (group.delivery_total > 0) add("التوصيل ${MarketplaceUi.formatPrice(group.delivery_total)}")
-                    if (group.discount_total > 0) add("الخصم ${MarketplaceUi.formatPrice(group.discount_total)}")
+                    if (group.delivery_total > 0) add(getString(R.string.orders_8, (MarketplaceUi.formatPrice(group.delivery_total))))
+                    if (group.discount_total > 0) add(getString(R.string.orders_9, (MarketplaceUi.formatPrice(group.discount_total))))
                 }
                 text = parts.joinToString(" • ")
                 textSize = 14f
@@ -199,10 +204,10 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
         }
 
         card.addView(Button(context).apply {
-            text = if (isActive(group)) "متابعة الطلب" else "عرض التفاصيل"
+            text = if (isActive(group)) getString(R.string.orders_10) else getString(R.string.orders_11)
             textSize = 16f
             setTypeface(typeface, Typeface.BOLD)
-            setTextColor(context.getColor(R.color.white))
+            setTextColor(context.getColor(R.color.on_primary))
             backgroundTintList = ColorStateList.valueOf(context.getColor(R.color.tani_primary))
             setOnClickListener { openDetails(group.id) }
         }, LinearLayout.LayoutParams(
@@ -228,22 +233,22 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
         orientation = LinearLayout.VERTICAL
         gravity = Gravity.CENTER
         setPadding(dp(18), dp(38), dp(18), dp(38))
-        background = requireContext().getDrawable(R.drawable.bg_card)
+        background = ContextCompat.getDrawable(requireContext(), R.drawable.bg_card)
         addView(TextView(requireContext()).apply {
             text = when (filter) {
-                Filter.ALL -> "ما عندك طلبات لسه"
-                Filter.ACTIVE -> "ما عندك طلبات نشطة حالياً"
-                Filter.COMPLETED -> "ما عندك طلبات مكتملة لسه"
-                Filter.CANCELLED -> "ما عندك طلبات ملغاة"
+                Filter.ALL -> getString(R.string.orders_6)
+                Filter.ACTIVE -> getString(R.string.orders_12)
+                Filter.COMPLETED -> getString(R.string.orders_13)
+                Filter.CANCELLED -> getString(R.string.orders_14)
             }
-            textSize = 19f
+            textSize = 22f
             setTypeface(typeface, Typeface.BOLD)
             gravity = Gravity.CENTER
             setTextColor(requireContext().getColor(R.color.text_dark))
         })
         addView(TextView(requireContext()).apply {
-            text = if (filter == Filter.ALL) "أي طلب جديد حيظهر هنا وتقدري تتابعي حالته." else "اختاري قسم تاني لعرض بقية الطلبات."
-            textSize = 15f
+            text = if (filter == Filter.ALL) getString(R.string.orders_15) else getString(R.string.orders_16)
+            textSize = 16f
             gravity = Gravity.CENTER
             setPadding(0, dp(8), 0, 0)
             setTextColor(requireContext().getColor(R.color.text_muted))
@@ -261,7 +266,7 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
             val selected = type == filter
             button.alpha = if (selected) 1f else 0.78f
             button.setTypeface(button.typeface, if (selected) Typeface.BOLD else Typeface.NORMAL)
-            button.textSize = 15f
+            button.textSize = 16f
         }
     }
 
@@ -272,18 +277,18 @@ class OrdersFragment : Fragment(R.layout.fragment_orders) {
         group.status in setOf("cancelled", "rejected", "failed")
 
     private fun paymentLabel(method: String): String = when (method.lowercase()) {
-        "cod" -> "الدفع عند الاستلام"
-        "bank_transfer" -> "تحويل بنكي"
-        "wallet" -> "محفظة إلكترونية"
-        "card" -> "بطاقة"
-        else -> "طريقة الدفع: $method"
+        "cod" -> getString(R.string.orders_17)
+        "bank_transfer" -> getString(R.string.orders_18)
+        "wallet" -> getString(R.string.orders_19)
+        "card" -> getString(R.string.orders_20)
+        else -> getString(R.string.orders_21, method)
     }
 
     private fun paymentStatusLabel(status: String): String = when (status.lowercase()) {
-        "paid" -> "مدفوع"
-        "pending" -> "بانتظار الدفع"
-        "failed" -> "فشل الدفع"
-        "refunded" -> "تم الاسترداد"
+        "paid" -> getString(R.string.orders_22)
+        "pending" -> getString(R.string.orders_23)
+        "failed" -> getString(R.string.orders_24)
+        "refunded" -> getString(R.string.orders_25)
         else -> status
     }
 

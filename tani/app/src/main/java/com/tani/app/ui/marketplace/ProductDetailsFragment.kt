@@ -1,9 +1,14 @@
 package com.tani.app.ui.marketplace
 
+import androidx.core.net.toUri
+import com.tani.app.data.productDetails
+import com.tani.app.data.productImageUrl
+
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.content.res.ColorStateList
-import android.net.Uri
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
@@ -58,7 +63,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
                     content.visibility = View.VISIBLE
                     bind(view, details)
                 }
-                .onFailure { loading.text = "تعذر تحميل المنتج\n${it.message ?: "حاولي مرة أخرى"}" }
+                .onFailure { loading.text = getString(R.string.product_details_42, CustomerErrorMessages.from(it, getString(R.string.product_details_43))) }
         }
     }
 
@@ -80,10 +85,10 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
         view.findViewById<TextView>(R.id.product_details_price).text = formattedPrice
         view.findViewById<TextView>(R.id.product_details_sticky_price).text = formattedPrice
         view.findViewById<TextView>(R.id.product_details_description).text =
-            product.description.ifBlank { "لا يوجد وصف إضافي لهذا المنتج." }
+            product.description.ifBlank { getString(R.string.product_details_1) }
 
         view.findViewById<TextView>(R.id.product_details_stock).apply {
-            text = if (product.stock > 0) "متوفر (${product.stock})" else "غير متوفر حالياً"
+            text = if (product.stock > 0) getString(R.string.product_details_2, product.stock.toString()) else getString(R.string.product_details_3)
             setTextColor(requireContext().getColor(if (product.stock > 0) R.color.success else R.color.error))
         }
 
@@ -95,8 +100,8 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
 
         view.findViewById<TextView>(R.id.product_details_rating).text =
             if (product.review_count > 0) {
-                String.format(Locale.US, "★ %.1f من 5 (%d تقييم)", product.average_rating, product.review_count)
-            } else "منتج جديد • لا توجد تقييمات بعد"
+                String.format(Locale.US, getString(R.string.product_details_4), product.average_rating, product.review_count)
+            } else getString(R.string.product_details_5)
 
         setupMediaGallery(view, details)
         setupFavoriteAndShare(view, product.id, product.name)
@@ -130,7 +135,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
         activeVideo = video
 
         counter.visibility = if (mediaItems.isEmpty()) View.GONE else View.VISIBLE
-        if (mediaItems.isNotEmpty()) counter.text = "${selectedMediaIndex + 1} / ${mediaItems.size}"
+        if (mediaItems.isNotEmpty()) counter.text = getString(R.string.product_details_44, (selectedMediaIndex + 1).toString(), mediaItems.size.toString())
 
         if (mediaItems.isEmpty()) {
             runCatchingCancellable { video.stopPlayback() }
@@ -150,7 +155,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
             image.visibility = View.VISIBLE
             image.setImageResource(R.drawable.ic_image_placeholder)
             if (url != null) MarketplaceUi.loadImage(viewLifecycleOwner.lifecycleScope, image, url)
-            image.contentDescription = "صورة المنتج ${selectedMediaIndex + 1} من ${mediaItems.size}"
+            image.contentDescription = getString(R.string.product_details_6, (selectedMediaIndex + 1).toString(), mediaItems.size.toString())
             return
         }
 
@@ -160,10 +165,10 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
         video.setMediaController(MediaController(requireContext()).apply { setAnchorView(video) })
         if (url == null) {
             play.visibility = View.GONE
-            Toast.makeText(requireContext(), "تعذر فتح الفيديو", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), getString(R.string.product_details_7), Toast.LENGTH_SHORT).show()
             return
         }
-        video.setVideoURI(Uri.parse(url))
+        video.setVideoURI(url.toUri())
         video.setOnPreparedListener { player ->
             player.isLooping = false
             runCatchingCancellable { video.seekTo(1) }
@@ -172,7 +177,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
         video.setOnCompletionListener { play.visibility = View.VISIBLE }
         video.setOnErrorListener { _, _, _ ->
             play.visibility = View.GONE
-            Toast.makeText(requireContext(), "تعذر تشغيل هذا الفيديو", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), getString(R.string.product_details_8), Toast.LENGTH_SHORT).show()
             true
         }
         val togglePlayback = {
@@ -203,7 +208,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
                 strokeColor = ContextCompat.getColor(requireContext(), if (selected) R.color.tani_primary else R.color.border)
                 setCardBackgroundColor(ContextCompat.getColor(requireContext(), R.color.brand_soft))
                 isClickable = true
-                contentDescription = if (item.kind == MediaKind.VIDEO) "عرض فيديو المنتج" else "عرض صورة المنتج ${index + 1}"
+                contentDescription = if (item.kind == MediaKind.VIDEO) getString(R.string.product_details_9) else getString(R.string.product_details_10, (index + 1).toString())
                 setOnClickListener {
                     if (selectedMediaIndex != index) {
                         selectedMediaIndex = index
@@ -224,9 +229,9 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
                 card.addView(thumb, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
             } else {
                 val videoThumb = TextView(requireContext()).apply {
-                    text = "▶\nفيديو"
+                    text = getString(R.string.product_details_11)
                     gravity = Gravity.CENTER
-                    textSize = 13f
+                    textSize = 14f
                     setTextColor(ContextCompat.getColor(requireContext(), R.color.tani_primary))
                     setTypeface(typeface, android.graphics.Typeface.BOLD)
                 }
@@ -250,7 +255,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
 
         fun renderFavorite() {
             favoriteButton.setImageResource(if (favoriteState) R.drawable.ic_favorite_filled else R.drawable.ic_favorite_outline)
-            favoriteButton.contentDescription = if (favoriteState) "إزالة $productName من المفضلة" else "إضافة $productName للمفضلة"
+            favoriteButton.contentDescription = if (favoriteState) getString(R.string.product_details_12, productName) else getString(R.string.product_details_13, productName)
         }
         renderFavorite()
 
@@ -265,7 +270,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
 
         favoriteButton.setOnClickListener {
             if (Supabase.userId.isNullOrBlank()) {
-                Toast.makeText(requireContext(), "سجلي الدخول لإضافة المنتج للمفضلة", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), getString(R.string.product_details_14), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             favoriteButton.isEnabled = false
@@ -277,11 +282,11 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
                         renderFavorite()
                         Toast.makeText(
                             requireContext(),
-                            if (target) "تمت الإضافة للمفضلة" else "تمت الإزالة من المفضلة",
+                            if (target) getString(R.string.product_details_15) else getString(R.string.product_details_16),
                             Toast.LENGTH_SHORT
                         ).show()
                     }
-                    .onFailure { Toast.makeText(requireContext(), it.message ?: "تعذر تحديث المفضلة", Toast.LENGTH_LONG).show() }
+                    .onFailure { Toast.makeText(requireContext(), CustomerErrorMessages.from(it, getString(R.string.product_details_17)), Toast.LENGTH_LONG).show() }
                 favoriteButton.isEnabled = true
             }
         }
@@ -320,14 +325,14 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
         fun refreshQuantityUi() {
             val available = availableToAdd()
             quantity = quantity.coerceIn(1, available.coerceAtLeast(1))
-            quantityText.text = quantity.toString()
+            quantityText.text = String.format(Locale.US, "%d", quantity)
             val price = unitPrice()
             mainPrice.text = MarketplaceUi.formatPrice(price)
             stickyPrice.text = MarketplaceUi.formatPrice(price)
             stockText.text = when {
-                product.has_variants && chosenVariant() == null -> "اختاري الخيار"
-                availableStock() > 0 -> "متوفر (${availableStock()})"
-                else -> "غير متوفر حالياً"
+                product.has_variants && chosenVariant() == null -> getString(R.string.product_details_18)
+                availableStock() > 0 -> getString(R.string.product_details_2, availableStock().toString())
+                else -> getString(R.string.product_details_3)
             }
             stockText.setTextColor(requireContext().getColor(if (availableStock() > 0) R.color.success else R.color.error))
             quantityBox.visibility = if (choiceReady() && availableStock() > 0) View.VISIBLE else View.GONE
@@ -335,10 +340,10 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
             plus.isEnabled = available > 0 && quantity < available
             addButton.isEnabled = choiceReady() && available > 0
             addButton.text = when {
-                product.has_variants && chosenVariant() == null -> "اختاري المقاس أو اللون أولاً"
-                availableStock() <= 0 -> "غير متوفر حالياً"
-                available <= 0 -> "الكمية المتاحة موجودة في السلة"
-                else -> "إضافة للسلة • ${MarketplaceUi.formatPrice(price * quantity)}"
+                product.has_variants && chosenVariant() == null -> getString(R.string.favorites_4)
+                availableStock() <= 0 -> getString(R.string.product_details_3)
+                available <= 0 -> getString(R.string.product_details_19)
+                else -> getString(R.string.product_details_20, (MarketplaceUi.formatPrice(price * quantity)))
             }
         }
 
@@ -352,7 +357,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
         }
         addButton.setOnClickListener {
             if (!choiceReady()) {
-                Toast.makeText(requireContext(), "اختاري المقاس أو اللون أولاً", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), getString(R.string.favorites_4), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             val wanted = quantity.coerceAtMost(availableToAdd())
@@ -365,10 +370,10 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
                 viewLifecycleOwner.lifecycleScope.launch {
                     Analytics.track("add_to_cart", screen = "product_details", entityType = "product", entityId = product.id)
                 }
-                Toast.makeText(requireContext(), "تمت إضافة $added من ${product.name} للسلة", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), getString(R.string.product_details_21, added.toString(), product.name), Toast.LENGTH_SHORT).show()
                 quantity = 1
             } else {
-                Toast.makeText(requireContext(), "تعذر إضافة كمية إضافية", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), getString(R.string.home_29), Toast.LENGTH_SHORT).show()
             }
             refreshQuantityUi()
         }
@@ -382,36 +387,36 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
     private fun bindTrustAndDelivery(view: View, details: ProductDetails, verification: String?) {
         val product = details.product
         val trustText = view.findViewById<TextView>(R.id.product_details_trust)
-        trustText.text = "جاري حساب مستوى الثقة…"
+        trustText.text = getString(R.string.product_details_22)
         viewLifecycleOwner.lifecycleScope.launch {
             runCatchingCancellable { trustRepository.merchantTrust(product.seller_id) }.onSuccess { trust ->
                 trustText.text = if (trust == null) {
-                    verification?.let { "حالة المتجر: $it" } ?: "لا توجد بيانات ثقة إضافية"
+                    verification?.let { getString(R.string.product_details_23, it) } ?: getString(R.string.product_details_24)
                 } else {
                     val level = when (trust.trust_level) {
-                        "high_performing" -> "أداء مرتفع"
-                        "trusted" -> "موثوق"
-                        "restricted" -> "مقيّد"
-                        else -> "موثق"
+                        "high_performing" -> getString(R.string.product_details_25)
+                        "trusted" -> getString(R.string.product_details_26)
+                        "restricted" -> getString(R.string.product_details_27)
+                        else -> getString(R.string.product_details_28)
                     }
                     "الثقة: $level • ${String.format(Locale.US, "%.0f", trust.trust_score)}/100 • إكمال ${String.format(Locale.US, "%.0f", trust.completion_rate)}%"
                 }
             }.onFailure {
-                trustText.text = verification?.let { "حالة المتجر: $it" } ?: "تعذر تحميل مستوى الثقة"
+                trustText.text = verification?.let { getString(R.string.product_details_23, it) } ?: getString(R.string.product_details_29)
             }
         }
 
         view.findViewById<TextView>(R.id.product_details_delivery).text = buildString {
-            append(if (product.delivery_fee > 0) "رسوم التوصيل: ${MarketplaceUi.formatPrice(product.delivery_fee)}" else "رسوم التوصيل يحددها المتجر")
-            product.delivery_area?.takeIf { it.isNotBlank() }?.let { append("\nمنطقة التوصيل: $it") }
-            product.estimated_minutes?.let { append("\nالوقت التقديري: $it دقيقة") }
+            append(if (product.delivery_fee > 0) getString(R.string.product_details_30, (MarketplaceUi.formatPrice(product.delivery_fee))) else getString(R.string.product_details_31))
+            product.delivery_area?.takeIf { it.isNotBlank() }?.let { append(getString(R.string.product_details_32, it)) }
+            product.estimated_minutes?.let { append(getString(R.string.product_details_33, it.toString())) }
         }
     }
 
     private fun bindStore(view: View, details: ProductDetails) {
         val storeButton = view.findViewById<MaterialButton>(R.id.product_details_store)
         storeButton.isEnabled = details.store != null
-        storeButton.text = details.store?.let { "زيارة متجر ${it.name}" } ?: "المتجر غير متاح"
+        storeButton.text = details.store?.let { getString(R.string.product_details_34, it.name) } ?: getString(R.string.product_details_35)
         storeButton.setOnClickListener {
             details.store?.let { store ->
                 (activity as MainActivity).show(StoreDetailsFragment.newInstance(store.id))
@@ -427,20 +432,20 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
         section.visibility = if (details.product.has_variants) View.VISIBLE else View.GONE
         if (!details.product.has_variants) return
         if (details.variants.isEmpty()) {
-            variantNote.text = "لا يوجد خيار متاح حالياً."
+            variantNote.text = getString(R.string.product_details_36)
             refreshPurchaseUi?.invoke()
             return
         }
 
-        variantNote.text = "اختاري المقاس أو اللون المطلوب قبل الإضافة للسلة."
+        variantNote.text = getString(R.string.product_details_37)
         fun renderChoices() {
             variantsBox.removeAllViews()
             details.variants.forEach { variant ->
                 val price = variant.price?.let { " • ${MarketplaceUi.formatPrice(it)}" }.orEmpty()
-                val availability = if (variant.stock > 0) "متوفر ${variant.stock}" else "غير متوفر"
+                val availability = if (variant.stock > 0) getString(R.string.product_details_38, variant.stock.toString()) else getString(R.string.product_details_39)
                 val selected = selectedVariant?.id == variant.id
                 val button = MaterialButton(requireContext()).apply {
-                    text = "${variant.name}$price • $availability"
+                    text = getString(R.string.product_details_45, variant.name, price, availability)
                     isCheckable = true
                     isChecked = selected
                     isEnabled = variant.stock > 0
@@ -473,7 +478,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
         val reviewsBox = view.findViewById<LinearLayout>(R.id.product_details_reviews)
         reviewsBox.removeAllViews()
         if (details.reviews.isEmpty()) {
-            reviewsBox.addView(MarketplaceUi.empty(requireContext(), "لا توجد تقييمات بعد"))
+            reviewsBox.addView(MarketplaceUi.empty(requireContext(), getString(R.string.product_details_40)))
         } else details.reviews.take(8).forEach { review ->
             val stars = "★".repeat(review.rating.coerceIn(1, 5))
             val reviewText = if (review.comment.isBlank()) stars else "$stars\n${review.comment}"
@@ -499,7 +504,7 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
         val relatedBox = view.findViewById<LinearLayout>(R.id.product_details_related)
         relatedBox.removeAllViews()
         if (details.related.isEmpty()) {
-            relatedBox.addView(MarketplaceUi.empty(requireContext(), "لا توجد منتجات مشابهة حالياً"))
+            relatedBox.addView(MarketplaceUi.empty(requireContext(), getString(R.string.product_details_41)))
             return
         }
         val cards = details.related.map { related ->
@@ -508,13 +513,13 @@ class ProductDetailsFragment : Fragment(R.layout.fragment_product_details) {
                 onOpen = { (activity as MainActivity).show(newInstance(related.id)) },
                 onAdd = {
                     if (related.has_variants) {
-                        Toast.makeText(requireContext(), "اختاري المقاس أو اللون أولاً", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), getString(R.string.favorites_4), Toast.LENGTH_SHORT).show()
                         (activity as MainActivity).show(newInstance(related.id))
                     } else if (Cart.add(related.toProduct())) {
                         (activity as? MainActivity)?.refreshCartBadge()
-                        Toast.makeText(requireContext(), "تمت إضافة ${related.name} للسلة", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), getString(R.string.home_28, related.name), Toast.LENGTH_SHORT).show()
                     } else {
-                        Toast.makeText(requireContext(), "تعذر إضافة كمية إضافية", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), getString(R.string.home_29), Toast.LENGTH_SHORT).show()
                     }
                 }
             )

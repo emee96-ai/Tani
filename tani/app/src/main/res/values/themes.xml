@@ -2,6 +2,7 @@
     <style name="Theme.Tani" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:fontFamily">sans-serif</item>
         <item name="colorPrimary">@color/tani_primary</item>
+        <item name="colorOnPrimary">@color/on_primary</item>
         <item name="colorSecondary">@color/tani_secondary</item>
         <item name="android:colorAccent">@color/tani_primary</item>
         <item name="android:navigationBarColor">@color/tani_surface</item>

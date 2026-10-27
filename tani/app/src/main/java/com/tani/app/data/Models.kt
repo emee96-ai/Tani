@@ -10,7 +10,9 @@ data class AuthResponse(
     val refresh_token: String? = null,
     val expires_in: Long? = null,
     val token_type: String? = null,
-    val user: AuthUser? = null
+    val user: AuthUser? = null,
+    // عند طلب تأكيد البريد يعيد Supabase المستخدم نفسه في أعلى الرد بلا جلسة.
+    val id: String? = null
 )
 
 @Serializable

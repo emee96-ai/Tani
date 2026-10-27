@@ -1,5 +1,13 @@
 package com.tani.app.ui.seller
 
+import androidx.core.content.edit
+import androidx.core.graphics.scale
+import com.tani.app.data.categories
+import com.tani.app.data.merchantIdentityDocuments
+import com.tani.app.data.merchantProfile
+import com.tani.app.data.submitMerchantApplication
+import com.tani.app.data.uploadMerchantIdentity
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.graphics.Bitmap
@@ -63,6 +71,8 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
     private var identityPath: String? = null
     private var reviewNotice: String? = null
     private var submissionInFlight = false
+    // true فقط أثناء عرض خطوة نموذج؛ يمنع حفظ حقول فارغة فوق المسودة أثناء التحميل أو شاشة الحالة.
+    private var formVisible = false
     private val inputs = mutableMapOf<String, EditText>()
     private var categoryField: MaterialAutoCompleteTextView? = null
     private var documentField: MaterialAutoCompleteTextView? = null
@@ -105,11 +115,21 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         loadEntry()
     }
 
+    override fun onPause() {
+        super.onPause()
+        // يحفظ ما كُتب في الخطوة الحالية قبل تدوير الشاشة أو انتقال التطبيق للخلفية.
+        if (formVisible && !submissionInFlight) {
+            captureCurrentStep()
+            saveDraft()
+        }
+    }
+
     private fun loadEntry() {
-        submitStatus.text = "جاري تجهيز تسجيل التاجر…"
+        formVisible = false
+        submitStatus.text = getString(R.string.merchant_onboarding_1)
         setBusy(true)
         content.removeAllViews()
-        addInfoText("جاري تجهيز تسجيل التاجر…")
+        addInfoText(getString(R.string.merchant_onboarding_1))
         viewLifecycleOwner.lifecycleScope.launch {
             runCatchingCancellable {
                 coroutineScope {
@@ -133,16 +153,16 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
                     ?: prefs.getString("identity_path", null)
                 reviewNotice = null
                 when (profile?.verification_status) {
-                    "pending" -> renderStatus(profile, "طلبك قيد المراجعة")
-                    "suspended" -> renderStatus(profile, "حساب التاجر موقوف مؤقتاً")
-                    "approved" -> renderStatus(profile, "متجرك معتمد ومفعّل", approved = true)
+                    "pending" -> renderStatus(profile, getString(R.string.merchant_onboarding_2))
+                    "suspended" -> renderStatus(profile, getString(R.string.merchant_onboarding_3))
+                    "approved" -> renderStatus(profile, getString(R.string.merchant_onboarding_4), approved = true)
                     "changes_requested" -> openForReviewChanges(
                         profile,
-                        "الإدارة طلبت تعديل بعض البيانات قبل اعتماد المتجر."
+                        getString(R.string.merchant_onboarding_5)
                     )
                     "rejected" -> openForReviewChanges(
                         profile,
-                        "الطلب لم يُعتمد بصورته الحالية. عدّلي البيانات المطلوبة ويمكنك إعادة الإرسال."
+                        getString(R.string.merchant_onboarding_6)
                     )
                     else -> {
                         restoreDraft(profile)
@@ -153,9 +173,9 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
             }.onFailure { error ->
                 setBusy(false)
                 content.removeAllViews()
-                addSectionTitle("تعذر فتح تسجيل التاجر")
-                addInfoText(merchantError(error, "تعذر تحميل بيانات التسجيل الآن. حاولي مرة أخرى."))
-                addPrimaryButton("إعادة المحاولة") { loadEntry() }
+                addSectionTitle(getString(R.string.merchant_onboarding_7))
+                addInfoText(merchantError(error, getString(R.string.merchant_onboarding_8)))
+                addPrimaryButton(getString(R.string.notifications_5)) { loadEntry() }
             }
         }
     }
@@ -166,7 +186,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         reviewNotice = buildString {
             append(headline)
             profile.review_note?.trim()?.takeIf { it.isNotBlank() }?.let {
-                append("\nملاحظة الإدارة: ")
+                append(getString(R.string.merchant_onboarding_9))
                 append(it)
             }
         }
@@ -186,7 +206,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
             draft.requestedCategory = prefs.getString("requested_category", "").orEmpty()
             draft.storeName = prefs.getString("store_name", "").orEmpty()
             draft.storeDescription = prefs.getString("store_description", "").orEmpty()
-            draft.city = prefs.getString("city", "كوستي").orEmpty()
+            draft.city = prefs.getString("city", getString(R.string.merchant_onboarding_10)).orEmpty()
             draft.area = prefs.getString("area", "").orEmpty()
             draft.deliveryZones = restoreDeliveryZones()
             draft.documentType = prefs.getString("document_type", "national_id").orEmpty()
@@ -209,7 +229,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         }
         draft.storeName = profile?.store_name ?: profile?.business_name.orEmpty()
         draft.storeDescription = profile?.store_description ?: profile?.description.orEmpty()
-        draft.city = profile?.city?.takeIf { it.isNotBlank() } ?: "كوستي"
+        draft.city = profile?.city?.takeIf { it.isNotBlank() } ?: getString(R.string.merchant_onboarding_10)
         draft.area = profile?.area.orEmpty()
         draft.deliveryZones = profile?.delivery_zones
             ?.takeIf { it.isNotEmpty() }
@@ -226,29 +246,30 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
     }
 
     private fun saveDraft() {
-        prefs.edit()
-            .putBoolean("has_draft", true)
-            .putString("business_name", draft.businessName)
-            .putString("description", draft.description)
-            .putString("phone", draft.phone)
-            .putString("whatsapp", draft.whatsapp)
-            .putBoolean("whatsapp_same", draft.whatsappSameAsPhone)
-            .putString("category_id", draft.categoryId)
-            .putString("requested_category", draft.requestedCategory)
-            .putString("store_name", draft.storeName)
-            .putString("store_description", draft.storeDescription)
-            .putString("city", draft.city)
-            .putString("area", draft.area)
-            .putString("delivery_zones", deliveryZonesJson())
-            .putString("document_type", draft.documentType)
-            .putString("identity_path", identityPath)
-            .putBoolean("policies", draft.policiesAccepted)
-            .putInt("step", step)
-            .apply()
+        prefs.edit {
+            putBoolean("has_draft", true)
+            putString("business_name", draft.businessName)
+            putString("description", draft.description)
+            putString("phone", draft.phone)
+            putString("whatsapp", draft.whatsapp)
+            putBoolean("whatsapp_same", draft.whatsappSameAsPhone)
+            putString("category_id", draft.categoryId)
+            putString("requested_category", draft.requestedCategory)
+            putString("store_name", draft.storeName)
+            putString("store_description", draft.storeDescription)
+            putString("city", draft.city)
+            putString("area", draft.area)
+            putString("delivery_zones", deliveryZonesJson())
+            putString("document_type", draft.documentType)
+            putString("identity_path", identityPath)
+            putBoolean("policies", draft.policiesAccepted)
+            putInt("step", step)
+        }
     }
 
     private fun renderStep() {
         setBusy(false)
+        formVisible = true
         content.removeAllViews()
         inputs.clear()
         categoryField = null
@@ -261,10 +282,10 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         stepText.visibility = View.VISIBLE
         progress.max = 4
         progress.setProgressCompat(step, true)
-        stepText.text = "الخطوة $step من 4"
+        stepText.text = getString(R.string.merchant_onboarding_11, step.toString())
         backButton.visibility = View.VISIBLE
         nextButton.visibility = View.VISIBLE
-        nextButton.text = if (step == 4) "إرسال للمراجعة" else "التالي"
+        nextButton.text = if (step == 4) getString(R.string.merchant_onboarding_12) else getString(R.string.merchant_onboarding_13)
 
         reviewNotice?.let(::addReviewNotice)
 
@@ -283,7 +304,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         val body = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(16), dp(14), dp(16), dp(14))
-            addView(sectionText("مطلوب منك تعديل"))
+            addView(sectionText(getString(R.string.merchant_onboarding_14)))
             addView(smallText(message).apply {
                 setTextColor(ContextCompat.getColor(requireContext(), R.color.text_dark))
             })
@@ -293,15 +314,15 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
     }
 
     private fun renderBusinessStep() {
-        title.text = "بيانات النشاط"
-        addInfoText("خلّي البيانات الأساسية واضحة. رقم الهاتف للتواصل والمراجعة فقط، بدون رمز OTP.")
+        title.text = getString(R.string.merchant_onboarding_15)
+        addInfoText(getString(R.string.merchant_onboarding_16))
         addCard {
-            addField(this, "business_name", "اسم النشاط", draft.businessName)
-            addField(this, "description", "وصف النشاط", draft.description, multiline = true, optional = true)
-            addField(this, "phone", "رقم الهاتف", draft.phone, phone = true)
-            addField(this, "whatsapp", "واتساب (اختياري)", draft.whatsapp, phone = true, optional = true)
+            addField(this, "business_name", getString(R.string.merchant_onboarding_17), draft.businessName)
+            addField(this, "description", getString(R.string.merchant_onboarding_18), draft.description, multiline = true, optional = true)
+            addField(this, "phone", getString(R.string.merchant_onboarding_19), draft.phone, phone = true)
+            addField(this, "whatsapp", getString(R.string.merchant_onboarding_20), draft.whatsapp, phone = true, optional = true)
             whatsappSameCheck = MaterialCheckBox(requireContext()).apply {
-                text = "رقم الواتساب هو نفس رقم الهاتف"
+                text = getString(R.string.merchant_onboarding_21)
                 isChecked = draft.whatsappSameAsPhone
                 setOnCheckedChangeListener { _, checked ->
                     draft.whatsappSameAsPhone = checked
@@ -320,17 +341,17 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
     }
 
     private fun renderStoreStep() {
-        title.text = "بيانات المتجر"
-        addInfoText("دي البيانات البتظهر للعميل بعد اعتماد الحساب.")
+        title.text = getString(R.string.merchant_onboarding_22)
+        addInfoText(getString(R.string.merchant_onboarding_23))
         if (categories.isEmpty()) {
-            addInfoText("تعذر تحديث قائمة الفئات الآن. يمكنك كتابة اسم الفئة في خانة «الفئة غير موجودة» ومواصلة التسجيل.")
+            addInfoText(getString(R.string.merchant_onboarding_24))
         }
         addCard {
-            addField(this, "store_name", "اسم المتجر", draft.storeName)
+            addField(this, "store_name", getString(R.string.merchant_onboarding_25), draft.storeName)
             addDropdown(
                 this,
-                label = "فئة المتجر",
-                labels = categories.map { it.name } + "فئة غير موجودة في القائمة",
+                label = getString(R.string.merchant_onboarding_26),
+                labels = categories.map { it.name } + getString(R.string.merchant_onboarding_27),
                 selected = categories.firstOrNull { it.id == draft.categoryId }?.name.orEmpty()
             ) { index ->
                 draft.categoryId = categories.getOrNull(index)?.id.orEmpty()
@@ -339,35 +360,35 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
             addField(
                 this,
                 "requested_category",
-                "الفئة غير موجودة؟ اكتبي اسمها هنا",
+                getString(R.string.merchant_onboarding_28),
                 draft.requestedCategory,
                 optional = true
             )
-            addField(this, "store_description", "وصف المتجر", draft.storeDescription, multiline = true, optional = true)
-            addField(this, "city", "المدينة", draft.city)
-            addField(this, "area", "المنطقة / الحي (اختياري)", draft.area, optional = true)
+            addField(this, "store_description", getString(R.string.merchant_onboarding_29), draft.storeDescription, multiline = true, optional = true)
+            addField(this, "city", getString(R.string.merchant_onboarding_30), draft.city)
+            addField(this, "area", getString(R.string.merchant_onboarding_31), draft.area, optional = true)
         }
     }
 
     private fun renderDeliveryIdentityStep() {
-        title.text = "التوصيل والهوية"
-        addInfoText("أضيفي كل منطقة مع رسومها وزمن الوصول المتوقع بعد تسليم الطلب للمندوب.")
+        title.text = getString(R.string.merchant_onboarding_32)
+        addInfoText(getString(R.string.merchant_onboarding_33))
         draft.deliveryZones.forEachIndexed { index, zone ->
             addCard {
-                addView(sectionText("منطقة التوصيل ${index + 1}"))
-                addField(this, "zone_area_$index", "اسم المنطقة أو الحي", zone.area)
-                addField(this, "zone_fee_$index", "رسوم التوصيل بالجنيه", zone.fee, decimal = true)
+                addView(sectionText(getString(R.string.merchant_onboarding_34, (index + 1).toString())))
+                addField(this, "zone_area_$index", getString(R.string.merchant_onboarding_35), zone.area)
+                addField(this, "zone_fee_$index", getString(R.string.merchant_onboarding_36), zone.fee, decimal = true)
                 addField(
                     this,
                     "zone_eta_$index",
-                    "زمن الوصول بعد تسليم الطلب للمندوب — بالدقائق",
+                    getString(R.string.merchant_onboarding_37),
                     zone.estimatedMinutes,
                     number = true,
                     optional = true
                 )
                 if (draft.deliveryZones.size > 1) {
                     addView(MaterialButton(requireContext()).apply {
-                        text = "حذف هذه المنطقة"
+                        text = getString(R.string.merchant_onboarding_38)
                         isAllCaps = false
                         setOnClickListener {
                             captureDeliveryZones()
@@ -379,7 +400,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
                 }
             }
         }
-        addSecondaryButton("+ إضافة منطقة توصيل أخرى") {
+        addSecondaryButton(getString(R.string.merchant_onboarding_39)) {
             captureDeliveryZones()
             draft.deliveryZones.add(DeliveryZoneDraft())
             saveDraft()
@@ -389,35 +410,35 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
     }
 
     private fun renderReviewStep() {
-        title.text = "راجعي البيانات"
-        addInfoText("تأكدي من المعلومات قبل إرسال الطلب للإدارة.")
+        title.text = getString(R.string.merchant_onboarding_40)
+        addInfoText(getString(R.string.merchant_onboarding_41))
 
-        addSummaryCard("النشاط", listOf(
-            "اسم النشاط" to draft.businessName,
-            "الهاتف" to draft.phone,
-            "واتساب" to draft.whatsapp.ifBlank { "—" }
+        addSummaryCard(getString(R.string.merchant_onboarding_42), listOf(
+            getString(R.string.merchant_onboarding_17) to draft.businessName,
+            getString(R.string.merchant_onboarding_43) to draft.phone,
+            getString(R.string.merchant_onboarding_44) to draft.whatsapp.ifBlank { "—" }
         ))
-        addSummaryCard("المتجر", listOf(
-            "اسم المتجر" to draft.storeName,
-            "الفئة" to (categories.firstOrNull { it.id == draft.categoryId }?.name
+        addSummaryCard(getString(R.string.main_18), listOf(
+            getString(R.string.merchant_onboarding_25) to draft.storeName,
+            getString(R.string.merchant_onboarding_45) to (categories.firstOrNull { it.id == draft.categoryId }?.name
                 ?: draft.requestedCategory.ifBlank { "—" }),
-            "الموقع" to listOf(draft.city, draft.area).filter { it.isNotBlank() }.joinToString(" - ")
+            getString(R.string.merchant_onboarding_46) to listOf(draft.city, draft.area).filter { it.isNotBlank() }.joinToString(" - ")
         ))
-        addSummaryCard("التوصيل والتحقق", listOf(
-            "المناطق والرسوم" to draft.deliveryZones.joinToString(" • ") {
+        addSummaryCard(getString(R.string.merchant_onboarding_47), listOf(
+            getString(R.string.merchant_onboarding_48) to draft.deliveryZones.joinToString(" • ") {
                 "${it.area}: ${it.fee} جنيه${it.estimatedMinutes.takeIf(String::isNotBlank)?.let { eta -> "، $eta دقيقة بعد التسليم للمندوب" } ?: ""}"
             },
-            "الهوية" to if (identityPath.isNullOrBlank()) "غير مرفوعة" else "مرفوعة ✓"
+            getString(R.string.merchant_onboarding_49) to if (identityPath.isNullOrBlank()) getString(R.string.merchant_onboarding_50) else getString(R.string.merchant_onboarding_51)
         ))
 
-        addSecondaryButton("عرض اتفاقية وسياسات التاجر") {
+        addSecondaryButton(getString(R.string.merchant_onboarding_52)) {
             draft.policiesAccepted = policiesCheck?.isChecked ?: draft.policiesAccepted
             saveDraft()
             (activity as? MainActivity)?.show(PoliciesFragment())
         }
 
         policiesCheck = MaterialCheckBox(requireContext()).apply {
-            text = "أوافق على اتفاقية وسياسات التاجر وصحة البيانات والمنتجات والأسعار والتوفر وتنفيذ الطلبات والتوصيل."
+            text = getString(R.string.merchant_onboarding_53)
             isChecked = draft.policiesAccepted
             setTextColor(ContextCompat.getColor(requireContext(), R.color.text_dark))
             textSize = 14f
@@ -432,26 +453,26 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
             orientation = LinearLayout.VERTICAL
             setPadding(dp(16), dp(16), dp(16), dp(16))
         }
-        body.addView(sectionText("إثبات الهوية"))
-        body.addView(smallText("بطاقة قومية أو جواز سفر. الملف لا يظهر للعملاء."))
+        body.addView(sectionText(getString(R.string.merchant_onboarding_54)))
+        body.addView(smallText(getString(R.string.merchant_onboarding_55)))
 
-        val docLabels = listOf("بطاقة قومية", "جواز سفر", "مستند آخر")
+        val docLabels = listOf(getString(R.string.merchant_onboarding_56), getString(R.string.merchant_onboarding_57), getString(R.string.merchant_onboarding_58))
         val docValues = listOf("national_id", "passport", "other")
         addDropdown(
             body,
-            "نوع المستند",
+            getString(R.string.merchant_onboarding_59),
             docLabels,
             docLabels.getOrNull(docValues.indexOf(draft.documentType)).orEmpty()
         ) { index -> draft.documentType = docValues.getOrElse(index) { "national_id" } }
         documentField = body.findViewWithTag("dropdown")
 
-        identityStatus = smallText(if (identityPath.isNullOrBlank()) "لم يتم رفع مستند بعد" else "تم رفع مستند الهوية ✓").apply {
+        identityStatus = smallText(if (identityPath.isNullOrBlank()) getString(R.string.merchant_onboarding_60) else getString(R.string.merchant_onboarding_61)).apply {
             setTextColor(ContextCompat.getColor(requireContext(), if (identityPath.isNullOrBlank()) R.color.text_muted else R.color.success))
             setPadding(0, dp(8), 0, dp(8))
         }
         body.addView(identityStatus)
         val upload = MaterialButton(requireContext()).apply {
-            text = if (identityPath.isNullOrBlank()) "رفع الهوية / جواز السفر" else "تغيير المستند"
+            text = if (identityPath.isNullOrBlank()) getString(R.string.merchant_onboarding_62) else getString(R.string.merchant_onboarding_63)
             isAllCaps = false
             setOnClickListener {
                 captureCurrentStep()
@@ -516,15 +537,15 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
             1 -> {
                 val cleanPhone = draft.phone.replace(Regex("[\\s()-]"), "")
                 when {
-                    draft.businessName.trim().length < 2 -> fail("أدخلي اسم النشاط")
-                    !Regex("^\\+?[0-9]{7,15}$").matches(cleanPhone) -> fail("راجعي رقم الهاتف")
+                    draft.businessName.trim().length < 2 -> fail(getString(R.string.merchant_onboarding_64))
+                    !Regex("^\\+?[0-9]{7,15}$").matches(cleanPhone) -> fail(getString(R.string.merchant_onboarding_65))
                     else -> true
                 }
             }
             2 -> when {
-                draft.storeName.trim().length < 2 -> fail("أدخلي اسم المتجر")
-                draft.categoryId.isBlank() && draft.requestedCategory.trim().length < 2 -> fail("اختاري فئة أو اكتبي الفئة غير الموجودة")
-                draft.city.trim().length < 2 -> fail("أدخلي المدينة")
+                draft.storeName.trim().length < 2 -> fail(getString(R.string.merchant_onboarding_66))
+                draft.categoryId.isBlank() && draft.requestedCategory.trim().length < 2 -> fail(getString(R.string.merchant_onboarding_67))
+                draft.city.trim().length < 2 -> fail(getString(R.string.merchant_onboarding_68))
                 else -> true
             }
             3 -> {
@@ -532,18 +553,18 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
                     val fee = zone.fee.toDoubleOrNull()
                     val minutes = zone.estimatedMinutes.takeIf { it.isNotBlank() }?.toIntOrNull()
                     when {
-                        zone.area.trim().length < 2 -> return fail("أدخلي اسم منطقة التوصيل ${index + 1}")
-                        fee == null || fee < 0 -> return fail("راجعي رسوم المنطقة ${index + 1}")
-                        zone.estimatedMinutes.isNotBlank() && (minutes == null || minutes !in 1..1440) -> return fail("راجعي زمن الوصول للمنطقة ${index + 1}")
+                        zone.area.trim().length < 2 -> return fail(getString(R.string.merchant_onboarding_69, (index + 1).toString()))
+                        fee == null || fee < 0 -> return fail(getString(R.string.merchant_onboarding_70, (index + 1).toString()))
+                        zone.estimatedMinutes.isNotBlank() && (minutes == null || minutes !in 1..1440) -> return fail(getString(R.string.merchant_onboarding_71, (index + 1).toString()))
                     }
                 }
                 when {
-                    draft.deliveryZones.isEmpty() -> fail("أضيفي منطقة توصيل واحدة على الأقل")
-                    identityPath.isNullOrBlank() -> fail("ارفعي مستند الهوية")
+                    draft.deliveryZones.isEmpty() -> fail(getString(R.string.merchant_onboarding_72))
+                    identityPath.isNullOrBlank() -> fail(getString(R.string.merchant_onboarding_73))
                     else -> true
                 }
             }
-            else -> if (!draft.policiesAccepted) fail("يجب الموافقة على سياسات التاجر") else true
+            else -> if (!draft.policiesAccepted) fail(getString(R.string.merchant_onboarding_74)) else true
         }
     }
 
@@ -560,7 +581,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         }
         submissionInFlight = true
         setBusy(true)
-        submitStatus.text = "جاري إرسال طلب التسجيل… لا تغلقي الصفحة"
+        submitStatus.text = getString(R.string.merchant_onboarding_75)
         viewLifecycleOwner.lifecycleScope.launch {
             runCatchingCancellable {
                 repository.submitMerchantApplication(
@@ -581,17 +602,17 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
                 )
             }.onSuccess {
                 submissionInFlight = false
-                prefs.edit().clear().apply()
+                prefs.edit { clear() }
                 reviewNotice = null
                 renderSubmittedState()
-                Toast.makeText(requireContext(), "تم إرسال طلب التاجر للمراجعة", Toast.LENGTH_LONG).show()
+                Toast.makeText(requireContext(), getString(R.string.merchant_onboarding_76), Toast.LENGTH_LONG).show()
             }.onFailure { error ->
                 submissionInFlight = false
                 setBusy(false)
-                nextButton.text = "إرسال للمراجعة"
+                nextButton.text = getString(R.string.merchant_onboarding_12)
                 Toast.makeText(
                     requireContext(),
-                    merchantError(error, "تعذر إرسال الطلب. راجعي اتصال الإنترنت وحاولي مرة أخرى."),
+                    merchantError(error, getString(R.string.merchant_onboarding_77)),
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -599,47 +620,49 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
     }
 
     private fun renderSubmittedState() {
+        formVisible = false
         setBusy(false)
         content.removeAllViews()
         progress.visibility = View.GONE
         stepText.visibility = View.GONE
         backButton.visibility = View.GONE
         nextButton.visibility = View.GONE
-        title.text = "تم إرسال الطلب"
+        title.text = getString(R.string.merchant_onboarding_78)
         addCard {
-            addView(sectionText("طلبك وصل للإدارة ✓"))
-            addView(smallText("الطلب الآن قيد المراجعة. يمكنك الرجوع للتطبيق بشكل طبيعي والعودة هنا لاحقاً لمتابعة الحالة."))
+            addView(sectionText(getString(R.string.merchant_onboarding_79)))
+            addView(smallText(getString(R.string.merchant_onboarding_80)))
         }
-        addSecondaryButton("تحديث حالة الطلب") { loadEntry() }
+        addSecondaryButton(getString(R.string.merchant_onboarding_81)) { loadEntry() }
     }
 
     private fun renderStatus(profile: MerchantProfile, headline: String, approved: Boolean = false) {
+        formVisible = false
         setBusy(false)
         content.removeAllViews()
         progress.visibility = View.GONE
         stepText.visibility = View.GONE
         backButton.visibility = View.GONE
         nextButton.visibility = View.GONE
-        title.text = "حالة حساب التاجر"
+        title.text = getString(R.string.merchant_onboarding_82)
         addCard {
             addView(sectionText(headline))
-            addView(summaryRow("النشاط", profile.business_name))
-            addView(summaryRow("المتجر", profile.store_name ?: "—"))
-            addView(summaryRow("الهاتف", profile.phone ?: "—"))
-            addView(summaryRow("الحالة", statusText(profile.verification_status)))
-            profile.review_note?.takeIf { it.isNotBlank() }?.let { addView(summaryRow("ملاحظة الإدارة", it)) }
+            addView(summaryRow(getString(R.string.merchant_onboarding_42), profile.business_name))
+            addView(summaryRow(getString(R.string.main_18), profile.store_name ?: "—"))
+            addView(summaryRow(getString(R.string.merchant_onboarding_43), profile.phone ?: "—"))
+            addView(summaryRow(getString(R.string.merchant_onboarding_83), statusText(profile.verification_status)))
+            profile.review_note?.takeIf { it.isNotBlank() }?.let { addView(summaryRow(getString(R.string.merchant_onboarding_84), it)) }
         }
         if (approved) {
-            addPrimaryButton("فتح لوحة المتجر") { (activity as? MainActivity)?.show(SellerFragment()) }
+            addPrimaryButton(getString(R.string.merchant_onboarding_85)) { (activity as? MainActivity)?.show(SellerFragment()) }
         } else {
-            addSecondaryButton("تحديث الحالة") { loadEntry() }
+            addSecondaryButton(getString(R.string.merchant_onboarding_86)) { loadEntry() }
         }
     }
 
     private fun uploadIdentity(uri: Uri) {
-        submitStatus.text = "جاري رفع مستند الهوية…"
+        submitStatus.text = getString(R.string.merchant_onboarding_87)
         setBusy(true)
-        identityStatus?.text = "جاري رفع المستند…"
+        identityStatus?.text = getString(R.string.merchant_onboarding_88)
         viewLifecycleOwner.lifecycleScope.launch {
             runCatchingCancellable {
                 val pair = withContext(Dispatchers.IO) { identityBytes(uri) }
@@ -648,13 +671,13 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
                 identityPath = path
                 saveDraft()
                 setBusy(false)
-                Toast.makeText(requireContext(), "تم رفع مستند الهوية ✓", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), getString(R.string.merchant_onboarding_61), Toast.LENGTH_SHORT).show()
                 renderStep()
             }.onFailure { error ->
                 setBusy(false)
                 Toast.makeText(
                     requireContext(),
-                    merchantError(error, localizedFallback(error, "تعذر رفع مستند الهوية")),
+                    merchantError(error, getString(R.string.merchant_onboarding_89)),
                     Toast.LENGTH_LONG
                 ).show()
                 renderStep()
@@ -666,27 +689,25 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         val mime = requireContext().contentResolver.getType(uri).orEmpty()
         if (mime == "application/pdf") {
             val bytes = requireContext().contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                ?: error("تعذر قراءة الملف")
-            require(bytes.size <= 8 * 1024 * 1024) { "الملف أكبر من 8 ميجابايت" }
+                ?: error(getString(R.string.merchant_onboarding_90))
+            require(bytes.size <= 8 * 1024 * 1024) { getString(R.string.merchant_onboarding_91) }
             return bytes to "application/pdf"
         }
         val bitmap = requireContext().contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
-            ?: error("تعذر قراءة الصورة")
+            ?: error(getString(R.string.account_4))
         val largest = maxOf(bitmap.width, bitmap.height)
         val scaled = if (largest > 1600) {
             val ratio = 1600f / largest
-            Bitmap.createScaledBitmap(
-                bitmap,
+            bitmap.scale(
                 (bitmap.width * ratio).toInt().coerceAtLeast(1),
-                (bitmap.height * ratio).toInt().coerceAtLeast(1),
-                true
+                (bitmap.height * ratio).toInt().coerceAtLeast(1)
             )
         } else bitmap
         val bytes = ByteArrayOutputStream().use { out ->
-            require(scaled.compress(Bitmap.CompressFormat.JPEG, 85, out)) { "تعذر تجهيز الصورة" }
+            require(scaled.compress(Bitmap.CompressFormat.JPEG, 85, out)) { getString(R.string.account_5) }
             out.toByteArray()
         }
-        require(bytes.size <= 5 * 1024 * 1024) { "الصورة أكبر من 5 ميجابايت" }
+        require(bytes.size <= 5 * 1024 * 1024) { getString(R.string.merchant_onboarding_92) }
         return bytes to "image/jpeg"
     }
 
@@ -695,28 +716,23 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         val specific = when {
             raw.contains("Identity document was not uploaded", ignoreCase = true) ||
                 raw.contains("Identity document is required", ignoreCase = true) ->
-                "مستند الهوية غير متاح. ارفعي المستند مرة أخرى ثم أعيدي الإرسال."
+                getString(R.string.merchant_onboarding_93)
             raw.contains("Store category is invalid", ignoreCase = true) ->
-                "الفئة المختارة لم تعد متاحة. اختاري فئة أخرى أو اكتبي اسم الفئة المطلوبة."
+                getString(R.string.merchant_onboarding_94)
             raw.contains("Choose a category", ignoreCase = true) ->
-                "اختاري فئة للمتجر أو اكتبي اسم الفئة غير الموجودة."
+                getString(R.string.merchant_onboarding_95)
             raw.contains("At least one delivery zone", ignoreCase = true) ||
                 raw.contains("Invalid delivery", ignoreCase = true) ->
-                "راجعي مناطق التوصيل والرسوم وزمن الوصول ثم أعيدي المحاولة."
+                getString(R.string.merchant_onboarding_96)
             raw.contains("Merchant policies", ignoreCase = true) ->
-                "يجب الموافقة على اتفاقية وسياسات التاجر قبل الإرسال."
+                getString(R.string.merchant_onboarding_97)
             raw.contains("cannot be resubmitted", ignoreCase = true) ->
-                "حالة حساب التاجر لا تسمح بإعادة إرسال الطلب. حدّثي الحالة أولاً."
+                getString(R.string.merchant_onboarding_98)
             raw.contains("Authentication required", ignoreCase = true) ->
-                "انتهت جلسة تسجيل الدخول. سجّلي الدخول من جديد لإكمال تسجيل التاجر."
-            else -> localizedFallback(error, fallback)
+                getString(R.string.merchant_onboarding_99)
+            else -> return CustomerErrorMessages.from(error, fallback)
         }
         return CustomerErrorMessages.from(error, specific)
-    }
-
-    private fun localizedFallback(error: Throwable, fallback: String): String {
-        val raw = error.message.orEmpty()
-        return if (raw.any { it in '\u0600'..'\u06FF' }) raw else fallback
     }
 
     private fun addField(
@@ -735,7 +751,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
             boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
             boxStrokeColor = ContextCompat.getColor(requireContext(), R.color.border)
             setBoxCornerRadii(dp(14).toFloat(), dp(14).toFloat(), dp(14).toFloat(), dp(14).toFloat())
-            helperText = if (optional) "اختياري" else null
+            helperText = if (optional) getString(R.string.merchant_onboarding_100) else null
         }
         val edit = TextInputEditText(layout.context).apply {
             setText(initial)
@@ -778,7 +794,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         }
         layout.addView(field, matchWrap())
         parent.addView(layout, matchWrapWithBottomMargin())
-        if (label == "فئة المتجر") categoryField = field
+        if (label == getString(R.string.merchant_onboarding_26)) categoryField = field
     }
 
     private fun addSummaryCard(header: String, rows: List<Pair<String, String>>) {
@@ -794,7 +810,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
     }
 
     private fun summaryRow(label: String, value: String): TextView = TextView(requireContext()).apply {
-        text = "$label: ${value.ifBlank { "—" }}"
+        text = getString(R.string.merchant_onboarding_105, label, value.ifBlank { "—" })
         textSize = 14f
         setTextColor(ContextCompat.getColor(requireContext(), R.color.text_dark))
         setPadding(0, dp(5), 0, dp(5))
@@ -821,7 +837,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
 
     private fun sectionText(value: String) = TextView(requireContext()).apply {
         text = value
-        textSize = 18f
+        textSize = 22f
         setTypeface(typeface, android.graphics.Typeface.BOLD)
         setTextColor(ContextCompat.getColor(requireContext(), R.color.text_dark))
         setPadding(0, 0, 0, dp(8))
@@ -829,7 +845,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
 
     private fun smallText(value: String) = TextView(requireContext()).apply {
         text = value
-        textSize = 13f
+        textSize = 14f
         setTextColor(ContextCompat.getColor(requireContext(), R.color.text_muted))
     }
 
@@ -850,7 +866,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         content.addView(MaterialButton(requireContext()).apply {
             text = label
             isAllCaps = false
-            setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.on_primary))
             backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.tani_primary)
             setOnClickListener { action() }
         }, matchWrapWithMargins())
@@ -873,7 +889,7 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
         nextButton.isEnabled = !busy
         submitProgress.visibility = if (busy) View.VISIBLE else View.GONE
         submitStatus.visibility = if (busy) View.VISIBLE else View.GONE
-        if (busy && submitStatus.text.isNullOrBlank()) submitStatus.text = "جاري المعالجة…"
+        if (busy && submitStatus.text.isNullOrBlank()) submitStatus.text = getString(R.string.merchant_onboarding_101)
     }
 
     private fun deliveryZonesJson(): String = JSONArray().apply {
@@ -914,11 +930,11 @@ class MerchantOnboardingFragment : Fragment(R.layout.fragment_merchant_onboardin
     private fun value(key: String): String = inputs[key]?.text?.toString()?.trim().orEmpty()
 
     private fun statusText(status: String): String = when (status) {
-        "pending" -> "قيد المراجعة"
-        "approved" -> "معتمد"
-        "changes_requested" -> "تعديلات مطلوبة"
-        "rejected" -> "مرفوض"
-        "suspended" -> "موقوف"
+        "pending" -> getString(R.string.monetization_32)
+        "approved" -> getString(R.string.merchant_onboarding_102)
+        "changes_requested" -> getString(R.string.merchant_onboarding_103)
+        "rejected" -> getString(R.string.monetization_34)
+        "suspended" -> getString(R.string.merchant_onboarding_104)
         else -> status
     }
 

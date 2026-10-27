@@ -1,5 +1,7 @@
 # Tani Full Product — Implementation Status
 
+> **Historical (2026-09-06).** "Complete" below means the features were implemented, not that the product is launch-ready. The current launch decision is in `docs/LAUNCH_REPAIR_STATUS_2026-10-01.md` (NO-GO at that date).
+
 **Status date:** 2026-09-06  
 **Scope:** Product phases 1–8 from the full implementation specification.
 

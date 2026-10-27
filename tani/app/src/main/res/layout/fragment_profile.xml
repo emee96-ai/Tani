@@ -2,7 +2,6 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/tani_background"
     android:fillViewport="true">
 
     <LinearLayout
@@ -21,18 +20,18 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="حسابي"
+                android:text="@string/drawer_header_label"
                 android:textColor="@color/text_dark"
-                android:textSize="20sp"
+                android:textSize="22sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="بياناتك الشخصية وعناوين التوصيل"
+                android:text="@string/profile_label"
                 android:textColor="@color/text_muted"
-                android:textSize="13sp" />
+                android:textSize="14sp" />
 
             <Button
                 android:id="@+id/profile_account"
@@ -40,7 +39,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:layout_marginTop="14dp"
-                android:text="بيانات الحساب" />
+                android:text="@string/account_label" />
 
             <Button
                 android:id="@+id/profile_addresses"
@@ -48,7 +47,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:layout_marginTop="10dp"
-                android:text="عناويني" />
+                android:text="@string/account_addresses" />
         </LinearLayout>
 
         <LinearLayout
@@ -62,9 +61,9 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="الأمان والمشاركة"
+                android:text="@string/profile_label_2"
                 android:textColor="@color/text_dark"
-                android:textSize="20sp"
+                android:textSize="22sp"
                 android:textStyle="bold" />
 
             <Button
@@ -73,7 +72,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:layout_marginTop="14dp"
-                android:text="تغيير كلمة المرور" />
+                android:text="@string/profile_change_password" />
 
             <Button
                 android:id="@+id/profile_referrals"
@@ -81,16 +80,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:layout_marginTop="10dp"
-                android:text="دعوة الأصدقاء" />
+                android:text="@string/profile_referrals" />
         </LinearLayout>
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="22dp"
-            android:text="إدارة الجلسة والحساب"
+            android:text="@string/profile_label_3"
             android:textColor="@color/text_muted"
-            android:textSize="13sp" />
+            android:textSize="14sp" />
 
         <Button
             android:id="@+id/profile_logout"
@@ -98,7 +97,7 @@
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="10dp"
-            android:text="تسجيل الخروج" />
+            android:text="@string/profile_logout" />
 
         <Button
             android:id="@+id/profile_delete_account"
@@ -107,6 +106,6 @@
             android:layout_height="56dp"
             android:layout_marginTop="12dp"
             android:layout_marginBottom="30dp"
-            android:text="حذف الحساب" />
+            android:text="@string/profile_delete_account" />
     </LinearLayout>
 </ScrollView>

@@ -11,6 +11,7 @@ import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
@@ -54,13 +55,13 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
         val selectedCity = arguments?.getString(ARG_CITY)?.trim()?.takeIf { it.isNotBlank() }
         title.text = when {
             !categoryName.isNullOrBlank() -> categoryName
-            !sellerName.isNullOrBlank() -> "منتجات $sellerName"
-            !initialSearch.isNullOrBlank() && selectedCity != null -> "نتائج البحث • $selectedCity"
-            else -> "المنتجات"
+            !sellerName.isNullOrBlank() -> getString(R.string.products_1, sellerName)
+            !initialSearch.isNullOrBlank() && selectedCity != null -> getString(R.string.products_2, selectedCity)
+            else -> getString(R.string.main_16)
         }
         if (!initialSearch.isNullOrBlank()) search.setText(initialSearch)
 
-        val sortLabels = listOf("الأحدث", "السعر: الأقل أولاً", "السعر: الأعلى أولاً", "الأعلى تقييماً")
+        val sortLabels = listOf(getString(R.string.products_3), getString(R.string.products_4), getString(R.string.products_5), getString(R.string.products_6))
         sort.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, sortLabels)
 
         val adapter = ProductListAdapter(
@@ -93,26 +94,26 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
         fun updateSummary() {
             val parts = mutableListOf(sortLabels[sort.selectedItemPosition.coerceIn(sortLabels.indices)])
             selectedCity?.let { parts += it }
-            minPrice.text.toString().toDoubleOrNull()?.let { parts += "من ${it.toLong()}" }
-            maxPrice.text.toString().toDoubleOrNull()?.let { parts += "حتى ${it.toLong()}" }
-            if (inStock.isChecked) parts += "المتوفر فقط"
+            minPrice.text.toString().toDoubleOrNull()?.let { parts += getString(R.string.products_7, it.toLong().toString()) }
+            maxPrice.text.toString().toDoubleOrNull()?.let { parts += getString(R.string.products_8, it.toLong().toString()) }
+            if (inStock.isChecked) parts += getString(R.string.products_9)
             filterSummary.text = parts.joinToString(" • ")
         }
 
         fun renderPageState(message: String? = null) {
             status.visibility = View.VISIBLE
             status.text = message ?: when {
-                isLoading && loaded.isEmpty() -> "جاري تحميل المنتجات..."
-                isLoading -> "جاري تحميل المزيد..."
-                loaded.isEmpty() -> "ما لقينا نتائج مطابقة. جرّبي تغيير البحث أو الفلاتر."
+                isLoading && loaded.isEmpty() -> getString(R.string.products_10)
+                isLoading -> getString(R.string.stores_2)
+                loaded.isEmpty() -> getString(R.string.products_11)
                 else -> "تم عرض ${loaded.size} منتج${selectedCity?.let { " • $it" }.orEmpty()}"
             }
             loadMore.visibility = if ((hasMore || retryMode) && !isLoading) View.VISIBLE else View.GONE
             loadMore.isEnabled = !isLoading && (hasMore || retryMode)
             loadMore.text = when {
-                isLoading -> "جاري التحميل..."
-                retryMode -> "إعادة المحاولة"
-                else -> "عرض المزيد"
+                isLoading -> getString(R.string.products_12)
+                retryMode -> getString(R.string.notifications_5)
+                else -> getString(R.string.products_13)
             }
         }
 
@@ -212,13 +213,13 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
                             if (cached.isNotEmpty()) {
                                 "بدون اتصال — نعرض ${cached.size} منتج محفوظ${selectedCity?.let { " • $it" }.orEmpty()}"
                             } else {
-                                "لا يوجد اتصال بالإنترنت ولا توجد نتائج محفوظة لهذه الفلاتر"
+                                getString(R.string.products_14)
                             }
                         )
                     } else {
                         renderPageState(
-                            if (loaded.isEmpty()) "لا يوجد اتصال ولا توجد بيانات محفوظة لهذه الصفحة"
-                            else "لا يوجد اتصال — المنتجات المعروضة محفوظة على الجهاز"
+                            if (loaded.isEmpty()) getString(R.string.products_15)
+                            else getString(R.string.products_16)
                         )
                     }
                     return@launch
@@ -231,7 +232,7 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
                         isLoading = false
                         retryMode = false
                         adapter.submitList(emptyList())
-                        renderPageState("لا توجد متاجر نشطة في $selectedCity حالياً")
+                        renderPageState(getString(R.string.products_17, selectedCity))
                         return@launch
                     }
 
@@ -311,9 +312,9 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
                         }
                     }
                     val fallback = if (loaded.isEmpty()) {
-                        "تعذر تحميل المنتجات. حاولي مرة أخرى."
+                        getString(R.string.products_18)
                     } else {
-                        "تعذر التحديث — نعرض المنتجات المحفوظة"
+                        getString(R.string.products_19)
                     }
                     renderPageState(CustomerErrorMessages.from(error, fallback))
                 }
@@ -330,7 +331,7 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
         loadMore.setOnClickListener { loadPage(reset = if (retryMode) retryReset else false) }
 
         view.findViewById<Button>(R.id.products_filter_toggle).setOnClickListener {
-            filtersPanel.visibility = if (filtersPanel.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+            filtersPanel.isVisible = !filtersPanel.isVisible
         }
         view.findViewById<Button>(R.id.products_apply).setOnClickListener {
             filtersPanel.visibility = View.GONE
@@ -356,16 +357,16 @@ class ProductsFragment : Fragment(R.layout.fragment_products) {
 
     private fun addToCart(product: ProductCard) {
         if (product.has_variants) {
-            Toast.makeText(requireContext(), "اختاري المقاس أو اللون أولاً", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), getString(R.string.favorites_4), Toast.LENGTH_SHORT).show()
             (activity as MainActivity).show(ProductDetailsFragment.newInstance(product.id))
         } else if (Cart.add(product.toProduct())) {
             (activity as? MainActivity)?.refreshCartBadge()
             viewLifecycleOwner.lifecycleScope.launch {
                 Analytics.track("add_to_cart", screen = "products", entityType = "product", entityId = product.id)
             }
-            Toast.makeText(requireContext(), "تمت إضافة ${product.name} للسلة", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), getString(R.string.home_28, product.name), Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(requireContext(), "تعذر إضافة كمية إضافية", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), getString(R.string.home_29), Toast.LENGTH_SHORT).show()
         }
     }
 

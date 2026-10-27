@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/tani_background">
+    android:layout_height="match_parent">
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -14,7 +13,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="44dp"
             android:gravity="center"
-            android:text="تم استلام طلبك ✓"
+            android:text="@string/order_confirmation_label"
             android:textColor="@color/success"
             android:textSize="28sp"
             android:textStyle="bold" />
@@ -24,9 +23,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:gravity="center"
-            android:text="جارٍ تحميل تفاصيل الطلب..."
+            android:text="@string/order_confirmation_confirmation_message"
             android:textColor="@color/text_dark"
-            android:textSize="17sp" />
+            android:textSize="16sp" />
         <ProgressBar
             android:id="@+id/confirmation_progress"
             android:layout_width="42dp"
@@ -37,13 +36,13 @@
             android:layout_width="match_parent"
             android:layout_height="54dp"
             android:layout_marginTop="28dp"
-            android:text="تفاصيل الطلب" />
+            android:text="@string/order_confirmation_confirmation_details" />
         <Button
             android:id="@+id/confirmation_orders"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
             android:layout_height="54dp"
             android:layout_marginTop="10dp"
-            android:text="كل طلباتي" />
+            android:text="@string/order_confirmation_confirmation_orders" />
     </LinearLayout>
 </ScrollView>

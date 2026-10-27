@@ -1,6 +1,7 @@
 package com.tani.admin.data
 
 import android.content.Context
+import com.tani.admin.BuildConfig
 import com.tani.admin.security.SecureTokenStorage
 import com.tani.admin.AdminUiText
 import io.ktor.client.HttpClient
@@ -32,8 +33,8 @@ import kotlinx.serialization.json.put
 import java.net.URLEncoder
 
 object AdminApi {
-    const val URL = "https://sihttimibjzoahvwuwbm.supabase.co"
-    const val KEY = "sb_publishable_9syQMNqMr0q9V0_Z4W-jvA_OQjhHj1Y"
+    const val URL = BuildConfig.SUPABASE_URL
+    const val KEY = BuildConfig.SUPABASE_PUBLISHABLE_KEY
 
     private const val ACCESS = "access_token"
     private const val REFRESH = "refresh_token"
@@ -240,6 +241,12 @@ object AdminApi {
                     append(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                 }
                 setBody(buildJsonObject { put("refresh_token", refresh) }.toString())
+            }
+            if (response.status.value in 400..499 && response.status.value != 408 && response.status.value != 429) {
+                // الخادم ألغى الجلسة: لا فائدة من إعادة المحاولة، والمطلوب تسجيل دخول جديد.
+                response.bodyAsText()
+                clearSession()
+                return@withLock false
             }
             val root = parseObject(response)
             accessToken = root.string("access_token") ?: error("تعذر تجديد الجلسة")

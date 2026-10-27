@@ -5,6 +5,16 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
+val taniSupabaseUrl = providers.gradleProperty("TANI_SUPABASE_URL")
+    .orElse("https://sihttimibjzoahvwuwbm.supabase.co")
+    .get().trimEnd('/')
+val taniSupabaseKey = providers.gradleProperty("TANI_SUPABASE_PUBLISHABLE_KEY")
+    .orElse("sb_publishable_9syQMNqMr0q9V0_Z4W-jvA_OQjhHj1Y")
+    .get()
+require(taniSupabaseUrl.startsWith("https://")) { "TANI_SUPABASE_URL must use HTTPS" }
+require(taniSupabaseKey.startsWith("sb_publishable_")) {
+    "TANI_SUPABASE_PUBLISHABLE_KEY must be a publishable key, never a server key"
+}
 val taniResetRedirect = providers.gradleProperty("TANI_RESET_REDIRECT")
     .orElse("https://tani.invalid/auth/reset")
     .get()
@@ -45,6 +55,7 @@ android {
     buildTypes {
         getByName("debug") {
             buildConfigField("String", "PASSWORD_RESET_REDIRECT", "\"tani://auth/reset\"")
+            buildConfigField("String", "EMAIL_CONFIRM_REDIRECT", "\"tani://auth/confirm\"")
         }
         getByName("release") {
             isMinifyEnabled = true
@@ -74,6 +85,10 @@ android {
         testInstrumentationRunnerArguments["disableAnalytics"] = "true"
 
         buildConfigField("String", "PASSWORD_RESET_REDIRECT", "\"$taniResetRedirect\"")
+        // رابط تأكيد البريد منفصل عن الاستعادة حتى لا يفتح أبداً شاشة تغيير كلمة المرور.
+        buildConfigField("String", "EMAIL_CONFIRM_REDIRECT", "\"https://$taniAppLinkHost/auth/confirm\"")
+        buildConfigField("String", "SUPABASE_URL", "\"$taniSupabaseUrl\"")
+        buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"$taniSupabaseKey\"")
         buildConfigField("String", "APP_LINK_HOST", "\"$taniAppLinkHost\"")
         listOf("API_KEY", "APPLICATION_ID", "PROJECT_ID", "SENDER_ID").forEach { field ->
             val value = providers.gradleProperty("TANI_FIREBASE_$field").orElse("").get()
@@ -103,21 +118,21 @@ dependencies {
             }
         }
     }
-    implementation("com.google.firebase:firebase-messaging:25.1.2")
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
-    implementation("androidx.core:core-ktx:1.15.0")
-    implementation("androidx.appcompat:appcompat:1.7.0")
-    implementation("com.google.android.material:material:1.12.0")
-    implementation("androidx.activity:activity-ktx:1.10.0")
-    implementation("androidx.fragment:fragment-ktx:1.8.5")
+    implementation("com.google.firebase:firebase-messaging:25.1.3")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+    implementation("androidx.core:core-ktx:1.18.0")
+    implementation("androidx.appcompat:appcompat:1.8.0")
+    implementation("com.google.android.material:material:1.14.0")
+    implementation("androidx.activity:activity-ktx:1.13.0")
+    implementation("androidx.fragment:fragment-ktx:1.9.1")
     implementation("androidx.recyclerview:recyclerview:1.4.0")
     implementation("androidx.drawerlayout:drawerlayout:1.2.0")
     implementation("io.ktor:ktor-client-android:3.0.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
-    implementation("androidx.room:room-runtime:2.7.1")
-    implementation("androidx.room:room-ktx:2.7.1")
-    ksp("androidx.room:room-compiler:2.7.1")
+    implementation("androidx.room:room-runtime:2.8.5")
+    implementation("androidx.room:room-ktx:2.8.5")
+    ksp("androidx.room:room-compiler:2.8.5")
 
     testImplementation("junit:junit:4.13.2")
 

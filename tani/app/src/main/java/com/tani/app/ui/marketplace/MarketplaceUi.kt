@@ -1,5 +1,10 @@
 package com.tani.app.ui.marketplace
 
+import com.tani.app.data.productImageUrl
+import com.tani.app.data.storeImageUrl
+
+import com.tani.app.data.network.CustomerErrorMessages
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.content.Context
@@ -48,7 +53,7 @@ object MarketplaceUi {
         val delivery = deliveryLabel(product)
         val ratingText = if (product.review_count > 0) {
             String.format(Locale.US, "★ %.1f (%d)", product.average_rating, product.review_count)
-        } else "جديد"
+        } else context.getString(R.string.marketplace_ui_1)
 
         val card = MaterialCardView(context).apply {
             radius = dp(context, 18).toFloat()
@@ -61,10 +66,10 @@ object MarketplaceUi {
             isFocusable = true
             contentDescription = buildString {
                 append(product.name)
-                append("، ${product.store_name}")
-                append("، ${formatPrice(product.price)}")
-                append("، ${availability.first}")
-                delivery?.let { append("، $it") }
+                append(context.getString(R.string.marketplace_ui_2, product.store_name))
+                append(context.getString(R.string.marketplace_ui_2, (formatPrice(product.price))))
+                append(context.getString(R.string.marketplace_ui_2, availability.first))
+                delivery?.let { append(context.getString(R.string.marketplace_ui_2, it)) }
             }
             setOnClickListener { onOpen() }
         }
@@ -103,7 +108,7 @@ object MarketplaceUi {
             scaleType = ImageView.ScaleType.CENTER_INSIDE
             setPadding(dp(context, 9), dp(context, 9), dp(context, 9), dp(context, 9))
             elevation = dp(context, 3).toFloat()
-            contentDescription = "إضافة ${product.name} للمفضلة"
+            contentDescription = context.getString(R.string.marketplace_ui_3, product.name)
         }
         imageFrame.addView(
             favoriteButton,
@@ -122,7 +127,7 @@ object MarketplaceUi {
         }
         favoriteButton.setOnClickListener {
             if (Supabase.userId.isNullOrBlank()) {
-                Toast.makeText(context, "سجلي الدخول لإضافة المنتجات للمفضلة", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.marketplace_ui_4), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             val target = !favoriteActive
@@ -137,11 +142,11 @@ object MarketplaceUi {
                     updateFavoriteButton(favoriteButton, state, product.name)
                     Toast.makeText(
                         context,
-                        if (state) "تمت الإضافة للمفضلة" else "تمت الإزالة من المفضلة",
+                        if (state) context.getString(R.string.marketplace_ui_5) else context.getString(R.string.marketplace_ui_6),
                         Toast.LENGTH_SHORT
                     ).show()
                 }.onFailure {
-                    Toast.makeText(context, it.message ?: "تعذر تحديث المفضلة", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, CustomerErrorMessages.from(it, context.getString(R.string.marketplace_ui_7)), Toast.LENGTH_SHORT).show()
                 }
                 favoriteButton.isEnabled = true
             }
@@ -152,7 +157,7 @@ object MarketplaceUi {
             setPadding(dp(context, 12), dp(context, 10), dp(context, 12), dp(context, 12))
         }
 
-        val title = text(context, product.name, 15f, true, R.color.text_dark).apply {
+        val title = text(context, product.name, 16f, true, R.color.text_dark).apply {
             maxLines = 2
             ellipsize = TextUtils.TruncateAt.END
         }
@@ -162,7 +167,7 @@ object MarketplaceUi {
                 append(product.store_name)
                 verificationLabel(product.verification_status)?.let { append(" • $it") }
             },
-            11.5f,
+            11f,
             false,
             R.color.text_muted
         ).apply {
@@ -201,15 +206,15 @@ object MarketplaceUi {
                     setPadding(dp(context, 10), dp(context, 10), dp(context, 10), dp(context, 10))
                     isEnabled = false
                     alpha = 0.45f
-                    contentDescription = "المنتج غير متوفر"
+                    contentDescription = context.getString(R.string.marketplace_ui_8)
                 }, LinearLayout.LayoutParams(dp(context, 44), dp(context, 44)))
             }
             product.has_variants -> {
-                footer.addView(text(context, "خيارات", 11.5f, true, R.color.tani_primary).apply {
+                footer.addView(text(context, context.getString(R.string.marketplace_ui_9), 11f, true, R.color.tani_primary).apply {
                     background = ContextCompat.getDrawable(context, R.drawable.bg_chip)
                     gravity = Gravity.CENTER
                     setPadding(dp(context, 10), dp(context, 7), dp(context, 10), dp(context, 7))
-                    contentDescription = "المنتج له خيارات، افتحي المنتج للاختيار"
+                    contentDescription = context.getString(R.string.marketplace_ui_10)
                 })
             }
             else -> {
@@ -218,7 +223,7 @@ object MarketplaceUi {
                     background = cartButtonBackground(context, true)
                     scaleType = ImageView.ScaleType.CENTER_INSIDE
                     setPadding(dp(context, 10), dp(context, 10), dp(context, 10), dp(context, 10))
-                    contentDescription = "إضافة ${product.name} للسلة"
+                    contentDescription = context.getString(R.string.marketplace_ui_11, product.name)
                     setOnClickListener { onAdd() }
                 }, LinearLayout.LayoutParams(dp(context, 44), dp(context, 44)))
             }
@@ -315,7 +320,7 @@ object MarketplaceUi {
             background = ContextCompat.getDrawable(context, R.drawable.bg_card)
             isClickable = true
             isFocusable = true
-            contentDescription = "فتح متجر ${store.name}"
+            contentDescription = context.getString(R.string.marketplace_ui_12, store.name)
             setOnClickListener { onOpen() }
         }
 
@@ -334,28 +339,28 @@ object MarketplaceUi {
             }
         }
 
-        val status = if (store.is_open) "مفتوح الآن" else "مغلق حالياً"
+        val status = if (store.is_open) context.getString(R.string.marketplace_ui_13) else context.getString(R.string.marketplace_ui_14)
         val rating = if (store.review_count > 0) {
             String.format(Locale.US, "★ %.1f (%d)", store.average_rating, store.review_count)
-        } else "جديد"
+        } else context.getString(R.string.marketplace_ui_1)
         val trust = verificationLabel(store.verification_status)
-        content.addView(text(context, store.name, 18f, true, R.color.text_dark))
+        content.addView(text(context, store.name, 22f, true, R.color.text_dark))
         content.addView(
             text(
                 context,
                 listOfNotNull(trust, status, rating).joinToString(" • "),
-                13f,
+                14f,
                 false,
                 R.color.text_muted
             ),
             marginTop(context, 4)
         )
-        content.addView(text(context, "${store.city}${store.area?.let { " - $it" } ?: ""}", 13f, false, R.color.text_muted), marginTop(context, 4))
-        content.addView(text(context, "${store.product_count} منتج", 12f, false, R.color.text_muted), marginTop(context, 4))
+        content.addView(text(context, "${store.city}${store.area?.let { " - $it" } ?: ""}", 14f, false, R.color.text_muted), marginTop(context, 4))
+        content.addView(text(context, context.getString(R.string.marketplace_ui_15, store.product_count.toString()), 12f, false, R.color.text_muted), marginTop(context, 4))
 
         card.addView(logo)
         card.addView(content)
-        card.addView(text(context, "عرض", 13f, true, R.color.tani_primary).apply {
+        card.addView(text(context, context.getString(R.string.marketplace_ui_16), 14f, true, R.color.tani_primary).apply {
             setPadding(dp(context, 8), dp(context, 12), dp(context, 8), dp(context, 12))
         })
         return card
@@ -395,7 +400,7 @@ object MarketplaceUi {
     fun empty(context: Context, value: String): TextView = text(
         context,
         value,
-        15f,
+        16f,
         false,
         R.color.text_muted
     ).apply {

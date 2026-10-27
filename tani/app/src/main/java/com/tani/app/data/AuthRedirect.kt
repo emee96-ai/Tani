@@ -7,8 +7,8 @@ import io.ktor.client.plugins.plugin
 /**
  * يضمن أن رسائل تأكيد إنشاء الحساب تعود إلى تطبيق أندرويد بدلاً من
  * Site URL الافتراضي في Supabase (مثل localhost:3000).
- * نستخدم نفس deep link المسموح مسبقاً لاستعادة كلمة المرور، ثم يميز
- * MainActivity نوع العملية من type=signup أو type=recovery.
+ * رابط التأكيد مسار مستقل (/auth/confirm) عن رابط الاستعادة، فلا يفتح
+ * رابط تأكيد منتهٍ شاشة تغيير كلمة المرور.
  */
 object AuthRedirect {
     @Volatile
@@ -25,7 +25,7 @@ object AuthRedirect {
             ) {
                 request.url.parameters.append(
                     "redirect_to",
-                    BuildConfig.PASSWORD_RESET_REDIRECT
+                    BuildConfig.EMAIL_CONFIRM_REDIRECT
                 )
             }
             execute(request)

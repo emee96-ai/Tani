@@ -148,7 +148,7 @@ object NotificationBadgeController {
                 visibility = View.GONE
                 gravity = Gravity.CENTER
                 setTextColor(Color.WHITE)
-                textSize = 9.5f
+                textSize = 11f
                 setPadding(dp(4), 0, dp(4), 0)
                 minWidth = dp(18)
                 background = badgeBackground

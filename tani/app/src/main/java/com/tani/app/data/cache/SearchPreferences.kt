@@ -1,6 +1,7 @@
 package com.tani.app.data.cache
 
 import android.content.Context
+import androidx.core.content.edit
 
 class SearchPreferences(context: Context) {
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -8,7 +9,7 @@ class SearchPreferences(context: Context) {
     var selectedCity: String?
         get() = prefs.getString(KEY_CITY, null)?.takeIf { it.isNotBlank() }
         set(value) {
-            prefs.edit().putString(KEY_CITY, value?.trim()?.takeIf { it.isNotBlank() }).apply()
+            prefs.edit { putString(KEY_CITY, value?.trim()?.takeIf { it.isNotBlank() }) }
         }
 
     val lastQuery: String?
@@ -30,7 +31,7 @@ class SearchPreferences(context: Context) {
             add(clean)
             recentQueries.filterNot { it.equals(clean, ignoreCase = true) }.forEach(::add)
         }.take(MAX_RECENT)
-        prefs.edit().putString(KEY_RECENT, updated.joinToString(RECENT_SEPARATOR)).apply()
+        prefs.edit { putString(KEY_RECENT, updated.joinToString(RECENT_SEPARATOR)) }
     }
 
     companion object {
@@ -39,5 +40,10 @@ class SearchPreferences(context: Context) {
         private const val KEY_RECENT = "recent_queries"
         private const val RECENT_SEPARATOR = "\u001F"
         private const val MAX_RECENT = 6
+
+        /** سجل البحث يخص صاحب الجلسة؛ المدينة المختارة تبقى لأنها إعداد للجهاز. */
+        fun clearHistory(context: Context) {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit { remove(KEY_RECENT) }
+        }
     }
 }

@@ -19,25 +19,25 @@ class AboutFragment : Fragment() {
     ): View {
         val context = requireContext()
         val content = ScreenUi.root(context).apply {
-            addView(ScreenUi.title(context, "من نحن"))
-            addView(ScreenUi.subtitle(context, "تاني — من محلاتنا لبابك"))
+            addView(ScreenUi.title(context, getString(R.string.main_25)))
+            addView(ScreenUi.subtitle(context, getString(R.string.about_1)))
             addSection(
-                "عن تاني",
-                "تاني سوق إلكتروني سوداني يجمع المتاجر والمشاريع المحلية في مكان واحد، عشان تكتشفي المنتجات وتطلبيها بصورة أسهل وأوضح وأكثر ثقة."
+                getString(R.string.about_2),
+                getString(R.string.about_3)
             )
             addSection(
-                "رسالتنا",
-                "نسهّل الشراء من التجار المحليين، ونساعد أصحاب المشاريع على عرض منتجاتهم وتنظيم طلباتهم والوصول لعملاء جدد."
+                getString(R.string.about_4),
+                getString(R.string.about_5)
             )
             addSection(
-                "كيف نعمل؟",
-                "تاني ينظم عرض المنتجات والطلبات والمتابعة. التاجر مسؤول عن صحة بيانات المنتج وتجهيز الطلب والتوصيل حسب المناطق والرسوم الظاهرة قبل تأكيد الطلب."
+                getString(R.string.about_6),
+                getString(R.string.about_7)
             )
             addSection(
-                "الثقة أولاً",
-                "طلبات التجار تُراجع قبل الاعتماد، ويمكن للعملاء متابعة حالة الطلب والوصول للدعم والإبلاغ عن أي مشكلة من داخل التطبيق."
+                getString(R.string.about_8),
+                getString(R.string.about_9)
             )
-            addView(ScreenUi.muted(context, "الإصدار ${BuildConfig.VERSION_NAME}"))
+            addView(ScreenUi.muted(context, getString(R.string.about_10, BuildConfig.VERSION_NAME)))
         }
         return ScrollView(context).apply {
             setBackgroundColor(context.getColor(R.color.tani_background))
@@ -48,8 +48,8 @@ class AboutFragment : Fragment() {
     private fun LinearLayout.addSection(title: String, body: String) {
         val context = this.context
         addView(ScreenUi.card(context).apply {
-            addView(ScreenUi.text(context, title, 18f, true))
-            addView(ScreenUi.text(context, body, 15f))
+            addView(ScreenUi.text(context, title, 22f, true))
+            addView(ScreenUi.text(context, body, 16f))
         })
     }
 }

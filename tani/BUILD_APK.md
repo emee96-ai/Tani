@@ -8,7 +8,7 @@
 
 السكربت:
 1. يشغل `qa/run_static_checks.sh`.
-2. يبني `assembleDebug` باستخدام Gradle Wrapper 8.9.
+2. يبني `assembleDebug` باستخدام Gradle Wrapper 8.11.1.
 3. ينسخ الناتج إلى `release/Tani-debug.apk`.
 4. ينشئ SHA256 بجانب الـAPK.
 

@@ -120,7 +120,7 @@ for imp in sorted(imports):
         found=False
         for p in (root/'app/src/main/java').rglob('*.kt'):
             txt=p.read_text(errors='ignore')
-            if re.search(rf'^package\s+{re.escape(pkg)}\s*$',txt,re.M) and re.search(rf'\b(?:fun|val|var|typealias)\s+(?:<[^>]+>\s*)?{re.escape(name)}\b',txt): found=True; break
+            if re.search(rf'^package\s+{re.escape(pkg)}\s*$',txt,re.M) and re.search(rf'\b(?:fun|val|var|typealias)\s+(?:<[^>]+>\s*)?(?:[A-Z][\w<>?, ]*\.)?{re.escape(name)}\b',txt): found=True; break
         if not found: missing_import.append(imp)
 if missing_import: bad('Internal imports',missing_import[:40])
 else: ok('Internal imports',str(len(imports)))

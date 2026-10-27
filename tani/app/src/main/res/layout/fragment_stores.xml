@@ -2,7 +2,6 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/tani_background"
     android:orientation="vertical"
     android:paddingStart="18dp"
     android:paddingTop="16dp"
@@ -11,16 +10,16 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="المتاجر"
+        android:text="@string/categories_stores"
         android:textColor="@color/text_dark"
-        android:textSize="26sp"
+        android:textSize="28sp"
         android:textStyle="bold" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="3dp"
-        android:text="استكشفي المتاجر المحلية حسب الاسم أو المنطقة"
+        android:text="@string/stores_label"
         android:textColor="@color/text_muted" />
 
     <LinearLayout
@@ -31,11 +30,13 @@
 
         <EditText
             android:id="@+id/stores_search"
+                    android:inputType="text"
+                    android:importantForAutofill="no"
             android:layout_width="0dp"
             android:layout_height="54dp"
             android:layout_weight="1"
             android:background="@drawable/bg_field"
-            android:hint="اسم المتجر أو المنطقة"
+            android:hint="@string/stores_search_hint"
             android:imeOptions="actionSearch"
             android:paddingHorizontal="13dp"
             android:singleLine="true" />
@@ -45,7 +46,7 @@
             android:layout_width="wrap_content"
             android:layout_height="54dp"
             android:layout_marginStart="8dp"
-            android:text="بحث" />
+            android:text="@string/search_button" />
     </LinearLayout>
 
     <TextView
@@ -53,7 +54,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:text="جاري تحميل المتاجر..."
+        android:text="@string/stores_loading"
         android:textColor="@color/text_muted" />
 
     <Button
@@ -62,7 +63,7 @@
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:layout_marginTop="8dp"
-        android:text="إعادة المحاولة"
+        android:text="@string/home_retry"
         android:visibility="gone" />
 
     <androidx.recyclerview.widget.RecyclerView

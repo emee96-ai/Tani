@@ -2,7 +2,6 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/tani_background"
     android:fillViewport="true"
     android:layoutDirection="rtl"
     android:scrollbars="none">
@@ -19,18 +18,18 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="سلة المشتريات"
+            android:text="@string/cart_label"
             android:textColor="@color/text_dark"
-            android:textSize="26sp"
+            android:textSize="28sp"
             android:textStyle="bold" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="راجعي المنتجات قبل الانتقال لإتمام الطلب"
+            android:text="@string/cart_label_2"
             android:textColor="@color/text_muted"
-            android:textSize="13sp" />
+            android:textSize="14sp" />
 
         <LinearLayout
             android:id="@+id/cart_box"

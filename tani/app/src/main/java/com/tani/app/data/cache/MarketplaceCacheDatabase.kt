@@ -64,7 +64,7 @@ abstract class MarketplaceCacheDatabase : RoomDatabase() {
                     "tani_market_cache.db"
                 )
                     // Cache data is disposable and can always be rebuilt from Supabase.
-                    .fallbackToDestructiveMigration()
+                    .fallbackToDestructiveMigration(dropAllTables = false)
                     .build()
                     .also { instance = it }
             }

@@ -1,5 +1,7 @@
 package com.tani.app.ui.commerce
 
+import com.tani.app.data.orderGroupDetails
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.os.Bundle
@@ -43,14 +45,14 @@ class OrderConfirmationFragment : Fragment(R.layout.fragment_order_confirmation)
                     AppContentStore.invalidateOrders()
                     (activity as? MainActivity)?.refreshCartBadge()
                     message.text = buildString {
-                        append("رقم العملية: ${groupId.take(8).uppercase()}\n")
-                        append("${details.orders.size} طلب للتجار\n")
-                        append("الإجمالي: ${MarketplaceUi.formatPrice(details.group.grand_total)}\n")
-                        append("طريقة الدفع: عند الاستلام")
+                        append(getString(R.string.order_confirmation_1, (groupId.take(8).uppercase())))
+                        append(getString(R.string.order_confirmation_2, details.orders.size.toString()))
+                        append(getString(R.string.order_confirmation_3, (MarketplaceUi.formatPrice(details.group.grand_total))))
+                        append(getString(R.string.order_confirmation_4))
                     }
                 }
                 .onFailure {
-                    message.text = "تم إنشاء الطلب. يمكنك متابعة حالته من طلباتي."
+                    message.text = getString(R.string.order_confirmation_5)
                 }
             progress.visibility = View.GONE
         }

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- androidx.fragment's UnsafeFragmentLifecycleObserverDetector recurses exponentially on this codebase and never finishes -->
+    <issue id="FragmentLiveDataObserve" severity="ignore" />
+    <issue id="FragmentBackPressedCallback" severity="ignore" />
+    <issue id="FragmentAddMenuProvider" severity="ignore" />
+</lint>

@@ -1,5 +1,7 @@
 package com.tani.app.ui.home
 
+import com.tani.app.data.homeFeed
+
 import com.tani.app.util.runCatchingCancellable
 
 import android.os.Bundle
@@ -55,7 +57,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         fun openSearch() {
             val query = search.text.toString().trim()
             if (query.length < 2) {
-                search.error = "اكتبي حرفين على الأقل"
+                search.error = getString(R.string.home_1)
                 return
             }
             (activity as MainActivity).show(SearchFragment.newInstance(query))
@@ -91,7 +93,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     minHeight = 0
                     minimumHeight = 0
                     gravity = Gravity.CENTER
-                    textSize = 12.5f
+                    textSize = 12f
                     setTextColor(ContextCompat.getColor(requireContext(), R.color.text_dark))
                     setPadding(
                         MarketplaceUi.dp(requireContext(), 8),
@@ -113,7 +115,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
             if (feed.featuredProducts.isNotEmpty()) {
                 featuredTitle.visibility = View.VISIBLE
-                featuredTitle.text = "ممول • ظهور مميز"
+                featuredTitle.text = getString(R.string.home_2)
                 renderProducts(featuredBox, feed.featuredProducts)
             } else {
                 featuredTitle.visibility = View.GONE
@@ -124,7 +126,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
             storesBox.removeAllViews()
             if (feed.stores.isEmpty()) {
-                storesBox.addView(MarketplaceUi.empty(requireContext(), "لا توجد متاجر معتمدة حالياً"))
+                storesBox.addView(MarketplaceUi.empty(requireContext(), getString(R.string.home_3)))
             } else feed.stores.forEach { store ->
                 MarketplaceUi.addWithSpacing(
                     storesBox,
@@ -148,17 +150,17 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 val cachedFeed = AppContentStore.homeFeed ?: cache.loadHomeFeed(allowExpired = true)
                 if (cachedFeed != null) {
                     renderFeed(cachedFeed)
-                    setFeedState("نعرض آخر بيانات محفوظة • جاري التحديث...", canRetry = false)
+                    setFeedState(getString(R.string.home_4), canRetry = false)
                 } else {
-                    setFeedState("جاري تحميل السوق...", canRetry = false)
+                    setFeedState(getString(R.string.home_5), canRetry = false)
                 }
 
                 if (!NetworkStatus.isOnline(requireContext())) {
                     setFeedState(
                         if (cachedFeed != null) {
-                            "بدون اتصال — نعرض آخر بيانات محفوظة"
+                            getString(R.string.home_6)
                         } else {
-                            "لا يوجد اتصال بالإنترنت ولا توجد بيانات محفوظة بعد"
+                            getString(R.string.home_7)
                         },
                         canRetry = true
                     )
@@ -173,9 +175,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     }
                     .onFailure { error ->
                         val fallback = if (cachedFeed != null) {
-                            "تعذر تحديث السوق — نعرض آخر بيانات محفوظة"
+                            getString(R.string.home_8)
                         } else {
-                            "تعذر تحميل السوق. حاولي مرة أخرى."
+                            getString(R.string.home_9)
                         }
                         setFeedState(CustomerErrorMessages.from(error, fallback), canRetry = true)
                     }
@@ -189,7 +191,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             val online = NetworkStatus.isOnline(requireContext())
             val userId = Supabase.userId?.takeIf { Supabase.hasStoredSession() }
             if (userId == null) {
-                recommendedTitle.text = if (online) "منتجات مقترحة" else "منتجات مقترحة • محفوظة"
+                recommendedTitle.text = if (online) getString(R.string.home_10) else getString(R.string.home_11)
                 val fallback = AppContentStore.products.ifEmpty {
                     cache.load(AppContentStore.CATALOG_PREVIEW_KEY, allowExpired = true)
                 }.take(8)
@@ -201,13 +203,13 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 cache.loadRecommendations(userId, allowExpired = true)
             }
             if (preloaded.isNotEmpty()) {
-                if (!online) recommendedTitle.text = "مقترحة لك • محفوظة"
+                if (!online) recommendedTitle.text = getString(R.string.home_12)
                 renderProducts(recommendedBox, preloaded)
                 if (!online) return@launch
             } else if (!online) {
-                recommendedTitle.text = "مقترحة لك • بدون اتصال"
+                recommendedTitle.text = getString(R.string.home_13)
                 recommendedBox.removeAllViews()
-                recommendedBox.addView(MarketplaceUi.empty(requireContext(), "لا توجد اقتراحات محفوظة لهذا الحساب بعد"))
+                recommendedBox.addView(MarketplaceUi.empty(requireContext(), getString(R.string.home_14)))
                 return@launch
             }
 
@@ -216,10 +218,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     if (Supabase.userId != userId || !Supabase.hasStoredSession()) return@onSuccess
                     AppContentStore.updateRecommendations(userId, products)
                     cache.saveRecommendations(userId, products)
-                    recommendedTitle.text = "مقترحة لك"
+                    recommendedTitle.text = getString(R.string.home_15)
                     if (products.isEmpty()) {
                         recommendedBox.removeAllViews()
-                        recommendedBox.addView(MarketplaceUi.empty(requireContext(), "ستتحسن الاقتراحات مع استخدامك لتاني"))
+                        recommendedBox.addView(MarketplaceUi.empty(requireContext(), getString(R.string.home_16)))
                     } else {
                         renderProducts(recommendedBox, products)
                     }
@@ -227,25 +229,25 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 .onFailure {
                     if (Supabase.userId != userId || !Supabase.hasStoredSession()) return@onFailure
                     val cached = cache.loadRecommendations(userId, allowExpired = true)
-                    recommendedTitle.text = if (cached.isNotEmpty()) "مقترحة لك • محفوظة" else "مقترحة لك"
+                    recommendedTitle.text = if (cached.isNotEmpty()) getString(R.string.home_12) else getString(R.string.home_15)
                     if (cached.isNotEmpty()) renderProducts(recommendedBox, cached)
                 }
         }
     }
 
     private fun categoryIcon(name: String): Int = when {
-        name.contains("نساء", ignoreCase = true) || name.contains("نسائي", ignoreCase = true) -> R.drawable.ic_cat_women
-        name.contains("طفل", ignoreCase = true) || name.contains("أطفال", ignoreCase = true) -> R.drawable.ic_cat_kids
-        name.contains("بيت", ignoreCase = true) || name.contains("منزل", ignoreCase = true) -> R.drawable.ic_cat_home
-        name.contains("إكسس", ignoreCase = true) || name.contains("اكسس", ignoreCase = true) -> R.drawable.ic_cat_accessories
-        name.contains("جمال", ignoreCase = true) || name.contains("عناية", ignoreCase = true) -> R.drawable.ic_cat_beauty
+        name.contains(getString(R.string.home_17), ignoreCase = true) || name.contains(getString(R.string.home_18), ignoreCase = true) -> R.drawable.ic_cat_women
+        name.contains(getString(R.string.home_19), ignoreCase = true) || name.contains(getString(R.string.home_20), ignoreCase = true) -> R.drawable.ic_cat_kids
+        name.contains(getString(R.string.home_21), ignoreCase = true) || name.contains(getString(R.string.home_22), ignoreCase = true) -> R.drawable.ic_cat_home
+        name.contains(getString(R.string.home_23), ignoreCase = true) || name.contains(getString(R.string.home_24), ignoreCase = true) -> R.drawable.ic_cat_accessories
+        name.contains(getString(R.string.home_25), ignoreCase = true) || name.contains(getString(R.string.home_26), ignoreCase = true) -> R.drawable.ic_cat_beauty
         else -> R.drawable.ic_cat_generic
     }
 
     private fun renderProducts(container: LinearLayout, products: List<com.tani.app.data.ProductCard>) {
         container.removeAllViews()
         if (products.isEmpty()) {
-            container.addView(MarketplaceUi.empty(requireContext(), "لا توجد منتجات متاحة حالياً"))
+            container.addView(MarketplaceUi.empty(requireContext(), getString(R.string.home_27)))
             return
         }
         val cards = products.map { product ->
@@ -262,9 +264,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                         viewLifecycleOwner.lifecycleScope.launch {
                             Analytics.track("add_to_cart", screen = "home", entityType = "product", entityId = product.id)
                         }
-                        Toast.makeText(requireContext(), "تمت إضافة ${product.name} للسلة", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), getString(R.string.home_28, product.name), Toast.LENGTH_SHORT).show()
                     } else {
-                        Toast.makeText(requireContext(), "تعذر إضافة كمية إضافية", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), getString(R.string.home_29), Toast.LENGTH_SHORT).show()
                     }
                 }
             )
