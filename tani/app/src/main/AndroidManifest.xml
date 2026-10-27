@@ -50,6 +50,10 @@
                     android:scheme="https"
                     android:host="${taniAppLinkHost}"
                     android:path="/auth/reset" />
+                <data
+                    android:scheme="https"
+                    android:host="${taniAppLinkHost}"
+                    android:path="/auth/confirm" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

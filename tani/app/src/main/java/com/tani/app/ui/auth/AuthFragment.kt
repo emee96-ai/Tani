@@ -17,7 +17,6 @@ import com.tani.app.R
 import com.tani.app.data.Cart
 import com.tani.app.data.Repository
 import com.tani.app.ui.commerce.CheckoutFragment
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class AuthFragment : Fragment(R.layout.fragment_auth) {
@@ -28,6 +27,7 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
     private var mode = Mode.LOGIN
     private var recoveryToken: String = ""
     private var recoveryRefreshToken: String = ""
+    private var awaitingConfirmation = false
 
     companion object {
         private const val ARG_RECOVERY_TOKEN = "recovery_token"
@@ -80,6 +80,7 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
         val backToLogin = view.findViewById<TextView>(R.id.back_to_login)
         val browseAsGuest = view.findViewById<TextView>(R.id.browse_as_guest)
         val status = view.findViewById<TextView>(R.id.status)
+        val resendConfirmation = view.findViewById<TextView>(R.id.resend_confirmation)
         val progress = view.findViewById<ProgressBar>(R.id.progress)
         val afterAuth = arguments?.getString(ARG_AFTER_AUTH)
         val continuingCheckout = afterAuth == AFTER_AUTH_CHECKOUT
@@ -106,6 +107,7 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
             forgot.visibility = if (mode == Mode.LOGIN) View.VISIBLE else View.GONE
             toggle.visibility = if (mode == Mode.LOGIN || mode == Mode.SIGNUP) View.VISIBLE else View.GONE
             backToLogin.visibility = if (mode == Mode.FORGOT || mode == Mode.RESET) View.VISIBLE else View.GONE
+            resendConfirmation.visibility = if (mode == Mode.LOGIN && awaitingConfirmation) View.VISIBLE else View.GONE
             browseAsGuest.visibility = if (mode == Mode.LOGIN || mode == Mode.SIGNUP) View.VISIBLE else View.GONE
             browseAsGuest.text = when {
                 continuingCheckout -> getString(R.string.auth_1)
@@ -159,6 +161,7 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
 
         toggle.setOnClickListener {
             status.text = ""
+            awaitingConfirmation = false
             mode = if (mode == Mode.LOGIN) Mode.SIGNUP else Mode.LOGIN
             password.text.clear()
             confirmPassword.text.clear()
@@ -173,6 +176,17 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
         }
 
         backToLogin.setOnClickListener { goLogin() }
+        resendConfirmation.setOnClickListener {
+            viewLifecycleOwner.lifecycleScope.launch {
+                setBusy(true)
+                resendConfirmation.isEnabled = false
+                runCatchingCancellable { repository.resendSignupConfirmation(email.text.toString()) }
+                    .onSuccess { status.text = getString(R.string.auth_confirmation_resent) }
+                    .onFailure { status.text = friendlyError(it) }
+                resendConfirmation.isEnabled = true
+                setBusy(false)
+            }
+        }
         browseAsGuest.setOnClickListener {
             when {
                 continuingCheckout -> parentFragmentManager.popBackStack()
@@ -200,11 +214,8 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
                                 name = name.text.toString(),
                                 phone = phone.text.toString()
                             )
-                            if (!hasSession) {
-                                delay(250)
-                                repository.login(signupEmail, signupPassword)
-                            }
-                            "SIGNUP_OK"
+                            // بدون جلسة يعني أن الخادم ينتظر تأكيد البريد، فلا نحاول الدخول قبل ذلك.
+                            if (hasSession) "SIGNUP_OK" else "SIGNUP_PENDING"
                         }
                         Mode.FORGOT -> {
                             repository.requestPasswordReset(email.text.toString())
@@ -223,6 +234,10 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
                 }.onSuccess { result ->
                     when (result) {
                         "LOGIN_OK", "SIGNUP_OK" -> continueAfterAuthentication(afterAuth)
+                        "SIGNUP_PENDING" -> {
+                            awaitingConfirmation = true
+                            goLogin(getString(R.string.auth_confirmation_sent, email.text.toString().trim()))
+                        }
                         "RESET_OK" -> {
                             // التوكنات أُلغيت على الخادم؛ لا نعيد فتح شاشة الاستعادة عند إعادة الإنشاء.
                             arguments?.remove(ARG_RECOVERY_TOKEN)
@@ -236,6 +251,10 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
                         }
                     }
                 }.onFailure {
+                    if (mode == Mode.LOGIN && isEmailNotConfirmed(it)) {
+                        awaitingConfirmation = true
+                        render()
+                    }
                     status.text = friendlyError(it)
                 }
                 setBusy(false)
@@ -266,14 +285,17 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
         }
     }
 
+    private fun isEmailNotConfirmed(error: Throwable) =
+        error.message.orEmpty().contains("Email not confirmed", true)
+
     private fun friendlyError(error: Throwable): String {
         val raw = error.message.orEmpty()
         return when {
             raw.contains("Invalid login credentials", true) -> getString(R.string.auth_25)
-            raw.contains("Email not confirmed", true) -> getString(R.string.auth_26)
+            isEmailNotConfirmed(error) -> getString(R.string.auth_26)
             raw.contains("User already registered", true) -> getString(R.string.auth_27)
             raw.contains("Password should be", true) -> getString(R.string.auth_28)
-            raw.contains("rate limit", true) -> getString(R.string.auth_29)
+            raw.contains("rate limit", true) || raw.contains("only request this after", true) -> getString(R.string.auth_29)
             else -> CustomerErrorMessages.from(error, getString(R.string.auth_30))
         }
     }

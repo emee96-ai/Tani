@@ -350,19 +350,29 @@ class MainActivity : AppCompatActivity() {
 
     private fun handleAuthDeepLink(intent: Intent?): Boolean {
         val uri = intent?.data ?: return false
-        val isLegacyRecovery =
-            BuildConfig.DEBUG && uri.scheme == "tani" && uri.host == "auth" && uri.path == "/reset"
-        val isVerifiedRecovery =
-            uri.scheme == "https" &&
-                uri.host.equals(BuildConfig.APP_LINK_HOST, ignoreCase = true) &&
-                uri.path == "/auth/reset"
-        if (!isLegacyRecovery && !isVerifiedRecovery) return false
+        val isDebugLink = BuildConfig.DEBUG && uri.scheme == "tani" && uri.host == "auth"
+        val isVerifiedLink =
+            uri.scheme == "https" && uri.host.equals(BuildConfig.APP_LINK_HOST, ignoreCase = true)
+        val isRecovery = (isDebugLink && uri.path == "/reset") || (isVerifiedLink && uri.path == "/auth/reset")
+        val isConfirmation = (isDebugLink && uri.path == "/confirm") || (isVerifiedLink && uri.path == "/auth/confirm")
+        if (!isRecovery && !isConfirmation) return false
 
         val params = parseAuthParams(uri)
         val token = params["access_token"]
         val refreshToken = params["refresh_token"]
         val type = params["type"]
         val error = params["error_description"] ?: params["error"]
+
+        if (isConfirmation) {
+            // رابط التأكيد لا يفتح شاشة كلمة المرور ولا يُعتمد توكنه كجلسة، سواء نجح أم انتهى.
+            setDrawerEnabled(false)
+            nav.visibility = View.GONE
+            toolbar.visibility = View.GONE
+            val notice = if (error != null) getString(R.string.auth_confirm_link_failed) else getString(R.string.auth_31)
+            show(AuthFragment.newNoticeInstance(notice), addToBackStack = false)
+            hideLaunchSplash()
+            return true
+        }
 
         if (error != null) {
             setDrawerEnabled(false)

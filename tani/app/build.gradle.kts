@@ -55,6 +55,7 @@ android {
     buildTypes {
         getByName("debug") {
             buildConfigField("String", "PASSWORD_RESET_REDIRECT", "\"tani://auth/reset\"")
+            buildConfigField("String", "EMAIL_CONFIRM_REDIRECT", "\"tani://auth/confirm\"")
         }
         getByName("release") {
             isMinifyEnabled = true
@@ -84,6 +85,8 @@ android {
         testInstrumentationRunnerArguments["disableAnalytics"] = "true"
 
         buildConfigField("String", "PASSWORD_RESET_REDIRECT", "\"$taniResetRedirect\"")
+        // رابط تأكيد البريد منفصل عن الاستعادة حتى لا يفتح أبداً شاشة تغيير كلمة المرور.
+        buildConfigField("String", "EMAIL_CONFIRM_REDIRECT", "\"https://$taniAppLinkHost/auth/confirm\"")
         buildConfigField("String", "SUPABASE_URL", "\"$taniSupabaseUrl\"")
         buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"$taniSupabaseKey\"")
         buildConfigField("String", "APP_LINK_HOST", "\"$taniAppLinkHost\"")

@@ -12,6 +12,10 @@
                     android:scheme="tani"
                     android:host="auth"
                     android:path="/reset" />
+                <data
+                    android:scheme="tani"
+                    android:host="auth"
+                    android:path="/confirm" />
             </intent-filter>
         </activity>
     </application>

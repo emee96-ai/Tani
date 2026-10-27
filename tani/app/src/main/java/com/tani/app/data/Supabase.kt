@@ -40,6 +40,7 @@ object Supabase {
     const val URL = BuildConfig.SUPABASE_URL
     const val KEY = BuildConfig.SUPABASE_PUBLISHABLE_KEY
     val PASSWORD_RESET_REDIRECT: String get() = BuildConfig.PASSWORD_RESET_REDIRECT
+    val EMAIL_CONFIRM_REDIRECT: String get() = BuildConfig.EMAIL_CONFIRM_REDIRECT
 
     private const val ACCESS_TOKEN_KEY = "access_token"
     private const val REFRESH_TOKEN_KEY = "refresh_token"

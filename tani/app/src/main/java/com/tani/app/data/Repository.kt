@@ -81,6 +81,23 @@ class Repository {
         Analytics.track("password_reset_requested", screen = "auth")
     }
 
+    suspend fun resendSignupConfirmation(email: String) {
+        val cleanEmail = validateEmail(email)
+        val redirect = java.net.URLEncoder.encode(
+            Supabase.EMAIL_CONFIRM_REDIRECT,
+            Charsets.UTF_8.name()
+        )
+
+        Supabase.authPost<JsonElement>(
+            "resend?redirect_to=$redirect",
+            buildJsonObject {
+                put("type", "signup")
+                put("email", cleanEmail)
+            }.toString()
+        )
+        Analytics.track("signup_confirmation_resent", screen = "auth")
+    }
+
     suspend fun resetPassword(
         recoveryToken: String,
         recoveryRefreshToken: String,

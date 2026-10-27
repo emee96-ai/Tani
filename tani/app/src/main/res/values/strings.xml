@@ -183,7 +183,11 @@
     <string name="auth_23">تعذر فتح رابط الاستعادة: %1$s</string>
     <string name="auth_24">رابط استعادة كلمة المرور غير صالح أو منتهي. اطلب رابطاً جديداً.</string>
     <string name="auth_25">البريد الإلكتروني أو كلمة المرور غير صحيحة</string>
-    <string name="auth_26">تعذر تفعيل الحساب تلقائياً. حاول تسجيل الدخول مرة أخرى</string>
+    <string name="auth_26">لم تؤكّد بريدك الإلكتروني بعد. افتح رابط التأكيد الذي أرسلناه إليك، أو اطلب رابطاً جديداً.</string>
+    <string name="auth_confirmation_sent">أرسلنا رابط تأكيد إلى %1$s. افتح الرابط من هذا الجهاز، ثم سجّل الدخول.</string>
+    <string name="auth_confirmation_resent">أرسلنا رابط تأكيد جديداً إلى بريدك. قد يتأخر وصوله دقيقة، وتحقق من مجلد الرسائل غير المرغوب فيها.</string>
+    <string name="auth_resend_confirmation">إعادة إرسال رابط التأكيد</string>
+    <string name="auth_confirm_link_failed">رابط التأكيد منتهٍ أو استُخدم من قبل. سجّل الدخول، وإن لم يكن بريدك مؤكداً فاطلب رابطاً جديداً.</string>
     <string name="auth_27">يوجد حساب مسجل بهذا البريد بالفعل</string>
     <string name="auth_28">كلمة المرور لا تحقق متطلبات الأمان</string>
     <string name="auth_29">تمت محاولات كثيرة. حاول مرة أخرى لاحقاً</string>
